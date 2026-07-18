@@ -1,0 +1,17 @@
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/dotnet:1-10.0
+    volumes:
+      - ..:/workspace:cached
+    command: sleep infinity
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=QueryPlus;User Id=sa;Password=Your_strong_Password123;TrustServerCertificate=True;Encrypt=False"
+      Keycloak__Authority: "http://keycloak:8080/realms/queryplus"
+      Keycloak__ClientId: "queryplus-web"
+      Keycloak__ClientSecret: "change-me-in-production"
+      Keycloak__RequireHttpsMetadata: "false"
+    depends_on:
+      - sqlserver
+      - keycloak
+    ports:
+      - "5000:5000"

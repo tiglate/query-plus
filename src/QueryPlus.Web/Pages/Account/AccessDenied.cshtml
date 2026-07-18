@@ -1,0 +1,16 @@
+@page
+@model QueryPlus.Web.Pages.Account.AccessDeniedModel
+@using Microsoft.Extensions.Localization
+@using QueryPlus.Web.Resources
+@inject IStringLocalizer<SharedResource> L
+@{
+    ViewData["Title"] = L["AccessDenied_Title"].Value;
+}
+
+<div class="rounded-xl border border-red-200 bg-red-50 p-8 shadow-sm">
+    <h1 class="text-2xl font-bold text-red-800">@L["AccessDenied_Title"]</h1>
+    <p class="mt-3 text-red-700">@L["AccessDenied_Body"]</p>
+    <a asp-page="/Index" class="mt-4 inline-block text-sm font-medium text-indigo-700 hover:underline">
+        @L["Nav_Home"]
+    </a>
+</div>

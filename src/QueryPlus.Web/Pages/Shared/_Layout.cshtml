@@ -1,0 +1,76 @@
+@using Microsoft.Extensions.Localization
+@using QueryPlus.Web.Resources
+@inject IStringLocalizer<SharedResource> L
+<!DOCTYPE html>
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - QueryPlus</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+    <header class="border-b border-slate-200 bg-white shadow-sm">
+        <nav class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+            <div class="flex items-center gap-6">
+                <a class="text-lg font-semibold text-indigo-700 hover:text-indigo-900" asp-page="/Index">QueryPlus</a>
+                <a class="text-sm text-slate-600 hover:text-slate-900" asp-page="/Index">@L["Nav_Home"]</a>
+                <a class="text-sm text-slate-600 hover:text-slate-900" asp-page="/Privacy">@L["Nav_Privacy"]</a>
+            </div>
+            <div class="flex items-center gap-3">
+                @{
+                    var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
+                }
+                <form method="get" class="flex items-center gap-1 text-sm">
+                    <label class="sr-only" for="culture">@L["Language"]</label>
+                    <select id="culture" name="culture"
+                            class="rounded border border-slate-300 bg-white px-2 py-1 text-sm"
+                            onchange="this.form.submit()">
+                        @if (culture == "pt-BR")
+                        {
+                            <option value="pt-BR" selected>Português</option>
+                            <option value="en">English</option>
+                        }
+                        else
+                        {
+                            <option value="pt-BR">Português</option>
+                            <option value="en" selected>English</option>
+                        }
+                    </select>
+                </form>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <span class="text-sm text-slate-600">@User.Identity.Name</span>
+                    <form method="post" action="/Account/Logout">
+                        <button type="submit"
+                                class="rounded bg-slate-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700">
+                            @L["Logout"]
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <a href="/Account/Login"
+                       class="rounded bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500">
+                        @L["Login"]
+                    </a>
+                }
+            </div>
+        </nav>
+    </header>
+
+    <main class="mx-auto max-w-6xl px-4 py-8">
+        @RenderBody()
+    </main>
+
+    <footer class="border-t border-slate-200 bg-white">
+        <div class="mx-auto max-w-6xl px-4 py-4 text-sm text-slate-500">
+            &copy; @DateTime.UtcNow.Year QueryPlus — @L["Footer_Tagline"]
+        </div>
+    </footer>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,16 @@
+**/.git
+**/.vs
+**/.vscode
+**/.idea
+**/bin
+**/obj
+**/node_modules
+**/TestResults
+**/coverage
+**/*.user
+**/*.suo
+**/.DS_Store
+**/docker-compose*.yml
+**/.devcontainer
+README.md
+**/*.md

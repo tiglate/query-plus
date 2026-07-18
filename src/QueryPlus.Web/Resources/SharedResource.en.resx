@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Nav_Home" xml:space="preserve"><value>Home</value></data>
+  <data name="Nav_Privacy" xml:space="preserve"><value>Privacy</value></data>
+  <data name="Login" xml:space="preserve"><value>Login</value></data>
+  <data name="Logout" xml:space="preserve"><value>Logout</value></data>
+  <data name="Language" xml:space="preserve"><value>Language</value></data>
+  <data name="Footer_Tagline" xml:space="preserve"><value>Dynamic queries with clean architecture</value></data>
+  <data name="Home_Title" xml:space="preserve"><value>Home</value></data>
+  <data name="Home_Welcome" xml:space="preserve"><value>Welcome to QueryPlus</value></data>
+  <data name="Home_Description" xml:space="preserve"><value>Platform for running queries and stored procedures with dynamic results, Keycloak authentication, and an HTMX + Tailwind UI.</value></data>
+  <data name="Home_Architecture" xml:space="preserve"><value>Architecture</value></data>
+  <data name="Home_Architecture_Body" xml:space="preserve"><value>Domain, Application, Infrastructure, Data and Web layers with dependency injection and INT primary keys.</value></data>
+  <data name="Home_Auth" xml:space="preserve"><value>Authentication</value></data>
+  <data name="Home_Auth_Body" xml:space="preserve"><value>OpenID Connect with Keycloak for authentication and authorization.</value></data>
+  <data name="Privacy_Title" xml:space="preserve"><value>Privacy</value></data>
+  <data name="Privacy_Body" xml:space="preserve"><value>Use this page to describe the application privacy policy.</value></data>
+  <data name="AccessDenied_Title" xml:space="preserve"><value>Access denied</value></data>
+  <data name="AccessDenied_Body" xml:space="preserve"><value>You do not have permission to access this resource.</value></data>
+</root>
