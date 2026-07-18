@@ -1,0 +1,1989 @@
+[
+  {
+    "caption": "USA Presidents - List",
+    "category": "Demo - Presidents",
+    "description": "Optional birth State (combo), mandate Start and End dates.",
+    "procedureName": "dbo.Sp_USA_President_List",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "State",
+        "name": "@State",
+        "type": "Combo",
+        "default": null,
+        "combo": "[\"Virginia\",\"Massachusetts\",\"South Carolina\",\"New York\",\"North Carolina\",\"New Hampshire\",\"Pennsylvania\",\"Kentucky\",\"Ohio\",\"Vermont\",\"New Jersey\",\"Iowa\",\"Missouri\",\"Texas\",\"California\",\"Nebraska\",\"Georgia\",\"Illinois\",\"Arkansas\",\"Connecticut\",\"Hawaii\"]"
+      },
+      {
+        "caption": "Start",
+        "name": "@Start",
+        "type": "Date",
+        "default": null,
+        "combo": null
+      },
+      {
+        "caption": "End",
+        "name": "@End",
+        "type": "Date",
+        "default": null,
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "TermNumber",
+        "caption": "Term",
+        "align": "Right",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "FullName",
+        "caption": "President",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Party",
+        "caption": "Party",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "BirthState",
+        "caption": "Birth State",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "BirthDate",
+        "caption": "Born",
+        "align": "Center",
+        "format": "{0:d}",
+        "visible": true
+      },
+      {
+        "tech": "TermStart",
+        "caption": "Term Start",
+        "align": "Center",
+        "format": "{0:d}",
+        "visible": true
+      },
+      {
+        "tech": "TermEnd",
+        "caption": "Term End",
+        "align": "Center",
+        "format": "{0:d}",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Customers - All",
+    "category": "Demo - Sales",
+    "description": "No parameters; lists all customers.",
+    "procedureName": "dbo.Sp_Demo_Customer_All",
+    "role": "user",
+    "parameters": [],
+    "columns": [
+      {
+        "tech": "Id",
+        "caption": "Id",
+        "align": "Right",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Code",
+        "caption": "Code",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "FullName",
+        "caption": "Name",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "City",
+        "caption": "City",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Country",
+        "caption": "Country",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "IsActive",
+        "caption": "Active",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "CreditLimit",
+        "caption": "Credit Limit",
+        "align": "Right",
+        "format": "{0:n2}",
+        "visible": true
+      },
+      {
+        "tech": "CreatedAt",
+        "caption": "Created",
+        "align": "Center",
+        "format": "{0:d}",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Customers - Search by Name",
+    "category": "Demo - Sales",
+    "description": "FreeText name filter.",
+    "procedureName": "dbo.Sp_Demo_Customer_ByName",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Name",
+        "name": "@Name",
+        "type": "FreeText",
+        "default": null,
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "Id",
+        "caption": "Id",
+        "align": "Right",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Code",
+        "caption": "Code",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "FullName",
+        "caption": "Name",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "City",
+        "caption": "City",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Country",
+        "caption": "Country",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "CreditLimit",
+        "caption": "Credit",
+        "align": "Right",
+        "format": "{0:c}",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Customers - By Country",
+    "category": "Demo - Sales",
+    "description": "Combo country filter.",
+    "procedureName": "dbo.Sp_Demo_Customer_ByCountry",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Country",
+        "name": "@Country",
+        "type": "Combo",
+        "default": null,
+        "combo": "[\"USA\",\"UK\",\"Brazil\"]"
+      }
+    ],
+    "columns": [
+      {
+        "tech": "Code",
+        "caption": "Code",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "FullName",
+        "caption": "Name",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "City",
+        "caption": "City",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Country",
+        "caption": "Country",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "IsActive",
+        "caption": "Active",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "CreditLimit",
+        "caption": "Credit",
+        "align": "Right",
+        "format": "{0:n2}",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Customers - Active Flag",
+    "category": "Demo - Sales",
+    "description": "Boolean filter for active customers.",
+    "procedureName": "dbo.Sp_Demo_Customer_ActiveOnly",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Active only",
+        "name": "@ActiveOnly",
+        "type": "Boolean",
+        "default": "true",
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "Code",
+        "caption": "Code",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "FullName",
+        "caption": "Name",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "IsActive",
+        "caption": "Active",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "CreditLimit",
+        "caption": "Credit",
+        "align": "Right",
+        "format": "{0:n2}",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Customers - Min Credit",
+    "category": "Demo - Sales",
+    "description": "Numeric minimum credit limit.",
+    "procedureName": "dbo.Sp_Demo_Customer_MinCredit",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Min credit",
+        "name": "@MinCredit",
+        "type": "Numeric",
+        "default": "0",
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "Code",
+        "caption": "Code",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "FullName",
+        "caption": "Name",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "CreditLimit",
+        "caption": "Credit Limit",
+        "align": "Right",
+        "format": "{0:n2}",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Products - List",
+    "category": "Demo - Sales",
+    "description": "Combo category + boolean discontinued.",
+    "procedureName": "dbo.Sp_Demo_Product_List",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Category",
+        "name": "@Category",
+        "type": "Combo",
+        "default": null,
+        "combo": "[\"Accessories\",\"Displays\",\"Computers\",\"Audio\"]"
+      },
+      {
+        "caption": "Include discontinued",
+        "name": "@IncludeDiscontinued",
+        "type": "Boolean",
+        "default": "false",
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "Sku",
+        "caption": "SKU",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "ProductName",
+        "caption": "Product",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Category",
+        "caption": "Category",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "UnitPrice",
+        "caption": "Unit Price",
+        "align": "Right",
+        "format": "{0:c}",
+        "visible": true
+      },
+      {
+        "tech": "StockQty",
+        "caption": "Stock",
+        "align": "Right",
+        "format": "{0:n0}",
+        "visible": true
+      },
+      {
+        "tech": "DiscountPct",
+        "caption": "Discount %",
+        "align": "Right",
+        "format": "{0:n2}",
+        "visible": true
+      },
+      {
+        "tech": "IsDiscontinued",
+        "caption": "Discontinued",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Products - Price Range",
+    "category": "Demo - Sales",
+    "description": "Two numeric parameters.",
+    "procedureName": "dbo.Sp_Demo_Product_PriceRange",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Min price",
+        "name": "@MinPrice",
+        "type": "Numeric",
+        "default": "0",
+        "combo": null
+      },
+      {
+        "caption": "Max price",
+        "name": "@MaxPrice",
+        "type": "Numeric",
+        "default": "2000",
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "Sku",
+        "caption": "SKU",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "ProductName",
+        "caption": "Product",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "UnitPrice",
+        "caption": "Price",
+        "align": "Right",
+        "format": "{0:c}",
+        "visible": true
+      },
+      {
+        "tech": "StockQty",
+        "caption": "Stock",
+        "align": "Right",
+        "format": null,
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Orders - Date Range",
+    "category": "Demo - Sales",
+    "description": "Order date between Start and End.",
+    "procedureName": "dbo.Sp_Demo_Order_ByDateRange",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Start",
+        "name": "@Start",
+        "type": "Date",
+        "default": "2024-01-01",
+        "combo": null
+      },
+      {
+        "caption": "End",
+        "name": "@End",
+        "type": "Date",
+        "default": "2025-12-31",
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "OrderId",
+        "caption": "Order #",
+        "align": "Right",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "CustomerName",
+        "caption": "Customer",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "OrderDate",
+        "caption": "Order Date",
+        "align": "Center",
+        "format": "{0:d}",
+        "visible": true
+      },
+      {
+        "tech": "ShipDate",
+        "caption": "Ship Date",
+        "align": "Center",
+        "format": "{0:d}",
+        "visible": true
+      },
+      {
+        "tech": "Status",
+        "caption": "Status",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "TotalAmount",
+        "caption": "Total",
+        "align": "Right",
+        "format": "{0:n2}",
+        "visible": true
+      },
+      {
+        "tech": "TaxAmount",
+        "caption": "Tax",
+        "align": "Right",
+        "format": "{0:n2}",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Orders - By Status",
+    "category": "Demo - Sales",
+    "description": "Combo status filter.",
+    "procedureName": "dbo.Sp_Demo_Order_ByStatus",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Status",
+        "name": "@Status",
+        "type": "Combo",
+        "default": null,
+        "combo": "[\"Shipped\",\"Pending\",\"Cancelled\"]"
+      }
+    ],
+    "columns": [
+      {
+        "tech": "OrderId",
+        "caption": "Order #",
+        "align": "Right",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "OrderDate",
+        "caption": "Date",
+        "align": "Center",
+        "format": "{0:d}",
+        "visible": true
+      },
+      {
+        "tech": "Status",
+        "caption": "Status",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "TotalAmount",
+        "caption": "Total",
+        "align": "Right",
+        "format": "{0:c}",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Orders - Summary by Status",
+    "category": "Demo - Sales",
+    "description": "Aggregation, no parameters.",
+    "procedureName": "dbo.Sp_Demo_Order_Summary",
+    "role": "user",
+    "parameters": [],
+    "columns": [
+      {
+        "tech": "Status",
+        "caption": "Status",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "OrderCount",
+        "caption": "Count",
+        "align": "Right",
+        "format": "{0:n0}",
+        "visible": true
+      },
+      {
+        "tech": "TotalAmount",
+        "caption": "Total",
+        "align": "Right",
+        "format": "{0:n2}",
+        "visible": true
+      },
+      {
+        "tech": "AvgAmount",
+        "caption": "Average",
+        "align": "Right",
+        "format": "{0:n2}",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Employees - List",
+    "category": "Demo - HR",
+    "description": "Department combo + managers boolean.",
+    "procedureName": "dbo.Sp_Demo_Employee_List",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Department",
+        "name": "@Department",
+        "type": "Combo",
+        "default": null,
+        "combo": "[\"Engineering\",\"Sales\",\"Finance\",\"HR\",\"Operations\"]"
+      },
+      {
+        "caption": "Managers only",
+        "name": "@ManagersOnly",
+        "type": "Boolean",
+        "default": "false",
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "Code",
+        "caption": "Code",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "FullName",
+        "caption": "Name",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Department",
+        "caption": "Dept",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "JobTitle",
+        "caption": "Title",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "HireDate",
+        "caption": "Hire Date",
+        "align": "Center",
+        "format": "{0:d}",
+        "visible": true
+      },
+      {
+        "tech": "Salary",
+        "caption": "Salary",
+        "align": "Right",
+        "format": "{0:c}",
+        "visible": true
+      },
+      {
+        "tech": "IsManager",
+        "caption": "Manager",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "WorkStart",
+        "caption": "Start",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "WorkEnd",
+        "caption": "End",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Employees - Hired After",
+    "category": "Demo - HR",
+    "description": "Single date parameter.",
+    "procedureName": "dbo.Sp_Demo_Employee_ByHireDate",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Hired after",
+        "name": "@HiredAfter",
+        "type": "Date",
+        "default": "2018-01-01",
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "FullName",
+        "caption": "Name",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Department",
+        "caption": "Dept",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "HireDate",
+        "caption": "Hire Date",
+        "align": "Center",
+        "format": "{0:yyyy-MM-dd}",
+        "visible": true
+      },
+      {
+        "tech": "Salary",
+        "caption": "Salary",
+        "align": "Right",
+        "format": "{0:n2}",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Employees - By Shift Window",
+    "category": "Demo - HR",
+    "description": "Time parameters for shift filtering.",
+    "procedureName": "dbo.Sp_Demo_Employee_Shift",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Start time",
+        "name": "@StartTime",
+        "type": "Time",
+        "default": "08:00",
+        "combo": null
+      },
+      {
+        "caption": "End time",
+        "name": "@EndTime",
+        "type": "Time",
+        "default": "18:00",
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "FullName",
+        "caption": "Name",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Department",
+        "caption": "Dept",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "WorkStart",
+        "caption": "Start",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "WorkEnd",
+        "caption": "End",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Employees - Salary Band",
+    "category": "Demo - HR",
+    "description": "Numeric range + free text name.",
+    "procedureName": "dbo.Sp_Demo_Employee_SalaryBand",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Min salary",
+        "name": "@MinSalary",
+        "type": "Numeric",
+        "default": "70000",
+        "combo": null
+      },
+      {
+        "caption": "Max salary",
+        "name": "@MaxSalary",
+        "type": "Numeric",
+        "default": "200000",
+        "combo": null
+      },
+      {
+        "caption": "Name contains",
+        "name": "@Name",
+        "type": "FreeText",
+        "default": null,
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "FullName",
+        "caption": "Name",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "JobTitle",
+        "caption": "Title",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Salary",
+        "caption": "Salary",
+        "align": "Right",
+        "format": "{0:c}",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Invoices - List",
+    "category": "Demo - Finance",
+    "description": "Currency combo + paid boolean; datetime paid_at.",
+    "procedureName": "dbo.Sp_Demo_Invoice_List",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Currency",
+        "name": "@Currency",
+        "type": "Combo",
+        "default": null,
+        "combo": "[\"USD\",\"GBP\",\"BRL\",\"EUR\"]"
+      },
+      {
+        "caption": "Paid only",
+        "name": "@PaidOnly",
+        "type": "Boolean",
+        "default": "false",
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "InvoiceNumber",
+        "caption": "Invoice",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "IssueDate",
+        "caption": "Issue",
+        "align": "Center",
+        "format": "{0:d}",
+        "visible": true
+      },
+      {
+        "tech": "DueDate",
+        "caption": "Due",
+        "align": "Center",
+        "format": "{0:d}",
+        "visible": true
+      },
+      {
+        "tech": "PaidAt",
+        "caption": "Paid At",
+        "align": "Center",
+        "format": "{0:g}",
+        "visible": true
+      },
+      {
+        "tech": "Amount",
+        "caption": "Amount",
+        "align": "Right",
+        "format": "{0:n2}",
+        "visible": true
+      },
+      {
+        "tech": "Currency",
+        "caption": "CCY",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "IsPaid",
+        "caption": "Paid",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Invoices - Overdue",
+    "category": "Demo - Finance",
+    "description": "Date as-of for overdue calculation.",
+    "procedureName": "dbo.Sp_Demo_Invoice_Overdue",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "As of",
+        "name": "@AsOf",
+        "type": "Date",
+        "default": null,
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "InvoiceNumber",
+        "caption": "Invoice",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "DueDate",
+        "caption": "Due",
+        "align": "Center",
+        "format": "{0:d}",
+        "visible": true
+      },
+      {
+        "tech": "Amount",
+        "caption": "Amount",
+        "align": "Right",
+        "format": "{0:c}",
+        "visible": true
+      },
+      {
+        "tech": "Currency",
+        "caption": "CCY",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "DaysOverdue",
+        "caption": "Days Overdue",
+        "align": "Right",
+        "format": "{0:n0}",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Invoices - Paid Between (DateTime)",
+    "category": "Demo - Finance",
+    "description": "DateTime range on paid_at.",
+    "procedureName": "dbo.Sp_Demo_Invoice_ByDateTimePaid",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Paid from",
+        "name": "@PaidFrom",
+        "type": "DateTime",
+        "default": "2024-01-01T00:00",
+        "combo": null
+      },
+      {
+        "caption": "Paid to",
+        "name": "@PaidTo",
+        "type": "DateTime",
+        "default": "2025-12-31T23:59",
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "InvoiceNumber",
+        "caption": "Invoice",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "PaidAt",
+        "caption": "Paid At",
+        "align": "Center",
+        "format": "{0:g}",
+        "visible": true
+      },
+      {
+        "tech": "Amount",
+        "caption": "Amount",
+        "align": "Right",
+        "format": "{0:n2}",
+        "visible": true
+      },
+      {
+        "tech": "Currency",
+        "caption": "CCY",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Events - List",
+    "category": "Demo - Operations",
+    "description": "Combo type + public boolean; time columns.",
+    "procedureName": "dbo.Sp_Demo_Event_List",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Event type",
+        "name": "@EventType",
+        "type": "Combo",
+        "default": null,
+        "combo": "[\"Conference\",\"Internal\",\"Marketing\",\"Training\",\"Community\"]"
+      },
+      {
+        "caption": "Public only",
+        "name": "@PublicOnly",
+        "type": "Boolean",
+        "default": "false",
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "EventName",
+        "caption": "Event",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "EventType",
+        "caption": "Type",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "EventDate",
+        "caption": "Date",
+        "align": "Center",
+        "format": "{0:d}",
+        "visible": true
+      },
+      {
+        "tech": "StartTime",
+        "caption": "Start",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "EndTime",
+        "caption": "End",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Location",
+        "caption": "Location",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Capacity",
+        "caption": "Capacity",
+        "align": "Right",
+        "format": "{0:n0}",
+        "visible": true
+      },
+      {
+        "tech": "IsPublic",
+        "caption": "Public",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Events - On Date",
+    "category": "Demo - Operations",
+    "description": "Single date equality filter.",
+    "procedureName": "dbo.Sp_Demo_Event_OnDate",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Event date",
+        "name": "@EventDate",
+        "type": "Date",
+        "default": "2025-09-10",
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "EventName",
+        "caption": "Event",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "EventDate",
+        "caption": "Date",
+        "align": "Center",
+        "format": "{0:d}",
+        "visible": true
+      },
+      {
+        "tech": "StartTime",
+        "caption": "Start",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "EndTime",
+        "caption": "End",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Location",
+        "caption": "Location",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Sensors - Readings",
+    "category": "Demo - Operations",
+    "description": "Combo location, boolean alert, datetime range.",
+    "procedureName": "dbo.Sp_Demo_Sensor_Readings",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Location",
+        "name": "@Location",
+        "type": "Combo",
+        "default": null,
+        "combo": "[\"Server Room\",\"Warehouse\",\"Office\"]"
+      },
+      {
+        "caption": "Alerts only",
+        "name": "@AlertsOnly",
+        "type": "Boolean",
+        "default": "false",
+        "combo": null
+      },
+      {
+        "caption": "From",
+        "name": "@From",
+        "type": "DateTime",
+        "default": "2025-03-01T00:00",
+        "combo": null
+      },
+      {
+        "caption": "To",
+        "name": "@To",
+        "type": "DateTime",
+        "default": "2025-03-02T00:00",
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "SensorCode",
+        "caption": "Sensor",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Location",
+        "caption": "Location",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "ReadingAt",
+        "caption": "Reading At",
+        "align": "Center",
+        "format": "{0:g}",
+        "visible": true
+      },
+      {
+        "tech": "TemperatureC",
+        "caption": "Temp \u00b0C",
+        "align": "Right",
+        "format": "{0:n2}",
+        "visible": true
+      },
+      {
+        "tech": "HumidityPct",
+        "caption": "Humidity %",
+        "align": "Right",
+        "format": "{0:n2}",
+        "visible": true
+      },
+      {
+        "tech": "IsAlert",
+        "caption": "Alert",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Sensors - Min Temperature",
+    "category": "Demo - Operations",
+    "description": "Numeric temperature threshold.",
+    "procedureName": "dbo.Sp_Demo_Sensor_ByTemp",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Min temperature",
+        "name": "@MinTemp",
+        "type": "Numeric",
+        "default": "20",
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "SensorCode",
+        "caption": "Sensor",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Location",
+        "caption": "Location",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "ReadingAt",
+        "caption": "When",
+        "align": "Center",
+        "format": "{0:g}",
+        "visible": true
+      },
+      {
+        "tech": "TemperatureC",
+        "caption": "Temp \u00b0C",
+        "align": "Right",
+        "format": "{0:n1}",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Countries - By Region",
+    "category": "Demo - Operations",
+    "description": "Large numbers with formatting.",
+    "procedureName": "dbo.Sp_Demo_Country_List",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Region",
+        "name": "@Region",
+        "type": "Combo",
+        "default": null,
+        "combo": "[\"Americas\",\"Europe\",\"Asia\",\"Oceania\",\"Africa\"]"
+      }
+    ],
+    "columns": [
+      {
+        "tech": "IsoCode",
+        "caption": "ISO",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "CountryName",
+        "caption": "Country",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Region",
+        "caption": "Region",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Population",
+        "caption": "Population",
+        "align": "Right",
+        "format": "{0:n0}",
+        "visible": true
+      },
+      {
+        "tech": "GdpUsd",
+        "caption": "GDP (USD)",
+        "align": "Right",
+        "format": "{0:n0}",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Countries - Search",
+    "category": "Demo - Operations",
+    "description": "FreeText country name search.",
+    "procedureName": "dbo.Sp_Demo_Country_Search",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Name",
+        "name": "@Name",
+        "type": "FreeText",
+        "default": null,
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "IsoCode",
+        "caption": "ISO",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "CountryName",
+        "caption": "Country",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Region",
+        "caption": "Region",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Flights - List",
+    "category": "Demo - Operations",
+    "description": "Combo status + free text origin.",
+    "procedureName": "dbo.Sp_Demo_Flight_List",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Status",
+        "name": "@Status",
+        "type": "Combo",
+        "default": null,
+        "combo": "[\"Scheduled\",\"Delayed\",\"Landed\",\"Cancelled\"]"
+      },
+      {
+        "caption": "Origin",
+        "name": "@Origin",
+        "type": "FreeText",
+        "default": null,
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "FlightNumber",
+        "caption": "Flight",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Origin",
+        "caption": "From",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Destination",
+        "caption": "To",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "DepartureAt",
+        "caption": "Departure",
+        "align": "Center",
+        "format": "{0:g}",
+        "visible": true
+      },
+      {
+        "tech": "ArrivalAt",
+        "caption": "Arrival",
+        "align": "Center",
+        "format": "{0:g}",
+        "visible": true
+      },
+      {
+        "tech": "Status",
+        "caption": "Status",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "SeatsAvailable",
+        "caption": "Seats",
+        "align": "Right",
+        "format": "{0:n0}",
+        "visible": true
+      },
+      {
+        "tech": "FareAmount",
+        "caption": "Fare",
+        "align": "Right",
+        "format": "{0:c}",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Flights - Departure Window",
+    "category": "Demo - Operations",
+    "description": "DateTime window only.",
+    "procedureName": "dbo.Sp_Demo_Flight_ByDepartureWindow",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "From",
+        "name": "@From",
+        "type": "DateTime",
+        "default": "2025-08-01T00:00",
+        "combo": null
+      },
+      {
+        "caption": "To",
+        "name": "@To",
+        "type": "DateTime",
+        "default": "2025-08-31T23:59",
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "FlightNumber",
+        "caption": "Flight",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Origin",
+        "caption": "From",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Destination",
+        "caption": "To",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "DepartureAt",
+        "caption": "Departure",
+        "align": "Center",
+        "format": "{0:g}",
+        "visible": true
+      },
+      {
+        "tech": "FareAmount",
+        "caption": "Fare",
+        "align": "Right",
+        "format": "{0:n2}",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Transactions - List",
+    "category": "Demo - Finance",
+    "description": "Combo type + boolean reversed.",
+    "procedureName": "dbo.Sp_Demo_Transaction_List",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Type",
+        "name": "@TxType",
+        "type": "Combo",
+        "default": null,
+        "combo": "[\"Credit\",\"Debit\"]"
+      },
+      {
+        "caption": "Include reversed",
+        "name": "@IncludeReversed",
+        "type": "Boolean",
+        "default": "false",
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "TxCode",
+        "caption": "Code",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "TxType",
+        "caption": "Type",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "TxAt",
+        "caption": "When",
+        "align": "Center",
+        "format": "{0:g}",
+        "visible": true
+      },
+      {
+        "tech": "Amount",
+        "caption": "Amount",
+        "align": "Right",
+        "format": "{0:n2}",
+        "visible": true
+      },
+      {
+        "tech": "FeePct",
+        "caption": "Fee %",
+        "align": "Right",
+        "format": "{0:n2}",
+        "visible": true
+      },
+      {
+        "tech": "Currency",
+        "caption": "CCY",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "IsReversed",
+        "caption": "Reversed",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "ReferenceNote",
+        "caption": "Note",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Transactions - Amount Range",
+    "category": "Demo - Finance",
+    "description": "Numeric range + currency combo.",
+    "procedureName": "dbo.Sp_Demo_Transaction_AmountRange",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Min amount",
+        "name": "@MinAmount",
+        "type": "Numeric",
+        "default": "0",
+        "combo": null
+      },
+      {
+        "caption": "Max amount",
+        "name": "@MaxAmount",
+        "type": "Numeric",
+        "default": "10000",
+        "combo": null
+      },
+      {
+        "caption": "Currency",
+        "name": "@Currency",
+        "type": "Combo",
+        "default": null,
+        "combo": "[\"USD\",\"EUR\",\"BRL\"]"
+      }
+    ],
+    "columns": [
+      {
+        "tech": "TxCode",
+        "caption": "Code",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "TxType",
+        "caption": "Type",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Amount",
+        "caption": "Amount",
+        "align": "Right",
+        "format": "{0:c}",
+        "visible": true
+      },
+      {
+        "tech": "Currency",
+        "caption": "CCY",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "TxAt",
+        "caption": "When",
+        "align": "Center",
+        "format": "{0:g}",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Kitchen Sink - All Parameter Types",
+    "category": "Demo - Mixed",
+    "description": "Exercises FreeText, Numeric, Date, Time, DateTime, Boolean, Combo together.",
+    "procedureName": "dbo.Sp_Demo_KitchenSink",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Name",
+        "name": "@Name",
+        "type": "FreeText",
+        "default": null,
+        "combo": null
+      },
+      {
+        "caption": "Min credit",
+        "name": "@MinCredit",
+        "type": "Numeric",
+        "default": "0",
+        "combo": null
+      },
+      {
+        "caption": "Created after",
+        "name": "@CreatedAfter",
+        "type": "Date",
+        "default": "2018-01-01",
+        "combo": null
+      },
+      {
+        "caption": "Work start",
+        "name": "@WorkStart",
+        "type": "Time",
+        "default": "08:00",
+        "combo": null
+      },
+      {
+        "caption": "Changed after",
+        "name": "@ChangedAfter",
+        "type": "DateTime",
+        "default": "2018-01-01T00:00",
+        "combo": null
+      },
+      {
+        "caption": "Active only",
+        "name": "@ActiveOnly",
+        "type": "Boolean",
+        "default": "true",
+        "combo": null
+      },
+      {
+        "caption": "Country",
+        "name": "@Country",
+        "type": "Combo",
+        "default": null,
+        "combo": "[\"USA\",\"UK\",\"Brazil\"]"
+      }
+    ],
+    "columns": [
+      {
+        "tech": "Code",
+        "caption": "Code",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "FullName",
+        "caption": "Name",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Country",
+        "caption": "Country",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "IsActive",
+        "caption": "Active",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "CreditLimit",
+        "caption": "Credit",
+        "align": "Right",
+        "format": "{0:n2}",
+        "visible": true
+      },
+      {
+        "tech": "CreatedAt",
+        "caption": "Created",
+        "align": "Center",
+        "format": "{0:g}",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Formatting - Alignment Showcase",
+    "category": "Demo - Mixed",
+    "description": "Left/center/right alignment and numeric formats.",
+    "procedureName": "dbo.Sp_Demo_Alignment_Showcase",
+    "role": "user",
+    "parameters": [],
+    "columns": [
+      {
+        "tech": "LeftText",
+        "caption": "Left Aligned",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "CenterText",
+        "caption": "Center",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "RightNumber",
+        "caption": "Right Currency",
+        "align": "Right",
+        "format": "{0:c}",
+        "visible": true
+      },
+      {
+        "tech": "RightPct",
+        "caption": "Right %",
+        "align": "Right",
+        "format": "{0:n2}",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Formatting - Hidden Technical Id",
+    "category": "Demo - Mixed",
+    "description": "Includes a hidden technical id column.",
+    "procedureName": "dbo.Sp_Demo_Hidden_Columns",
+    "role": "user",
+    "parameters": [],
+    "columns": [
+      {
+        "tech": "IdProduct",
+        "caption": "Id",
+        "align": "Right",
+        "format": null,
+        "visible": false
+      },
+      {
+        "tech": "Sku",
+        "caption": "SKU",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "ProductName",
+        "caption": "Product",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "UnitPrice",
+        "caption": "Price",
+        "align": "Right",
+        "format": "{0:c}",
+        "visible": true
+      },
+      {
+        "tech": "StockQty",
+        "caption": "Stock",
+        "align": "Right",
+        "format": null,
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Edge - Empty Result Set",
+    "category": "Demo - Mixed",
+    "description": "Usually returns zero rows (empty grid).",
+    "procedureName": "dbo.Sp_Demo_Empty_Result",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Impossible code",
+        "name": "@ImpossibleCode",
+        "type": "FreeText",
+        "default": "___NONE___",
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "Code",
+        "caption": "Code",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "FullName",
+        "caption": "Name",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Params - Boolean Only",
+    "category": "Demo - Mixed",
+    "description": "Single boolean parameter.",
+    "procedureName": "dbo.Sp_Demo_Boolean_Only",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Active only",
+        "name": "@ActiveOnly",
+        "type": "Boolean",
+        "default": "true",
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "FullName",
+        "caption": "Name",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "IsActive",
+        "caption": "Active",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Params - Time Only",
+    "category": "Demo - Mixed",
+    "description": "Single time parameter.",
+    "procedureName": "dbo.Sp_Demo_Time_Only",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "After",
+        "name": "@After",
+        "type": "Time",
+        "default": "08:00",
+        "combo": null
+      }
+    ],
+    "columns": [
+      {
+        "tech": "FullName",
+        "caption": "Name",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "WorkStart",
+        "caption": "Start",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "WorkEnd",
+        "caption": "End",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      }
+    ]
+  }
+]

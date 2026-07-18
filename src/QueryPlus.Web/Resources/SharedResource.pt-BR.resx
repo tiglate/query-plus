@@ -4,21 +4,18 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <!-- Neutral (SharedResource.resx) is already pt-BR; this file mirrors for explicit culture. -->
   <data name="Nav_Home" xml:space="preserve"><value>Início</value></data>
-  <data name="Nav_Privacy" xml:space="preserve"><value>Privacidade</value></data>
+  <data name="Nav_Admin" xml:space="preserve"><value>Admin</value></data>
+  <data name="Nav_Categories" xml:space="preserve"><value>Categorias</value></data>
+  <data name="Nav_Procedures" xml:space="preserve"><value>Procedures</value></data>
+  <data name="Nav_Support" xml:space="preserve"><value>Suporte</value></data>
   <data name="Login" xml:space="preserve"><value>Entrar</value></data>
   <data name="Logout" xml:space="preserve"><value>Sair</value></data>
   <data name="Language" xml:space="preserve"><value>Idioma</value></data>
-  <data name="Footer_Tagline" xml:space="preserve"><value>Consultas dinâmicas com arquitetura limpa</value></data>
-  <data name="Home_Title" xml:space="preserve"><value>Início</value></data>
-  <data name="Home_Welcome" xml:space="preserve"><value>Bem-vindo ao QueryPlus</value></data>
-  <data name="Home_Description" xml:space="preserve"><value>Plataforma para execução de consultas e stored procedures com resultados dinâmicos, autenticação Keycloak e interface HTMX + Tailwind.</value></data>
-  <data name="Home_Architecture" xml:space="preserve"><value>Arquitetura</value></data>
-  <data name="Home_Architecture_Body" xml:space="preserve"><value>Camadas Domain, Application, Infrastructure, Data e Web com injeção de dependência e chaves INT.</value></data>
-  <data name="Home_Auth" xml:space="preserve"><value>Autenticação</value></data>
-  <data name="Home_Auth_Body" xml:space="preserve"><value>OpenID Connect com Keycloak para autenticação e autorização.</value></data>
-  <data name="Privacy_Title" xml:space="preserve"><value>Privacidade</value></data>
-  <data name="Privacy_Body" xml:space="preserve"><value>Use esta página para descrever a política de privacidade da aplicação.</value></data>
-  <data name="AccessDenied_Title" xml:space="preserve"><value>Acesso negado</value></data>
-  <data name="AccessDenied_Body" xml:space="preserve"><value>Você não tem permissão para acessar este recurso.</value></data>
+  <data name="Footer_Tagline" xml:space="preserve"><value>Consultas governadas com segurança</value></data>
+  <data name="Home_Title" xml:space="preserve"><value>Execução de consultas</value></data>
+  <data name="Categories_Title" xml:space="preserve"><value>Categorias</value></data>
+  <data name="Procedures_Title" xml:space="preserve"><value>Procedures</value></data>
+  <data name="Support_Title" xml:space="preserve"><value>Suporte</value></data>
 </root>

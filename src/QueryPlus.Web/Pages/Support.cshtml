@@ -1,0 +1,35 @@
+@page
+@model QueryPlus.Web.Pages.SupportModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> L
+@{
+    ViewData["Title"] = L["Support_Title"].Value;
+}
+
+<div class="qp-page">
+    <div class="qp-card max-w-4xl">
+        <div class="qp-card-header">
+            <h1 class="text-xl font-semibold">@L["Support_Title"]</h1>
+        </div>
+        <div class="qp-card-body space-y-4 text-sm">
+            <p class="text-slate-600">@L["Support_Body"]</p>
+            <dl class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div class="rounded border border-slate-200 p-4">
+                    <dt class="font-semibold text-navy">@L["Support_Helpdesk"]</dt>
+                    <dd class="mt-1"><a class="text-cyan-700 underline" href="https://helpdesk.example.com" target="_blank" rel="noopener">helpdesk.example.com</a></dd>
+                </div>
+                <div class="rounded border border-slate-200 p-4">
+                    <dt class="font-semibold text-navy">@L["Support_Phone"]</dt>
+                    <dd class="mt-1">+55 (11) 0000-0000</dd>
+                </div>
+                <div class="rounded border border-slate-200 p-4">
+                    <dt class="font-semibold text-navy">@L["Support_Email"]</dt>
+                    <dd class="mt-1"><a class="text-cyan-700 underline" href="mailto:support@queryplus.local">support@queryplus.local</a></dd>
+                </div>
+                <div class="rounded border border-slate-200 p-4">
+                    <dt class="font-semibold text-navy">@L["Support_Hours"]</dt>
+                    <dd class="mt-1">Seg–Sex · 09:00–18:00 (BRT)</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+</div>

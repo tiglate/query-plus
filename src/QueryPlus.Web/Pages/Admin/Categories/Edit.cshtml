@@ -1,0 +1,41 @@
+@page "{id:int}"
+@model QueryPlus.Web.Pages.Admin.Categories.EditModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> L
+@{
+    ViewData["Title"] = L["Categories_Edit"].Value;
+}
+
+<div class="qp-page space-y-4">
+    <div class="qp-card max-w-3xl">
+        <div class="qp-card-header">
+            <h1 class="text-xl font-semibold">@L["Categories_Edit"]</h1>
+            <a asp-page="Index" class="qp-btn-secondary">@L["Back"]</a>
+        </div>
+        <div class="qp-card-body">
+            <form method="post" class="space-y-4">
+                <input type="hidden" asp-for="Input.Id" />
+                <div>
+                    <label class="qp-label">@L["Id"]</label>
+                    <input class="qp-input bg-slate-50" value="@Model.Input.Id" readonly />
+                </div>
+                <div>
+                    <label class="qp-label" asp-for="Input.Description">@L["Description"]</label>
+                    <input class="qp-input" asp-for="Input.Description" />
+                    <span asp-validation-for="Input.Description" class="text-sm text-red-600"></span>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="qp-btn-primary">@L["Save"]</button>
+                    <a asp-page="View" asp-route-id="@Model.Input.Id" class="qp-btn-secondary">@L["Cancel"]</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="qp-card max-w-3xl">
+        <div class="qp-card-header"><h2 class="font-semibold">@L["Audit"]</h2></div>
+        <div class="qp-card-body grid grid-cols-2 gap-4 text-sm">
+            <div><span class="text-slate-500">@L["CreatedAt"]</span><div>@Model.CreatedAt.ToLocalTime().ToString("g")</div></div>
+            <div><span class="text-slate-500">@L["UpdatedAt"]</span><div>@(Model.UpdatedAt?.ToLocalTime().ToString("g") ?? "—")</div></div>
+        </div>
+    </div>
+</div>

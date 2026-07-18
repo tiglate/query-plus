@@ -1,0 +1,28 @@
+@page
+@model QueryPlus.Web.Pages.Admin.Categories.CreateModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> L
+@{
+    ViewData["Title"] = L["Categories_New"].Value;
+}
+
+<div class="qp-page">
+    <div class="qp-card max-w-3xl">
+        <div class="qp-card-header">
+            <h1 class="text-xl font-semibold">@L["Categories_New"]</h1>
+            <a asp-page="Index" class="qp-btn-secondary">@L["Back"]</a>
+        </div>
+        <div class="qp-card-body">
+            <form method="post" class="space-y-4">
+                <div>
+                    <label class="qp-label" asp-for="Input.Description">@L["Description"]</label>
+                    <input class="qp-input" asp-for="Input.Description" />
+                    <span asp-validation-for="Input.Description" class="text-sm text-red-600"></span>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="qp-btn-primary">@L["Save"]</button>
+                    <a asp-page="Index" class="qp-btn-secondary">@L["Cancel"]</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

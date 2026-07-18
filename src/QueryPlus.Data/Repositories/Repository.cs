@@ -1,17 +1,16 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using QueryPlus.Data.Context;
-using QueryPlus.Domain.Common;
 using QueryPlus.Domain.Interfaces;
 
 namespace QueryPlus.Data.Repositories;
 
-public class Repository<TEntity> : IRepository<TEntity> where TEntity : BaseEntity
+public class Repository<TEntity> : IRepository<TEntity> where TEntity : class
 {
-    protected readonly QueryPlusDbContext Context;
+    protected readonly ApplicationDbContext Context;
     protected readonly DbSet<TEntity> DbSet;
 
-    public Repository(QueryPlusDbContext context)
+    public Repository(ApplicationDbContext context)
     {
         Context = context;
         DbSet = context.Set<TEntity>();
@@ -46,8 +45,8 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : BaseEnti
         return Task.CompletedTask;
     }
 
-    public virtual Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default)
-        => DbSet.AnyAsync(e => e.Id == id, cancellationToken);
+    public virtual async Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default)
+        => await DbSet.FindAsync([id], cancellationToken) is not null;
 
     public virtual Task<int> CountAsync(
         Expression<Func<TEntity, bool>>? predicate = null,

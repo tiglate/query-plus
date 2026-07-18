@@ -5,9 +5,9 @@ namespace QueryPlus.Data.Repositories;
 
 public class UnitOfWork : IUnitOfWork
 {
-    private readonly QueryPlusDbContext _context;
+    private readonly ApplicationDbContext _context;
 
-    public UnitOfWork(QueryPlusDbContext context)
+    public UnitOfWork(ApplicationDbContext context)
     {
         _context = context;
     }

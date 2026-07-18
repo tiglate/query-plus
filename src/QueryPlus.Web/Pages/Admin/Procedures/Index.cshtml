@@ -1,0 +1,98 @@
+@page
+@model QueryPlus.Web.Pages.Admin.Procedures.IndexModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> L
+@{
+    ViewData["Title"] = L["Procedures_Title"].Value;
+}
+
+<div class="qp-page space-y-4">
+    <div class="qp-card">
+        <div class="qp-card-header">
+            <h1 class="text-xl font-semibold text-navy">@L["Procedures_Title"]</h1>
+            <a asp-page="Create" class="qp-btn-primary">@L["Create"]</a>
+        </div>
+        <div class="qp-card-body">
+            <form method="get" class="mb-4 grid grid-cols-1 gap-3 md:grid-cols-6">
+                <div>
+                    <label class="qp-label">@L["Procedures_Category"]</label>
+                    <select class="qp-input" asp-for="CategoryId" asp-items="Model.CategoryOptions"></select>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="qp-label">@L["Procedures_Caption"]</label>
+                    <input class="qp-input" asp-for="Caption" />
+                </div>
+                <div>
+                    <label class="qp-label">@L["Procedures_Role"]</label>
+                    <input class="qp-input" asp-for="RoleEntitlement" />
+                </div>
+                <div>
+                    <label class="qp-label">@L["Enabled"]</label>
+                    <select class="qp-input" asp-for="Enabled">
+                        <option value="">—</option>
+                        <option value="true">@L["Yes"]</option>
+                        <option value="false">@L["No"]</option>
+                    </select>
+                </div>
+                <div class="flex items-end gap-2">
+                    <button type="submit" class="qp-btn-primary">@L["Search"]</button>
+                    <a asp-page="./Index" class="qp-btn-secondary">@L["Clear"]</a>
+                </div>
+            </form>
+
+            <div class="overflow-x-auto">
+                <table class="qp-table">
+                    <thead>
+                        <tr>
+                            <th>@L["Id"]</th>
+                            <th>@L["Procedures_Caption"]</th>
+                            <th>@L["Procedures_Category"]</th>
+                            <th>@L["Procedures_Database"]</th>
+                            <th>@L["Procedures_Name"]</th>
+                            <th>@L["Procedures_Role"]</th>
+                            <th>@L["Enabled"]</th>
+                            <th class="w-52">@L["Actions"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (Model.Items.Count == 0)
+                    {
+                        <tr><td colspan="8" class="text-slate-500">@L["NoRecords"]</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Caption</td>
+                                <td>@item.CategoryDescription</td>
+                                <td>@item.DatabaseName</td>
+                                <td class="font-mono text-xs">@item.ProcedureName</td>
+                                <td>@item.RoleEntitlement</td>
+                                <td>
+                                    @if (item.Enabled)
+                                    {
+                                        <span class="qp-badge-ok">@L["Enabled"]</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="qp-badge-off">@L["Disabled"]</span>
+                                    }
+                                </td>
+                                <td class="space-x-1 whitespace-nowrap">
+                                    <a class="qp-btn-ghost" asp-page="View" asp-route-id="@item.Id">@L["View"]</a>
+                                    <a class="qp-btn-ghost" asp-page="Edit" asp-route-id="@item.Id">@L["Edit"]</a>
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@item.Id" class="inline"
+                                          data-confirm="@L["ConfirmDelete"]">
+                                        <button type="submit" class="qp-btn-ghost text-red-700">@L["Delete"]</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

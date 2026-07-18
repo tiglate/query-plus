@@ -5,20 +5,104 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Nav_Home" xml:space="preserve"><value>Início</value></data>
+  <data name="Nav_Admin" xml:space="preserve"><value>Admin</value></data>
+  <data name="Nav_Categories" xml:space="preserve"><value>Categorias</value></data>
+  <data name="Nav_Procedures" xml:space="preserve"><value>Procedures</value></data>
+  <data name="Nav_Support" xml:space="preserve"><value>Suporte</value></data>
   <data name="Nav_Privacy" xml:space="preserve"><value>Privacidade</value></data>
   <data name="Login" xml:space="preserve"><value>Entrar</value></data>
   <data name="Logout" xml:space="preserve"><value>Sair</value></data>
   <data name="Language" xml:space="preserve"><value>Idioma</value></data>
-  <data name="Footer_Tagline" xml:space="preserve"><value>Consultas dinâmicas com arquitetura limpa</value></data>
-  <data name="Home_Title" xml:space="preserve"><value>Início</value></data>
-  <data name="Home_Welcome" xml:space="preserve"><value>Bem-vindo ao QueryPlus</value></data>
-  <data name="Home_Description" xml:space="preserve"><value>Plataforma para execução de consultas e stored procedures com resultados dinâmicos, autenticação Keycloak e interface HTMX + Tailwind.</value></data>
-  <data name="Home_Architecture" xml:space="preserve"><value>Arquitetura</value></data>
-  <data name="Home_Architecture_Body" xml:space="preserve"><value>Camadas Domain, Application, Infrastructure, Data e Web com injeção de dependência e chaves INT.</value></data>
-  <data name="Home_Auth" xml:space="preserve"><value>Autenticação</value></data>
-  <data name="Home_Auth_Body" xml:space="preserve"><value>OpenID Connect com Keycloak para autenticação e autorização.</value></data>
-  <data name="Privacy_Title" xml:space="preserve"><value>Privacidade</value></data>
-  <data name="Privacy_Body" xml:space="preserve"><value>Use esta página para descrever a política de privacidade da aplicação.</value></data>
+  <data name="Footer_Tagline" xml:space="preserve"><value>Consultas governadas com segurança</value></data>
+  <data name="Actions" xml:space="preserve"><value>Ações</value></data>
+  <data name="Search" xml:space="preserve"><value>Pesquisar</value></data>
+  <data name="Clear" xml:space="preserve"><value>Limpar</value></data>
+  <data name="Create" xml:space="preserve"><value>Novo</value></data>
+  <data name="Edit" xml:space="preserve"><value>Editar</value></data>
+  <data name="View" xml:space="preserve"><value>Visualizar</value></data>
+  <data name="Delete" xml:space="preserve"><value>Excluir</value></data>
+  <data name="Save" xml:space="preserve"><value>Salvar</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Cancelar</value></data>
+  <data name="Back" xml:space="preserve"><value>Voltar</value></data>
+  <data name="Yes" xml:space="preserve"><value>Sim</value></data>
+  <data name="No" xml:space="preserve"><value>Não</value></data>
+  <data name="Enabled" xml:space="preserve"><value>Ativo</value></data>
+  <data name="Disabled" xml:space="preserve"><value>Inativo</value></data>
+  <data name="ConfirmDelete" xml:space="preserve"><value>Tem certeza que deseja excluir este registro?</value></data>
+  <data name="Id" xml:space="preserve"><value>ID</value></data>
+  <data name="Description" xml:space="preserve"><value>Descrição</value></data>
+  <data name="CreatedAt" xml:space="preserve"><value>Criado em</value></data>
+  <data name="UpdatedAt" xml:space="preserve"><value>Atualizado em</value></data>
+  <data name="Audit" xml:space="preserve"><value>Auditoria</value></data>
+  <data name="NoRecords" xml:space="preserve"><value>Nenhum registro encontrado.</value></data>
+  <data name="Categories_Title" xml:space="preserve"><value>Categorias</value></data>
+  <data name="Categories_New" xml:space="preserve"><value>Nova categoria</value></data>
+  <data name="Categories_Edit" xml:space="preserve"><value>Editar categoria</value></data>
+  <data name="Categories_View" xml:space="preserve"><value>Detalhe da categoria</value></data>
+  <data name="Categories_Saved" xml:space="preserve"><value>Categoria salva com sucesso.</value></data>
+  <data name="Categories_Deleted" xml:space="preserve"><value>Categoria excluída.</value></data>
+  <data name="Procedures_Title" xml:space="preserve"><value>Procedures</value></data>
+  <data name="Procedures_New" xml:space="preserve"><value>Nova procedure</value></data>
+  <data name="Procedures_Edit" xml:space="preserve"><value>Editar procedure</value></data>
+  <data name="Procedures_View" xml:space="preserve"><value>Detalhe da procedure</value></data>
+  <data name="Procedures_Saved" xml:space="preserve"><value>Procedure salva com sucesso.</value></data>
+  <data name="Procedures_Deleted" xml:space="preserve"><value>Procedure excluída.</value></data>
+  <data name="Procedures_Caption" xml:space="preserve"><value>Título</value></data>
+  <data name="Procedures_Database" xml:space="preserve"><value>Banco de dados</value></data>
+  <data name="Procedures_Name" xml:space="preserve"><value>Nome da procedure</value></data>
+  <data name="Procedures_Role" xml:space="preserve"><value>Papel / Entitlement</value></data>
+  <data name="Procedures_Category" xml:space="preserve"><value>Categoria</value></data>
+  <data name="Procedures_SelectCategory" xml:space="preserve"><value>— Selecione —</value></data>
+  <data name="Procedures_Parameters" xml:space="preserve"><value>Parâmetros</value></data>
+  <data name="Procedures_Columns" xml:space="preserve"><value>Colunas</value></data>
+  <data name="Procedures_SyncMetadata" xml:space="preserve"><value>Sincronizar metadados</value></data>
+  <data name="Procedures_SyncMetadata_Hint" xml:space="preserve"><value>Preencha Banco de dados e Nome da procedure para sincronizar.</value></data>
+  <data name="Procedures_SyncMetadata_RequiresDatabase" xml:space="preserve"><value>Banco de dados é obrigatório para sincronizar metadados.</value></data>
+  <data name="Procedures_SyncMetadata_RequiresProcedure" xml:space="preserve"><value>Nome da procedure é obrigatório para sincronizar metadados.</value></data>
+  <data name="Procedures_SyncMetadata_Success" xml:space="preserve"><value>Metadados sincronizados.</value></data>
+  <data name="Procedures_AddParameter" xml:space="preserve"><value>Adicionar parâmetro</value></data>
+  <data name="Procedures_AddColumn" xml:space="preserve"><value>Adicionar coluna</value></data>
+  <data name="Param_Caption" xml:space="preserve"><value>Rótulo</value></data>
+  <data name="Param_Name" xml:space="preserve"><value>Nome</value></data>
+  <data name="Param_Type" xml:space="preserve"><value>Tipo</value></data>
+  <data name="Param_Default" xml:space="preserve"><value>Valor padrão</value></data>
+  <data name="Param_Required" xml:space="preserve"><value>Obrigatório</value></data>
+  <data name="Param_Combo" xml:space="preserve"><value>Valores combo (JSON)</value></data>
+  <data name="Col_Technical" xml:space="preserve"><value>Nome técnico</value></data>
+  <data name="Col_Caption" xml:space="preserve"><value>Rótulo</value></data>
+  <data name="Col_Alignment" xml:space="preserve"><value>Alinhamento</value></data>
+  <data name="Col_Format" xml:space="preserve"><value>Máscara</value></data>
+  <data name="Col_Visible" xml:space="preserve"><value>Visível</value></data>
+  <data name="Home_Title" xml:space="preserve"><value>Execução de consultas</value></data>
+  <data name="Home_SelectProcedure" xml:space="preserve"><value>Procedure</value></data>
+  <data name="Home_Execute" xml:space="preserve"><value>Executar</value></data>
+  <data name="Home_Export" xml:space="preserve"><value>Exportar Excel</value></data>
+  <data name="Home_Parameters" xml:space="preserve"><value>Parâmetros</value></data>
+  <data name="Home_Results" xml:space="preserve"><value>Resultados</value></data>
+  <data name="Home_NoProcedure" xml:space="preserve"><value>Selecione uma procedure para continuar.</value></data>
+  <data name="Home_SelectProcedureRequired" xml:space="preserve"><value>Selecione uma procedure antes de executar ou exportar.</value></data>
+  <data name="Home_ProcedureNotFound" xml:space="preserve"><value>Procedure não encontrada ou indisponível.</value></data>
+  <data name="Home_ExecuteFailed" xml:space="preserve"><value>Falha ao executar a procedure. Tente novamente.</value></data>
+  <data name="Home_RequiredParametersMissing" xml:space="preserve"><value>Preencha os parâmetros obrigatórios: {0}</value></data>
+  <data name="Home_RequiredParametersClient" xml:space="preserve"><value>Parâmetro obrigatório: {0}</value></data>
+  <data name="Home_Rows" xml:space="preserve"><value>linhas</value></data>
+  <data name="Home_ExportQueued" xml:space="preserve"><value>Exportação enfileirada.</value></data>
+  <data name="Home_ExportReady" xml:space="preserve"><value>Arquivo pronto para download.</value></data>
+  <data name="Home_ExportRunning" xml:space="preserve"><value>Gerando arquivo…</value></data>
+  <data name="Home_ExportFailed" xml:space="preserve"><value>Falha na exportação.</value></data>
+  <data name="Home_ExportRequiresData" xml:space="preserve"><value>Execute a procedure e obtenha resultados antes de exportar.</value></data>
+  <data name="Home_ExportParamsChanged" xml:space="preserve"><value>Os parâmetros mudaram. Execute novamente antes de exportar.</value></data>
+  <data name="Home_ExportExpired" xml:space="preserve"><value>A sessão de exportação expirou. Execute novamente antes de exportar.</value></data>
+  <data name="Home_Download" xml:space="preserve"><value>Baixar</value></data>
+  <data name="Support_Title" xml:space="preserve"><value>Suporte</value></data>
+  <data name="Support_Body" xml:space="preserve"><value>Entre em contato com a equipe de suporte para ajuda com QueryPlus.</value></data>
+  <data name="Support_Helpdesk" xml:space="preserve"><value>Helpdesk</value></data>
+  <data name="Support_Phone" xml:space="preserve"><value>Telefone</value></data>
+  <data name="Support_Email" xml:space="preserve"><value>E-mail</value></data>
+  <data name="Support_Hours" xml:space="preserve"><value>Horário de atendimento</value></data>
   <data name="AccessDenied_Title" xml:space="preserve"><value>Acesso negado</value></data>
   <data name="AccessDenied_Body" xml:space="preserve"><value>Você não tem permissão para acessar este recurso.</value></data>
+  <data name="Filter" xml:space="preserve"><value>Filtros</value></data>
+  <data name="Remove" xml:space="preserve"><value>Remover</value></data>
+  <data name="Validation_FixErrors" xml:space="preserve"><value>Corrija os campos destacados antes de salvar.</value></data>
 </root>

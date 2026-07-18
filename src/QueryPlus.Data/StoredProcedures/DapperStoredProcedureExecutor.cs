@@ -2,15 +2,16 @@ using System.Data;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using QueryPlus.Application.Interfaces;
+using QueryPlus.Application.Abstractions;
+using QueryPlus.Application.Common;
 
 namespace QueryPlus.Data.StoredProcedures;
 
 /// <summary>
-/// Executes stored procedures using Dapper / ADO.NET and returns a DataTable.
-/// Use this for dynamic result sets; use EF Core for regular CRUD.
+/// Executes catalog-registered stored procedures via Dapper/ADO.NET.
+/// Only validated identifiers and bound parameters are accepted — never free SQL.
 /// </summary>
-public class DapperStoredProcedureExecutor : IStoredProcedureExecutor
+public sealed class DapperStoredProcedureExecutor : IStoredProcedureExecutor
 {
     private readonly string _connectionString;
 
@@ -21,29 +22,37 @@ public class DapperStoredProcedureExecutor : IStoredProcedureExecutor
     }
 
     public async Task<DataTable> ExecuteAsync(
+        string databaseName,
         string procedureName,
-        IDictionary<string, object?>? parameters = null,
+        IReadOnlyDictionary<string, object?> parameters,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(procedureName);
+        // Defense in depth: re-validate identifiers even if caller already checked.
+        var qualifiedName = SqlIdentifier.BuildThreePartName(databaseName, procedureName);
 
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
 
         var dynamicParameters = new DynamicParameters();
-        if (parameters is not null)
+        foreach (var (name, value) in parameters)
         {
-            foreach (var (name, value) in parameters)
+            var paramName = SqlIdentifier.NormalizeParameterName(name);
+            // Reject anything that is not a simple parameter name.
+            var bare = paramName.TrimStart('@');
+            if (!SqlIdentifier.IsValidSegment(bare))
             {
-                dynamicParameters.Add(name.StartsWith('@') ? name : $"@{name}", value);
+                throw new ArgumentException($"Invalid parameter name '{name}'.", nameof(parameters));
             }
+
+            dynamicParameters.Add(paramName, value ?? DBNull.Value);
         }
 
         await using var reader = await connection.ExecuteReaderAsync(
             new CommandDefinition(
-                procedureName,
-                dynamicParameters,
+                commandText: qualifiedName,
+                parameters: dynamicParameters,
                 commandType: CommandType.StoredProcedure,
+                commandTimeout: 120,
                 cancellationToken: cancellationToken));
 
         var table = new DataTable();

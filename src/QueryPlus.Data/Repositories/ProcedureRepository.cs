@@ -1,0 +1,153 @@
+using Microsoft.EntityFrameworkCore;
+using QueryPlus.Data.Context;
+using QueryPlus.Domain.Entities;
+using QueryPlus.Domain.Interfaces;
+
+namespace QueryPlus.Data.Repositories;
+
+public sealed class ProcedureRepository : IProcedureRepository
+{
+    private readonly ApplicationDbContext _db;
+
+    public ProcedureRepository(ApplicationDbContext db)
+    {
+        _db = db;
+    }
+
+    public Task<Procedure?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+        => _db.Procedures.FirstOrDefaultAsync(p => p.IdProcedure == id, cancellationToken);
+
+    public Task<Procedure?> GetByIdWithDetailsAsync(int id, CancellationToken cancellationToken = default)
+        => _db.Procedures
+            .Include(p => p.Category)
+            .Include(p => p.Parameters)
+            .Include(p => p.Columns)
+            .FirstOrDefaultAsync(p => p.IdProcedure == id, cancellationToken);
+
+    public Task<Procedure?> GetEnabledByIdWithDetailsAsync(int id, CancellationToken cancellationToken = default)
+        => _db.Procedures
+            .Include(p => p.Category)
+            .Include(p => p.Parameters)
+            .Include(p => p.Columns)
+            .FirstOrDefaultAsync(p => p.IdProcedure == id && p.Enabled, cancellationToken);
+
+    public async Task<IReadOnlyList<Procedure>> SearchAsync(
+        ProcedureSearchCriteria criteria,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _db.Procedures
+            .AsNoTracking()
+            .Include(p => p.Category)
+            .AsQueryable();
+
+        if (criteria.CategoryId is not null)
+        {
+            query = query.Where(p => p.IdCategory == criteria.CategoryId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(criteria.Caption))
+        {
+            var term = criteria.Caption.Trim();
+            query = query.Where(p => p.Caption.Contains(term));
+        }
+
+        if (!string.IsNullOrWhiteSpace(criteria.RoleEntitlement))
+        {
+            var role = criteria.RoleEntitlement.Trim();
+            query = query.Where(p => p.RoleEntitlement.Contains(role));
+        }
+
+        if (criteria.Enabled is not null)
+        {
+            query = query.Where(p => p.Enabled == criteria.Enabled.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(criteria.DatabaseName))
+        {
+            var db = criteria.DatabaseName.Trim();
+            query = query.Where(p => p.DatabaseName == db);
+        }
+
+        if (!string.IsNullOrWhiteSpace(criteria.ProcedureName))
+        {
+            var name = criteria.ProcedureName.Trim();
+            query = query.Where(p => p.ProcedureName.Contains(name));
+        }
+
+        return await query
+            .OrderBy(p => p.Caption)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Procedure>> GetAccessibleForExecutionAsync(
+        IReadOnlyCollection<string> userRoles,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _db.Procedures
+            .AsNoTracking()
+            .Where(p => p.Enabled);
+
+        var items = await query
+            .OrderBy(p => p.Caption)
+            .ToListAsync(cancellationToken);
+
+        if (userRoles.Count == 0)
+        {
+            return items;
+        }
+
+        var roleSet = new HashSet<string>(userRoles, StringComparer.OrdinalIgnoreCase);
+        return items
+            .Where(p =>
+            {
+                var required = p.RoleEntitlement
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                return required.Length == 0 || required.Any(r => roleSet.Contains(r));
+            })
+            .ToList();
+    }
+
+    public Task<bool> ExistsByCaptionAsync(
+        string caption,
+        int? excludeId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _db.Procedures.AsNoTracking().Where(p => p.Caption == caption);
+        if (excludeId is not null)
+        {
+            query = query.Where(p => p.IdProcedure != excludeId.Value);
+        }
+
+        return query.AnyAsync(cancellationToken);
+    }
+
+    public Task<bool> ExistsByDatabaseAndNameAsync(
+        string databaseName,
+        string procedureName,
+        int? excludeId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _db.Procedures.AsNoTracking()
+            .Where(p => p.DatabaseName == databaseName && p.ProcedureName == procedureName);
+
+        if (excludeId is not null)
+        {
+            query = query.Where(p => p.IdProcedure != excludeId.Value);
+        }
+
+        return query.AnyAsync(cancellationToken);
+    }
+
+    public async Task AddAsync(Procedure procedure, CancellationToken cancellationToken = default)
+        => await _db.Procedures.AddAsync(procedure, cancellationToken);
+
+    public void Update(Procedure procedure) => _db.Procedures.Update(procedure);
+
+    public void Remove(Procedure procedure) => _db.Procedures.Remove(procedure);
+
+    public void RemoveParameter(ProcedureParameter parameter)
+        => _db.ProcedureParameters.Remove(parameter);
+
+    public void RemoveColumn(ProcedureColumn column)
+        => _db.ProcedureColumns.Remove(column);
+}

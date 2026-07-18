@@ -1,12 +1,11 @@
 using System.Linq.Expressions;
-using QueryPlus.Domain.Common;
 
 namespace QueryPlus.Domain.Interfaces;
 
 /// <summary>
 /// Generic repository for EF Core CRUD operations.
 /// </summary>
-public interface IRepository<TEntity> where TEntity : BaseEntity
+public interface IRepository<TEntity> where TEntity : class
 {
     Task<TEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<TEntity>> GetAllAsync(CancellationToken cancellationToken = default);

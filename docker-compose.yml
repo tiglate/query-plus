@@ -24,6 +24,13 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
       KC_HTTP_PORT: 8080
+      # Browser URLs must use localhost (published port), not the Docker service name.
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: "8080"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: "xforwarded"
     ports:
       - "8080:8080"
     volumes:
@@ -38,6 +45,9 @@ services:
       ASPNETCORE_ENVIRONMENT: Docker
       ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=QueryPlus;User Id=sa;Password=Your_strong_Password123;TrustServerCertificate=True;Encrypt=False"
       Keycloak__Authority: "http://localhost:8080/realms/queryplus"
+      Keycloak__MetadataAddress: "http://keycloak:8080/realms/queryplus/.well-known/openid-configuration"
+      Keycloak__BackchannelHost: "keycloak"
+      Keycloak__BackchannelPort: "8080"
       Keycloak__ClientId: "queryplus-web"
       Keycloak__ClientSecret: "change-me-in-production"
       Keycloak__RequireHttpsMetadata: "false"

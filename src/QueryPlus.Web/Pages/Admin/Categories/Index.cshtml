@@ -1,0 +1,67 @@
+@page
+@model QueryPlus.Web.Pages.Admin.Categories.IndexModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> L
+@{
+    ViewData["Title"] = L["Categories_Title"].Value;
+}
+
+<div class="qp-page space-y-4">
+    <div class="qp-card">
+        <div class="qp-card-header">
+            <h1 class="text-xl font-semibold text-navy">@L["Categories_Title"]</h1>
+            <a asp-page="Create" class="qp-btn-primary">@L["Create"]</a>
+        </div>
+        <div class="qp-card-body">
+            <form method="get" class="mb-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+                <div class="md:col-span-2">
+                    <label class="qp-label" asp-for="Description">@L["Description"]</label>
+                    <input class="qp-input" asp-for="Description" />
+                </div>
+                <div class="flex items-end gap-2">
+                    <button type="submit" class="qp-btn-primary">@L["Search"]</button>
+                    <a asp-page="./Index" class="qp-btn-secondary">@L["Clear"]</a>
+                </div>
+            </form>
+
+            <div class="overflow-x-auto">
+                <table class="qp-table">
+                    <thead>
+                        <tr>
+                            <th>@L["Id"]</th>
+                            <th>@L["Description"]</th>
+                            <th>@L["CreatedAt"]</th>
+                            <th>@L["UpdatedAt"]</th>
+                            <th class="w-48">@L["Actions"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (Model.Items.Count == 0)
+                    {
+                        <tr><td colspan="5" class="text-slate-500">@L["NoRecords"]</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Description</td>
+                                <td>@item.CreatedAt.ToLocalTime().ToString("g")</td>
+                                <td>@(item.UpdatedAt?.ToLocalTime().ToString("g") ?? "—")</td>
+                                <td class="space-x-1 whitespace-nowrap">
+                                    <a class="qp-btn-ghost" asp-page="View" asp-route-id="@item.Id">@L["View"]</a>
+                                    <a class="qp-btn-ghost" asp-page="Edit" asp-route-id="@item.Id">@L["Edit"]</a>
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@item.Id" class="inline"
+                                          data-confirm="@L["ConfirmDelete"]">
+                                        <button type="submit" class="qp-btn-ghost text-red-700">@L["Delete"]</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,3 +1,117 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-100 text-navy antialiased;
+  }
+}
+
+@layer components {
+  .qp-page {
+    @apply w-full px-4 py-4 lg:px-6;
+  }
+
+  .qp-card {
+    @apply rounded-lg border border-slate-200 bg-white shadow-sm;
+  }
+
+  .qp-card-header {
+    @apply flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3;
+  }
+
+  .qp-card-body {
+    @apply p-4;
+  }
+
+  .qp-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .qp-btn-primary {
+    @apply qp-btn bg-cyan text-navy hover:bg-cyan-600;
+  }
+
+  .qp-btn-secondary {
+    @apply qp-btn border border-slate-300 bg-white text-navy hover:bg-slate-50;
+  }
+
+  .qp-btn-danger {
+    @apply qp-btn bg-red-600 text-white hover:bg-red-700;
+  }
+
+  .qp-btn-ghost {
+    @apply qp-btn text-navy hover:bg-slate-100;
+  }
+
+  .qp-btn-accent {
+    @apply qp-btn bg-leaf text-navy hover:bg-leaf-600;
+  }
+
+  .qp-input {
+    @apply w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-navy shadow-sm focus:border-cyan focus:outline-none focus:ring-1 focus:ring-cyan;
+  }
+
+  .qp-label {
+    @apply mb-1 block text-sm font-medium text-navy;
+  }
+
+  .qp-label-required {
+    @apply font-bold;
+  }
+
+  .qp-th-required {
+    @apply font-bold;
+  }
+
+  .qp-field-error {
+    @apply mt-1 block text-sm text-red-600;
+  }
+
+  .qp-validation-summary {
+    @apply rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700;
+  }
+
+  .qp-validation-summary ul {
+    @apply list-disc space-y-1 pl-5;
+  }
+
+  .qp-input.input-validation-error,
+  select.input-validation-error,
+  textarea.input-validation-error {
+    @apply border-red-500 focus:border-red-500 focus:ring-red-500;
+  }
+
+  .qp-table {
+    @apply w-full border-collapse text-left text-sm;
+  }
+
+  .qp-table thead {
+    @apply bg-navy text-white;
+  }
+
+  .qp-table th {
+    @apply px-3 py-2 font-semibold;
+  }
+
+  .qp-table td {
+    @apply border-b border-slate-100 px-3 py-2 align-top;
+  }
+
+  .qp-table tbody tr:hover {
+    @apply bg-cyan-50/40;
+  }
+
+  .qp-badge {
+    @apply inline-flex rounded-full px-2 py-0.5 text-xs font-medium;
+  }
+
+  .qp-badge-ok {
+    @apply qp-badge bg-leaf/30 text-navy;
+  }
+
+  .qp-badge-off {
+    @apply qp-badge bg-slate-200 text-slate-700;
+  }
+}

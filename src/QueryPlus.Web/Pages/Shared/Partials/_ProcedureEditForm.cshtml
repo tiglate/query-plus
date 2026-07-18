@@ -1,0 +1,207 @@
+@model ProcedureEditViewModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> L
+@{
+    var isReadOnly = Model.ReadOnly;
+    var categoryOptions = ViewData["CategoryOptions"] as IEnumerable<SelectListItem> ?? [];
+}
+
+@if (Model.Id is > 0)
+{
+    <input type="hidden" asp-for="Id" />
+}
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="qp-validation-summary mb-4" role="alert">
+        <p class="font-semibold">@L["Validation_FixErrors"]</p>
+        @* Property-level messages appear under each field; list any model-level errors here. *@
+        <div asp-validation-summary="ModelOnly"></div>
+    </div>
+}
+
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+    <div>
+        <label class="qp-label qp-label-required" asp-for="CategoryId">@L["Procedures_Category"]</label>
+        <select class="qp-input" asp-for="CategoryId" asp-items="categoryOptions" disabled="@isReadOnly"></select>
+        <span asp-validation-for="CategoryId" class="qp-field-error"></span>
+    </div>
+    <div class="lg:col-span-2">
+        <label class="qp-label qp-label-required" asp-for="Caption">@L["Procedures_Caption"]</label>
+        <input class="qp-input" asp-for="Caption" readonly="@isReadOnly" />
+        <span asp-validation-for="Caption" class="qp-field-error"></span>
+    </div>
+    <div>
+        <label class="qp-label qp-label-required" asp-for="DatabaseName">@L["Procedures_Database"]</label>
+        <input class="qp-input font-mono js-sync-metadata-source" asp-for="DatabaseName" readonly="@isReadOnly"
+               data-sync-field="database" />
+        <span asp-validation-for="DatabaseName" class="qp-field-error"></span>
+    </div>
+    <div>
+        <label class="qp-label qp-label-required" asp-for="ProcedureName">@L["Procedures_Name"]</label>
+        <input class="qp-input font-mono js-sync-metadata-source" asp-for="ProcedureName" readonly="@isReadOnly"
+               data-sync-field="procedure" />
+        <span asp-validation-for="ProcedureName" class="qp-field-error"></span>
+    </div>
+    <div>
+        <label class="qp-label qp-label-required" asp-for="RoleEntitlement">@L["Procedures_Role"]</label>
+        <input class="qp-input" asp-for="RoleEntitlement" readonly="@isReadOnly" />
+        <span asp-validation-for="RoleEntitlement" class="qp-field-error"></span>
+    </div>
+    <div class="flex items-end gap-2">
+        <label class="inline-flex items-center gap-2 text-sm font-medium">
+            <input type="checkbox" asp-for="Enabled" disabled="@isReadOnly" class="h-4 w-4 rounded border-slate-300 text-cyan" />
+            @L["Enabled"]
+        </label>
+    </div>
+    <div class="lg:col-span-3">
+        <label class="qp-label" asp-for="Description">@L["Description"]</label>
+        <textarea class="qp-input" asp-for="Description" rows="3" maxlength="500" readonly="@isReadOnly"></textarea>
+        <span asp-validation-for="Description" class="qp-field-error"></span>
+    </div>
+</div>
+
+@if (!isReadOnly)
+{
+    var canSync = !string.IsNullOrWhiteSpace(Model.DatabaseName)
+                  && !string.IsNullOrWhiteSpace(Model.ProcedureName);
+    <div class="mt-4 flex flex-wrap items-center gap-2">
+        <button type="submit"
+                id="btn-sync-metadata"
+                formaction="?handler=SyncMetadata"
+                formmethod="post"
+                class="qp-btn-accent"
+                formnovalidate
+                disabled="@(!canSync)"
+                title="@L["Procedures_SyncMetadata_Hint"]">
+            @L["Procedures_SyncMetadata"]
+        </button>
+        <span id="sync-metadata-hint" class="text-xs text-slate-500 @(canSync ? "hidden" : "")">
+            @L["Procedures_SyncMetadata_Hint"]
+        </span>
+    </div>
+}
+
+<div class="mt-6">
+    <div class="mb-2 flex items-center justify-between">
+        <h2 class="text-lg font-semibold">@L["Procedures_Parameters"]</h2>
+        @if (!isReadOnly)
+        {
+            <button type="submit" formaction="?handler=AddParameter" class="qp-btn-secondary" formnovalidate>
+                @L["Procedures_AddParameter"]
+            </button>
+        }
+    </div>
+    <div class="overflow-x-auto">
+        <table class="qp-table">
+            <thead>
+                <tr>
+                    <th class="qp-th-required">@L["Param_Caption"]</th>
+                    <th class="qp-th-required">@L["Param_Name"]</th>
+                    <th class="qp-th-required">@L["Param_Type"]</th>
+                    <th>@L["Param_Required"]</th>
+                    <th>@L["Param_Default"]</th>
+                    <th>@L["Param_Combo"]</th>
+                    @if (!isReadOnly) { <th></th> }
+                </tr>
+            </thead>
+            <tbody>
+            @for (var i = 0; i < Model.Parameters.Count; i++)
+            {
+                <tr>
+                    <td>
+                        <input type="hidden" asp-for="Parameters[i].Id" />
+                        <input class="qp-input" asp-for="Parameters[i].Caption" readonly="@isReadOnly" />
+                        <span asp-validation-for="Parameters[i].Caption" class="qp-field-error"></span>
+                    </td>
+                    <td>
+                        <input class="qp-input font-mono" asp-for="Parameters[i].Name" readonly="@isReadOnly" />
+                        <span asp-validation-for="Parameters[i].Name" class="qp-field-error"></span>
+                    </td>
+                    <td>
+                        <select class="qp-input" asp-for="Parameters[i].ParameterType" asp-items="Html.GetEnumSelectList<ParameterType>()" disabled="@isReadOnly"></select>
+                    </td>
+                    <td class="text-center">
+                        <input type="checkbox" asp-for="Parameters[i].IsRequired" disabled="@isReadOnly"
+                               class="h-4 w-4 rounded border-slate-300 text-cyan" />
+                    </td>
+                    <td><input class="qp-input" asp-for="Parameters[i].DefaultValue" readonly="@isReadOnly" /></td>
+                    <td><input class="qp-input font-mono text-xs" asp-for="Parameters[i].ComboValues" readonly="@isReadOnly" /></td>
+                    @if (!isReadOnly)
+                    {
+                        <td>
+                            <button type="submit" formaction="?handler=RemoveParameter&index=@i" class="qp-btn-ghost text-red-700" formnovalidate>
+                                @L["Remove"]
+                            </button>
+                        </td>
+                    }
+                </tr>
+            }
+            @if (Model.Parameters.Count == 0)
+            {
+                <tr><td colspan="7" class="text-slate-500">@L["NoRecords"]</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="mt-6">
+    <div class="mb-2 flex items-center justify-between">
+        <h2 class="text-lg font-semibold">@L["Procedures_Columns"]</h2>
+        @if (!isReadOnly)
+        {
+            <button type="submit" formaction="?handler=AddColumn" class="qp-btn-secondary" formnovalidate>
+                @L["Procedures_AddColumn"]
+            </button>
+        }
+    </div>
+    <div class="overflow-x-auto">
+        <table class="qp-table">
+            <thead>
+                <tr>
+                    <th class="qp-th-required">@L["Col_Technical"]</th>
+                    <th class="qp-th-required">@L["Col_Caption"]</th>
+                    <th>@L["Col_Alignment"]</th>
+                    <th>@L["Col_Format"]</th>
+                    <th>@L["Col_Visible"]</th>
+                    @if (!isReadOnly) { <th></th> }
+                </tr>
+            </thead>
+            <tbody>
+            @for (var i = 0; i < Model.Columns.Count; i++)
+            {
+                <tr>
+                    <td>
+                        <input type="hidden" asp-for="Columns[i].Id" />
+                        <input class="qp-input font-mono" asp-for="Columns[i].TechnicalName" readonly="@isReadOnly" />
+                        <span asp-validation-for="Columns[i].TechnicalName" class="qp-field-error"></span>
+                    </td>
+                    <td>
+                        <input class="qp-input" asp-for="Columns[i].Caption" readonly="@isReadOnly" />
+                        <span asp-validation-for="Columns[i].Caption" class="qp-field-error"></span>
+                    </td>
+                    <td>
+                        <select class="qp-input" asp-for="Columns[i].Alignment" asp-items="Html.GetEnumSelectList<ColumnAlignment>()" disabled="@isReadOnly"></select>
+                    </td>
+                    <td><input class="qp-input font-mono" asp-for="Columns[i].FormatMask" readonly="@isReadOnly" /></td>
+                    <td class="text-center">
+                        <input type="checkbox" asp-for="Columns[i].Visible" disabled="@isReadOnly" class="h-4 w-4 rounded border-slate-300 text-cyan" />
+                    </td>
+                    @if (!isReadOnly)
+                    {
+                        <td>
+                            <button type="submit" formaction="?handler=RemoveColumn&index=@i" class="qp-btn-ghost text-red-700" formnovalidate>
+                                @L["Remove"]
+                            </button>
+                        </td>
+                    }
+                </tr>
+            }
+            @if (Model.Columns.Count == 0)
+            {
+                <tr><td colspan="6" class="text-slate-500">@L["NoRecords"]</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

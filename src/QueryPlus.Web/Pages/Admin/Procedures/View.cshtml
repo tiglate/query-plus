@@ -1,0 +1,30 @@
+@page "{id:int}"
+@model QueryPlus.Web.Pages.Admin.Procedures.ViewModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> L
+@{
+    ViewData["Title"] = L["Procedures_View"].Value;
+    ViewData["CategoryOptions"] = Model.CategoryOptions;
+}
+
+<div class="qp-page space-y-4">
+    <div class="qp-card">
+        <div class="qp-card-header">
+            <h1 class="text-xl font-semibold">@L["Procedures_View"]</h1>
+            <div class="flex gap-2">
+                <a asp-page="Edit" asp-route-id="@Model.Input.Id" class="qp-btn-primary">@L["Edit"]</a>
+                <a asp-page="Index" class="qp-btn-secondary">@L["Back"]</a>
+            </div>
+        </div>
+        <div class="qp-card-body">
+            <partial name="~/Pages/Shared/Partials/_ProcedureEditForm.cshtml" model="Model.Input" />
+        </div>
+    </div>
+    <div class="qp-card">
+        <div class="qp-card-header"><h2 class="font-semibold">@L["Audit"]</h2></div>
+        <div class="qp-card-body grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+            <div><span class="text-slate-500">@L["Id"]</span><div>@Model.Input.Id</div></div>
+            <div><span class="text-slate-500">@L["CreatedAt"]</span><div>@(Model.Input.CreatedAt?.ToLocalTime().ToString("g") ?? "—")</div></div>
+            <div><span class="text-slate-500">@L["UpdatedAt"]</span><div>@(Model.Input.UpdatedAt?.ToLocalTime().ToString("g") ?? "—")</div></div>
+        </div>
+    </div>
+</div>

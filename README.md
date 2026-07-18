@@ -141,11 +141,51 @@ Localization: `?culture=pt-BR` or `?culture=en` (also cookie / `Accept-Language`
 - Cookie session after login (`QueryPlus.Auth`).
 - `/Account/Login` challenges OIDC; `/Account/Logout` signs out cookie + OIDC.
 
+### Dev Containers / Docker networking
+
+The browser must never be redirected to the Docker DNS name `keycloak`.
+
+| Setting | Purpose |
+|---------|---------|
+| `Keycloak:Authority` | Public URL for the browser (`http://localhost:8080/realms/queryplus`) |
+| `Keycloak:MetadataAddress` | Internal discovery URL (`http://keycloak:8080/realms/.../.well-known/...`) |
+| `Keycloak:BackchannelHost` | Rewrites server token/JWKS calls from `localhost` → `keycloak` |
+
+Keycloak is started with `KC_HOSTNAME=localhost` so issuer/authorize URLs are host-reachable.
+
+After changing compose env vars, recreate containers:
+
+```bash
+docker compose down
+docker compose up -d sqlserver keycloak
+# or: Dev Containers → Rebuild Container
+```
+
 Change the client secret before any non-dev environment.
 
 ## Primary keys
 
-All domain entities use **`int`** identity primary keys (`BaseEntity.Id`).
+All domain entities use **`int`** identity primary keys.
+
+## Demo data (automatic on startup)
+
+On application start, `DemoDataSeeder`:
+
+1. Applies EF Core migrations  
+2. Installs demo tables + stored procedures from `src/QueryPlus.Data/Seed/demo-objects.sql`  
+3. Registers categories/procedures/parameters/columns from `demo-catalog.json` (idempotent)
+
+### Highlights
+
+| Object | Purpose |
+|--------|---------|
+| `tb_usa_president` + `Sp_USA_President_List` | Full US presidents list; combo **State**, dates **Start** / **End** |
+| 30+ additional `Sp_Demo_*` procedures | FreeText, Numeric, Date, Time, DateTime, Boolean, Combo; formats & alignments |
+| Supporting tables | customers, products, orders, employees, invoices, events, sensors, countries, flights, transactions |
+
+Role entitlement for demo procedures is **`user`** (also works for `admin`).
+
+SQL scripts are also mirrored under `docs/database/demo-objects.sql`.
 
 ## License
 

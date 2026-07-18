@@ -1,0 +1,92 @@
+@model ProcedureDetailDto
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> L
+
+@if (Model.Parameters.Count == 0)
+{
+    <p class="text-sm text-slate-500">@L["NoRecords"]</p>
+}
+else
+{
+    <div class="space-y-3" id="execution-parameters">
+        @foreach (var p in Model.Parameters)
+        {
+            var fieldName = "param_" + p.Name.TrimStart('@');
+            var checkName = "paramcheck_" + p.Name.TrimStart('@');
+            var required = p.IsRequired && p.ParameterType != ParameterType.Boolean;
+            var labelClass = required ? "qp-label qp-label-required" : "qp-label";
+            <div class="js-param-field" data-required="@(required ? "true" : "false")" data-caption="@p.Caption">
+                <label class="@labelClass" for="@fieldName">@p.Caption</label>
+                @switch (p.ParameterType)
+                {
+                    case ParameterType.Numeric:
+                        <input class="qp-input js-param-input" type="number" step="any"
+                               id="@fieldName" name="@fieldName" value="@p.DefaultValue"
+                               data-required="@(required ? "true" : "false")"
+                               aria-required="@(required ? "true" : "false")" />
+                        break;
+                    case ParameterType.Date:
+                        <input class="qp-input js-param-input" type="date"
+                               id="@fieldName" name="@fieldName" value="@p.DefaultValue"
+                               data-required="@(required ? "true" : "false")"
+                               aria-required="@(required ? "true" : "false")" />
+                        break;
+                    case ParameterType.Time:
+                        <input class="qp-input js-param-input" type="time"
+                               id="@fieldName" name="@fieldName" value="@p.DefaultValue"
+                               data-required="@(required ? "true" : "false")"
+                               aria-required="@(required ? "true" : "false")" />
+                        break;
+                    case ParameterType.DateTime:
+                        <input class="qp-input js-param-input" type="datetime-local"
+                               id="@fieldName" name="@fieldName" value="@p.DefaultValue"
+                               data-required="@(required ? "true" : "false")"
+                               aria-required="@(required ? "true" : "false")" />
+                        break;
+                    case ParameterType.Boolean:
+                        <input type="hidden" name="@checkName" value="1" />
+                        <label class="inline-flex items-center gap-2 text-sm font-medium">
+                            <input type="checkbox" class="h-4 w-4 rounded border-slate-300 text-cyan js-param-input"
+                                   id="@fieldName" name="@fieldName" value="true"
+                                   data-required="false"
+                                   @(string.Equals(p.DefaultValue, "true", StringComparison.OrdinalIgnoreCase) ? "checked" : null) />
+                            @p.Caption
+                        </label>
+                        break;
+                    case ParameterType.Combo:
+                        <select class="qp-input js-param-input" id="@fieldName" name="@fieldName"
+                                data-required="@(required ? "true" : "false")"
+                                aria-required="@(required ? "true" : "false")">
+                            @if (!required || string.IsNullOrWhiteSpace(p.DefaultValue))
+                            {
+                                <option value="">—</option>
+                            }
+                            @foreach (var opt in p.ComboOptions)
+                            {
+                                if (opt == p.DefaultValue)
+                                {
+                                    <option value="@opt" selected>@opt</option>
+                                }
+                                else
+                                {
+                                    <option value="@opt">@opt</option>
+                                }
+                            }
+                        </select>
+                        break;
+                    default:
+                        <input class="qp-input js-param-input" type="text"
+                               id="@fieldName" name="@fieldName" value="@p.DefaultValue"
+                               data-required="@(required ? "true" : "false")"
+                               aria-required="@(required ? "true" : "false")" />
+                        break;
+                }
+                <span class="qp-field-error js-param-error hidden" data-for="@fieldName"></span>
+            </div>
+        }
+    </div>
+}
+
+@* Keep procedureId for posts *@
+<input type="hidden" name="procedureId" value="@Model.Id" />
+<textarea id="procedure-description" class="qp-input bg-slate-50" rows="2" readonly
+          hx-swap-oob="true">@Model.Description</textarea>

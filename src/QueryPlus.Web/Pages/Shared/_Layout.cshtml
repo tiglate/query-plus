@@ -1,33 +1,63 @@
 @using Microsoft.Extensions.Localization
 @using QueryPlus.Web.Resources
 @inject IStringLocalizer<SharedResource> L
+@{
+    var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
+    var path = Context.Request.Path.Value ?? "/";
+}
 <!DOCTYPE html>
 <html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - QueryPlus</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4" crossorigin="anonymous"></script>
+    @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+    @{
+        var af = Antiforgery.GetAndStoreTokens(Context);
+    }
+    <meta name="csrf-token" content="@af.RequestToken" />
 </head>
-<body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
-    <header class="border-b border-slate-200 bg-white shadow-sm">
-        <nav class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-            <div class="flex items-center gap-6">
-                <a class="text-lg font-semibold text-indigo-700 hover:text-indigo-900" asp-page="/Index">QueryPlus</a>
-                <a class="text-sm text-slate-600 hover:text-slate-900" asp-page="/Index">@L["Nav_Home"]</a>
-                <a class="text-sm text-slate-600 hover:text-slate-900" asp-page="/Privacy">@L["Nav_Privacy"]</a>
+<body class="min-h-screen flex flex-col font-sans">
+    <header class="bg-navy text-white shadow">
+        <div class="flex w-full items-center justify-between gap-4 px-4 py-3 lg:px-6">
+            <div class="flex items-center gap-8">
+                <a asp-page="/Index" class="flex items-center gap-2 text-lg font-semibold tracking-tight">
+                    <span class="inline-flex h-8 w-8 items-center justify-center rounded bg-cyan text-navy font-bold">Q+</span>
+                    <span>QueryPlus</span>
+                </a>
+                <nav class="hidden items-center gap-1 md:flex">
+                    <a asp-page="/Index"
+                       class="rounded px-3 py-2 text-sm font-medium hover:bg-white/10 @(path == "/" ? "bg-white/10 text-cyan" : "")">
+                        @L["Nav_Home"]
+                    </a>
+                    <div class="relative group">
+                        <button type="button" class="rounded px-3 py-2 text-sm font-medium hover:bg-white/10 @(path.StartsWith("/Admin") ? "bg-white/10 text-cyan" : "")">
+                            @L["Nav_Admin"] ▾
+                        </button>
+                        <div class="invisible absolute left-0 z-20 mt-1 w-48 rounded-md border border-slate-200 bg-white py-1 text-navy opacity-0 shadow-lg transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                            <a asp-page="/Admin/Categories/Index" class="block px-3 py-2 text-sm hover:bg-cyan-50">@L["Nav_Categories"]</a>
+                            <a asp-page="/Admin/Procedures/Index" class="block px-3 py-2 text-sm hover:bg-cyan-50">@L["Nav_Procedures"]</a>
+                        </div>
+                    </div>
+                    <a asp-page="/Support"
+                       class="rounded px-3 py-2 text-sm font-medium hover:bg-white/10 @(path.StartsWith("/Support") ? "bg-white/10 text-cyan" : "")">
+                        @L["Nav_Support"]
+                    </a>
+                </nav>
             </div>
             <div class="flex items-center gap-3">
-                @{
-                    var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
-                }
-                <form method="get" class="flex items-center gap-1 text-sm">
+                <form method="post" asp-page="/Culture" class="flex items-center gap-1 text-sm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
                     <label class="sr-only" for="culture">@L["Language"]</label>
-                    <select id="culture" name="culture"
-                            class="rounded border border-slate-300 bg-white px-2 py-1 text-sm"
+                    <select id="culture" name="culture" class="rounded border-0 bg-white/10 px-2 py-1 text-sm text-white"
                             onchange="this.form.submit()">
-                        @if (culture == "pt-BR")
+                        @if (culture.StartsWith("pt", StringComparison.OrdinalIgnoreCase))
                         {
                             <option value="pt-BR" selected>Português</option>
                             <option value="en">English</option>
@@ -41,36 +71,52 @@
                 </form>
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <span class="text-sm text-slate-600">@User.Identity.Name</span>
+                    <span class="hidden text-sm text-white/80 sm:inline">@User.Identity.Name</span>
                     <form method="post" action="/Account/Logout">
-                        <button type="submit"
-                                class="rounded bg-slate-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700">
+                        <button type="submit" class="rounded bg-white/10 px-3 py-1.5 text-sm font-medium hover:bg-white/20">
                             @L["Logout"]
                         </button>
                     </form>
                 }
                 else
                 {
-                    <a href="/Account/Login"
-                       class="rounded bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500">
+                    <a href="/Account/Login" class="rounded bg-cyan px-3 py-1.5 text-sm font-semibold text-navy hover:bg-cyan-600">
                         @L["Login"]
                     </a>
                 }
             </div>
-        </nav>
+        </div>
     </header>
 
-    <main class="mx-auto max-w-6xl px-4 py-8">
+    <main class="flex-1 w-full">
+        @if (TempData["Success"] is string success)
+        {
+            <div class="mx-4 mt-4 rounded border border-leaf bg-leaf/20 px-4 py-2 text-sm text-navy lg:mx-6">@success</div>
+        }
+        @if (TempData["Error"] is string error)
+        {
+            <div class="mx-4 mt-4 rounded border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800 lg:mx-6">@error</div>
+        }
         @RenderBody()
     </main>
 
     <footer class="border-t border-slate-200 bg-white">
-        <div class="mx-auto max-w-6xl px-4 py-4 text-sm text-slate-500">
-            &copy; @DateTime.UtcNow.Year QueryPlus — @L["Footer_Tagline"]
+        <div class="flex w-full items-center justify-between px-4 py-3 text-xs text-slate-500 lg:px-6">
+            <span>&copy; @DateTime.UtcNow.Year QueryPlus</span>
+            <span>@L["Footer_Tagline"]</span>
         </div>
     </footer>
 
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        document.body.addEventListener('htmx:configRequest', function (event) {
+            var token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            if (token) {
+                event.detail.headers['RequestVerificationToken'] = token;
+            }
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+
