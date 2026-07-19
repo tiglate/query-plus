@@ -9,7 +9,7 @@ QueryPlus is a .NET 10 web application for managing and executing dynamic querie
 ```
 QueryPlus.sln
 src/
-  QueryPlus.Web              # Razor Pages + HTMX + Tailwind + Keycloak OIDC
+  QueryPlus.Web              # Razor Pages + ClientApp (TS/Tailwind) + Keycloak OIDC
   QueryPlus.Application      # Application services & interfaces
   QueryPlus.Domain           # Entities, repository contracts (INT PKs)
   QueryPlus.Infrastructure   # Composition root for external concerns
@@ -75,7 +75,79 @@ dotnet ef database update \
   --startup-project src/QueryPlus.Web
 ```
 
-### 3. Run the web app
+### 3. Build the ClientApp (first time / after frontend changes)
+
+Frontend TypeScript, Tailwind 4, HTMX, Clusterize, Font Awesome, and Inter live under  
+`src/QueryPlus.Web/ClientApp/` and are built into `wwwroot/dist/` (gitignored).  
+Architecture notes: **[docs/frontend-reorganization.md](docs/frontend-reorganization.md)**.
+
+**Prerequisites:** Node.js 22+ and [pnpm](https://pnpm.io/) 10+ (or the [Vite+](https://viteplus.dev/) CLI `vp`).
+
+```bash
+cd src/QueryPlus.Web
+pnpm install          # or: vp install
+pnpm run build        # → wwwroot/dist/{js,css,fonts}
+```
+
+#### When do I need `pnpm run build`?
+
+| Situation | Rebuild ClientApp? |
+|-----------|--------------------|
+| First clone / empty `wwwroot/dist` | **Yes** — or just `dotnet build` / `dotnet run` (auto-builds when `dist/js/app.js` is missing) |
+| You changed files under `ClientApp/` | **Yes** — `dotnet run` alone will **not** rebuild an existing `dist` |
+| Only .NET / Razor / C# changes | No — `dotnet run` is enough |
+| `dotnet publish` or Docker image build | Automatic (`pnpm install --frozen-lockfile` + `pnpm run build`) |
+
+So: **do not assume every `dotnet run` refreshes the frontend.** After TS/CSS/vendor edits, run `pnpm run build` again (or use watch mode below).
+
+#### Day-to-day frontend development (recommended)
+
+Use two terminals so the UI rebuilds as you edit:
+
+```bash
+# Terminal 1 — watch ClientApp → wwwroot/dist
+cd src/QueryPlus.Web
+pnpm run dev          # or: vp dev
+
+# Terminal 2 — ASP.NET
+dotnet run --project src/QueryPlus.Web
+```
+
+One-shot rebuild after a batch of frontend changes:
+
+```bash
+cd src/QueryPlus.Web && pnpm run build
+dotnet run --project src/QueryPlus.Web
+```
+
+#### Useful ClientApp commands
+
+```bash
+cd src/QueryPlus.Web
+
+# Preferred (Vite+: https://viteplus.dev/)
+vp install
+vp build
+vp test
+vp dev
+
+# Equivalent with pnpm
+pnpm install
+pnpm run build
+pnpm test
+pnpm run dev
+```
+
+Skip the MSBuild ClientApp step when needed:
+
+```bash
+dotnet publish ... /p:SkipClientAppBuild=true
+```
+
+Edit styles under `ClientApp/src/styles/` (not under `wwwroot`).  
+`_Layout` only loads `~/dist/js/app.js` and `~/dist/css/site.css` (no CDNs).
+
+### 4. Run the web app
 
 ```bash
 dotnet run --project src/QueryPlus.Web
@@ -85,42 +157,22 @@ Open the URL printed by Kestrel (typically `https://localhost:7xxx` or `http://l
 
 Configure Keycloak client redirect URIs to match that URL if needed (`docker/keycloak/realm-export.json`).
 
-### 4. ClientApp (Vite+ / Tailwind 4)
-
-Frontend TypeScript and Tailwind 4 live under `src/QueryPlus.Web/ClientApp/`.  
-See **[docs/frontend-reorganization.md](docs/frontend-reorganization.md)** for the full migration plan.
-
-**Current (Phases 0–7 complete):** Frontend source of truth is `ClientApp/` (Vite+ / Tailwind 4 / TypeScript). `_Layout` loads only `~/dist/js/app.js` and `~/dist/css/site.css` — no CDNs (HTMX, Clusterize, Font Awesome, and Inter are npm-bundled into `dist`). Build ClientApp before first run if `wwwroot/dist` is missing (`pnpm run build` or `dotnet build` auto-builds when dist is absent).
-
-```bash
-cd src/QueryPlus.Web
-
-# Preferred (Vite+ CLI: https://viteplus.dev/)
-vp install
-vp build          # → wwwroot/dist/{js,css}
-vp test
-vp dev            # watch mode
-
-# Fallback (pnpm)
-pnpm install
-pnpm run build
-pnpm test
-pnpm run dev
-```
-
-`dotnet publish` runs `pnpm install --frozen-lockfile && pnpm run build` automatically (skip with `/p:SkipClientAppBuild=true`).
-
-Edit styles under `ClientApp/src/styles/` (not under `wwwroot`).
-
 ## Build & test
 
 ```bash
 dotnet restore
-dotnet build QueryPlus.sln
+dotnet build QueryPlus.sln    # builds ClientApp only if dist/js/app.js is missing
 dotnet test QueryPlus.sln
 
 # ClientApp unit tests (Vitest + jsdom)
 cd src/QueryPlus.Web && pnpm test
+```
+
+For a full local frontend rebuild before test/run:
+
+```bash
+cd src/QueryPlus.Web && pnpm run build && cd ../..
+dotnet test QueryPlus.sln
 ```
 
 ## Docker (full stack)
