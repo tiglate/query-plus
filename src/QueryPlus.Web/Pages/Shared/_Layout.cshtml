@@ -160,10 +160,8 @@
         </div>
     </footer>
 
-    @* ClientApp shell (Vite → wwwroot/dist): nav dropdown, confirm forms, CSRF. *@
+    @* ClientApp shell (Vite → wwwroot/dist): nav, confirm, CSRF, SheetGrid, page controllers. *@
     <script type="module" src="~/dist/js/app.js" asp-append-version="true"></script>
-    @* Legacy home/admin helpers until Phase 3–6 migration completes. *@
-    <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

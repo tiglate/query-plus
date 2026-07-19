@@ -25,10 +25,9 @@ Plan: [`docs/frontend-reorganization.md`](../../../docs/frontend-reorganization.
 | `src/styles/legacy-components.css` | Temporary port of `wwwroot/css/input.css` |
 | `tests/` | Vitest + jsdom |
 
-### Runtime (Phases 1–3)
+### Runtime (Phases 1–4)
 
-- `_Layout` loads `~/dist/js/app.js` (module): shell + `window.QueryPlusSheetGrid` + page controllers via `body[data-page]`.
-- **Home** (`data-page="home"`): `HomePageController` (procedure list, execute/export guards, results, maximize).
-- Legacy `wwwroot/js/site.js`: admin-only (combo visibility, sync metadata) until Phase 4.
-- `wwwroot/js/sheet-grid.js` is deprecated (no longer loaded).
+- `_Layout` loads only `~/dist/js/app.js` (module): shell + SheetGrid + page controllers via `body[data-page]`.
+- **Page keys:** `home`, `admin-categories`, `admin-procedures`, `admin-procedure-edit`.
+- `wwwroot/js/site.js` and `sheet-grid.js` are deprecated stubs (not loaded).
 - CSS: layout still uses `~/css/site.css` until Phase 5.

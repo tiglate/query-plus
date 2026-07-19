@@ -5,6 +5,7 @@
 @using System.Net
 @{
     ViewData["Title"] = L["Procedures_Title"].Value;
+    ViewData["PageKey"] = "admin-procedures";
 
     const int idToken = 987654321;
     var viewUrlTemplate = (Url.Page("View", new { id = idToken }) ?? "").Replace(idToken.ToString(), "__ID__");
@@ -160,13 +161,3 @@
         </div>
     </div>
 </div>
-
-@section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('.js-sheet-root.qp-sheet-grid--admin').forEach(function (el) {
-                if (window.QueryPlusSheetGrid) QueryPlusSheetGrid.mount(el);
-            });
-        });
-    </script>
-}

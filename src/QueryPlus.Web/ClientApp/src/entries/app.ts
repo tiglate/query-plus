@@ -8,7 +8,7 @@ import "reflect-metadata";
 // would inject a second Tailwind (v4) preflight and break flex height chains.
 import { bootstrap } from "../core/bootstrap";
 
-export const QUERYPLUS_CLIENT_VERSION = "0.3.0-phase3";
+export const QUERYPLUS_CLIENT_VERSION = "0.4.0-phase4";
 
 /** Side-effect marker so production bundles stay non-empty (CSS is co-emitted). */
 export function markClientAppLoaded(target: ParentNode = document): void {

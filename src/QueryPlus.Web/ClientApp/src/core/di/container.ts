@@ -2,7 +2,11 @@ import { container, type DependencyContainer } from "tsyringe";
 import { HtmxBridge } from "../HtmxBridge";
 import { ConfirmSubmitService } from "../../components/confirm-submit/ConfirmSubmitService";
 import { NavDropdownService } from "../../components/nav-dropdown/NavDropdownService";
+import { ParameterComboService } from "../../components/parameter-combo/ParameterComboService";
 import { SheetGridService } from "../../components/sheet-grid/SheetGridService";
+import { AdminListPageController } from "../../pages/admin/AdminListPageController";
+import { AdminProcedureFormController } from "../../pages/admin/AdminProcedureFormController";
+import { SyncMetadataService } from "../../pages/admin/SyncMetadataService";
 import { HomePageController } from "../../pages/home/HomePageController";
 import { HomeResultsService } from "../../pages/home/HomeResultsService";
 import { ResultsMaximize } from "../../pages/home/ResultsMaximize";
@@ -50,9 +54,13 @@ function registerAppServices(c: DependencyContainer): void {
   c.registerSingleton(NavDropdownService);
   c.registerSingleton(ConfirmSubmitService);
   c.registerSingleton(SheetGridService);
+  c.registerSingleton(ParameterComboService);
+  c.registerSingleton(SyncMetadataService);
   c.registerSingleton(HomeResultsService);
   c.registerSingleton(ResultsMaximize);
   c.registerSingleton(HomePageController);
+  c.registerSingleton(AdminListPageController);
+  c.registerSingleton(AdminProcedureFormController);
   c.registerSingleton(SharedShellController);
 }
 

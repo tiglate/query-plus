@@ -1,7 +1,7 @@
 # Frontend reorganization plan
 
 **Branch:** `feature/reorganize-frontend`  
-**Status:** Approved — Phases 0–3 complete; next is Phase 4 (Admin pages)  
+**Status:** Approved — Phases 0–4 complete; next is Phase 5 (CSS modularization + layout switch)  
 **Last updated:** 2026-07-19
 
 This document is the source of truth for the TypeScript / Vite+ / DI frontend reorg. Resume from here if the session is interrupted.
@@ -199,9 +199,10 @@ class HomePageController extends PageController {
 
 ### Phase 4 — Admin pages
 
-- [ ] Combo visibility, sync-metadata guards
-- [ ] Admin list sheet-grid remounts
-- [ ] `data-page` per area
+- [x] Combo visibility + sync-metadata (`AdminProcedureFormController`)
+- [x] Admin list sheet-grid mount (`AdminListPageController`)
+- [x] `data-page`: `admin-categories`, `admin-procedures`, `admin-procedure-edit`
+- [x] Remove `site.js` from layout (stub remains until Phase 6)
 
 ### Phase 5 — CSS modularization + layout switch
 
