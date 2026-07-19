@@ -29,90 +29,12 @@ function refreshHomeSheetLayout() {
   panel.querySelectorAll(".js-sheet-root").forEach((el) => QueryPlusSheetGrid.refresh(el));
 }
 
+// Nav dropdowns + confirm-submit + CSRF moved to ClientApp (Phase 1: dist/js/app.js).
+
 document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("resize", () => {
     refreshHomeSheetLayout();
   });
-  wireNavDropdowns();
-});
-
-/**
- * Header dropdowns (Admin → Categories / Procedures).
- * Pure CSS :hover fails when the pointer crosses the gap between trigger and panel.
- * Keep open while pointer is over the whole control, with a short leave delay.
- */
-function wireNavDropdowns() {
-  document.querySelectorAll("[data-nav-dropdown]").forEach((root) => {
-    const trigger = root.querySelector("[data-nav-dropdown-trigger]");
-    const panel = root.querySelector("[data-nav-dropdown-panel]");
-    if (!trigger || !panel) return;
-
-    let closeTimer = null;
-    const CLOSE_DELAY_MS = 250;
-
-    const open = () => {
-      if (closeTimer) {
-        clearTimeout(closeTimer);
-        closeTimer = null;
-      }
-      panel.hidden = false;
-      trigger.setAttribute("aria-expanded", "true");
-      root.classList.add("is-open");
-    };
-
-    const close = () => {
-      panel.hidden = true;
-      trigger.setAttribute("aria-expanded", "false");
-      root.classList.remove("is-open");
-    };
-
-    const scheduleClose = () => {
-      if (closeTimer) clearTimeout(closeTimer);
-      closeTimer = setTimeout(close, CLOSE_DELAY_MS);
-    };
-
-    root.addEventListener("mouseenter", open);
-    root.addEventListener("mouseleave", scheduleClose);
-
-    // Keyboard / click: toggle; keep focus-within open.
-    trigger.addEventListener("click", (e) => {
-      e.preventDefault();
-      if (panel.hidden) open();
-      else close();
-    });
-
-    root.addEventListener("focusin", open);
-    root.addEventListener("focusout", (e) => {
-      // Close only when focus leaves the whole dropdown control.
-      if (!root.contains(e.relatedTarget)) {
-        scheduleClose();
-      }
-    });
-
-    // Close when clicking outside.
-    document.addEventListener("click", (e) => {
-      if (!root.contains(e.target)) {
-        close();
-      }
-    });
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && !panel.hidden) {
-        close();
-        trigger.focus();
-      }
-    });
-  });
-}
-
-// Confirm delete forms
-document.body.addEventListener("submit", (e) => {
-  const form = e.target;
-  if (form?.dataset?.confirm) {
-    if (!window.confirm(form.dataset.confirm)) {
-      e.preventDefault();
-    }
-  }
 });
 
 // Home screen action buttons — procedure id lives in a hidden input (list selection).

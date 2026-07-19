@@ -4,9 +4,9 @@ import {
   QUERYPLUS_CLIENT_VERSION,
 } from "../src/entries/app";
 
-describe("ClientApp Phase 0 smoke", () => {
+describe("ClientApp smoke", () => {
   it("exports a client version marker", () => {
-    expect(QUERYPLUS_CLIENT_VERSION).toMatch(/^0\.0\.0-phase0$/);
+    expect(QUERYPLUS_CLIENT_VERSION).toMatch(/phase1/);
   });
 
   it("runs under jsdom", () => {

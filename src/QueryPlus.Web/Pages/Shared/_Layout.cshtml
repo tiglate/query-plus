@@ -158,15 +158,10 @@
         </div>
     </footer>
 
+    @* ClientApp shell (Vite → wwwroot/dist): nav dropdown, confirm forms, CSRF. *@
+    <script type="module" src="~/dist/js/app.js" asp-append-version="true"></script>
+    @* Legacy home/admin helpers until Phase 3–6 migration completes. *@
     <script src="~/js/site.js" asp-append-version="true"></script>
-    <script>
-        document.body.addEventListener('htmx:configRequest', function (event) {
-            var token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            if (token) {
-                event.detail.headers['RequestVerificationToken'] = token;
-            }
-        });
-    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

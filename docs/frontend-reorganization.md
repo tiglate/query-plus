@@ -1,7 +1,7 @@
 # Frontend reorganization plan
 
 **Branch:** `feature/reorganize-frontend`  
-**Status:** Approved — Phase 0 complete; next is Phase 1  
+**Status:** Approved — Phases 0–1 complete; next is Phase 2 (SheetGrid)  
 **Last updated:** 2026-07-19
 
 This document is the source of truth for the TypeScript / Vite+ / DI frontend reorg. Resume from here if the session is interrupted.
@@ -178,10 +178,10 @@ class HomePageController extends PageController {
 
 ### Phase 1 — Core shell + DI
 
-- [ ] Container, `PageController`, bootstrap, `HtmxBridge`
-- [ ] Migrate nav dropdown + confirm submit
-- [ ] Load `app.js` in layout (shared controllers only)
-- [ ] Unit tests for nav delay and confirm cancel
+- [x] Container (tsyringe), `PageController`, bootstrap, `HtmxBridge`
+- [x] Migrate nav dropdown + confirm submit (+ Escape/focusin fix)
+- [x] Load `app.js` in layout; remove duplicate site.js/CSRF handlers
+- [x] Unit tests for nav delay, confirm cancel/allow, CSRF meta
 
 ### Phase 2 — SheetGrid component
 
