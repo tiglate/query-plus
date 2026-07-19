@@ -1,0 +1,49 @@
+/*
+ * QueryPlus ClientApp styles — Tailwind 4 entry.
+ * Phase 0: theme + source detection; custom qp-* layers live under components/
+ * until Phase 5 fully modularizes the legacy input.css.
+ */
+
+@import "tailwindcss";
+
+/* Scan Razor + TS so utilities used only in cshtml are generated. */
+@source "../../../Pages/**/*.{cshtml,cs}";
+@source "../**/*.{ts,css}";
+@source "../../../wwwroot/js/**/*.js";
+
+@theme {
+  --font-sans: "Inter", "Segoe UI", system-ui, sans-serif;
+
+  --color-navy: #1c334d;
+  --color-navy-50: #e8eef4;
+  --color-navy-100: #d1dde9;
+  --color-navy-200: #a3bbd3;
+  --color-navy-300: #7599bd;
+  --color-navy-400: #4777a7;
+  --color-navy-500: #1c334d;
+  --color-navy-600: #172a40;
+  --color-navy-700: #122033;
+  --color-navy-800: #0c1626;
+  --color-navy-900: #070d19;
+
+  --color-cyan: #21bbee;
+  --color-cyan-50: #e9f8fd;
+  --color-cyan-100: #d3f1fb;
+  --color-cyan-500: #21bbee;
+  --color-cyan-600: #0ea5d8;
+  --color-cyan-700: #0b84ad;
+
+  --color-lime: #dee76c;
+  --color-lime-500: #dee76c;
+  --color-lime-600: #c9d24a;
+
+  --color-leaf: #9fcd6b;
+  --color-leaf-500: #9fcd6b;
+  --color-leaf-600: #86b851;
+
+  --max-width-desktop: 100%;
+}
+
+/* Phase 0: keep legacy component CSS as a single import so the pipeline is proven.
+   Phase 5 will split this into base/components/pages modules. */
+@import "./legacy-components.css";

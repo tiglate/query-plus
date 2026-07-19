@@ -2,11 +2,24 @@
   "name": "queryplus-web",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.14.0",
   "scripts": {
-    "build:css": "tailwindcss -i ./wwwroot/css/input.css -o ./wwwroot/css/site.css --minify",
-    "watch:css": "tailwindcss -i ./wwwroot/css/input.css -o ./wwwroot/css/site.css --watch"
+    "dev": "vp dev",
+    "build": "vp build",
+    "test": "vp test run",
+    "check": "vp check",
+    "preview": "vp preview",
+    "dev:vite": "vite",
+    "build:vite": "vite build",
+    "test:vitest": "vitest run"
   },
   "devDependencies": {
-    "tailwindcss": "^3.4.17"
+    "@tailwindcss/vite": "^4.1.11",
+    "@types/node": "^24.0.0",
+    "jsdom": "^26.1.0",
+    "tailwindcss": "^4.1.11",
+    "typescript": "^5.8.3",
+    "vite-plus": "0.2.5"
   }
 }

@@ -39,7 +39,7 @@ docker/
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [Docker](https://www.docker.com/) (SQL Server + Keycloak)
-- Optional: Node.js 18+ (rebuild Tailwind CSS)
+- Optional (ClientApp / CSS): [Node.js 22+](https://nodejs.org/) + [pnpm](https://pnpm.io/) 10+ (or [Vite+](https://viteplus.dev/) `vp`)
 
 ## Quick start (local)
 
@@ -85,16 +85,32 @@ Open the URL printed by Kestrel (typically `https://localhost:7xxx` or `http://l
 
 Configure Keycloak client redirect URIs to match that URL if needed (`docker/keycloak/realm-export.json`).
 
-### 4. Optional: Tailwind CSS rebuild
+### 4. ClientApp (Vite+ / Tailwind 4)
 
-A prebuilt `wwwroot/css/site.css` is committed. To regenerate:
+Frontend TypeScript and Tailwind 4 live under `src/QueryPlus.Web/ClientApp/`.  
+See **[docs/frontend-reorganization.md](docs/frontend-reorganization.md)** for the full migration plan.
+
+**Phase 0 note:** the running app still loads legacy `wwwroot/js/site.js`, `sheet-grid.js`, and `wwwroot/css/site.css` (plus CDNs). The new pipeline builds to `wwwroot/dist/` (gitignored) and is not wired into `_Layout` yet.
 
 ```bash
 cd src/QueryPlus.Web
-npm install
-npm run build:css
-# or: npm run watch:css
+
+# Preferred (Vite+ CLI: https://viteplus.dev/)
+vp install
+vp build          # → wwwroot/dist/{js,css}
+vp test
+vp dev            # watch mode
+
+# Fallback (pnpm)
+pnpm install
+pnpm run build
+pnpm test
+pnpm run dev
 ```
+
+`dotnet publish` runs `pnpm install --frozen-lockfile && pnpm run build` automatically (skip with `/p:SkipClientAppBuild=true`).
+
+Legacy Tailwind 3 CSS (until Phase 5 layout switch) is still in `wwwroot/css/site.css`. Prefer editing `ClientApp/src/styles/` going forward.
 
 ## Build & test
 
@@ -102,6 +118,9 @@ npm run build:css
 dotnet restore
 dotnet build QueryPlus.sln
 dotnet test QueryPlus.sln
+
+# ClientApp unit tests (Vitest + jsdom)
+cd src/QueryPlus.Web && pnpm test
 ```
 
 ## Docker (full stack)

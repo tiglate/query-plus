@@ -19,6 +19,27 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Set SkipClientAppBuild=true to publish without Node (legacy wwwroot assets only). -->
+    <SkipClientAppBuild Condition="'$(SkipClientAppBuild)' == ''">false</SkipClientAppBuild>
   </PropertyGroup>
+
+  <!--
+    ClientApp (Vite+ / pnpm) → wwwroot/dist.
+    Runs on publish so Docker / CI always ship built assets. Local `dotnet run`
+    does not require dist while layout still uses legacy site.js / css (Phase 0–4).
+  -->
+  <Target Name="BuildClientApp" BeforeTargets="ComputeFilesToPublish" Condition="'$(SkipClientAppBuild)' != 'true'">
+    <Message Importance="high" Text="Building ClientApp (pnpm) → wwwroot/dist" />
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)" Command="pnpm install --frozen-lockfile" />
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)" Command="pnpm run build" />
+    <ItemGroup>
+      <DistFiles Include="$(MSBuildProjectDirectory)\wwwroot\dist\**" />
+      <ResolvedFileToPublish Include="@(DistFiles)">
+        <RelativePath>wwwroot\dist\%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
 
 </Project>
