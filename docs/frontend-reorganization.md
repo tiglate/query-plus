@@ -218,9 +218,10 @@ class HomePageController extends PageController {
 
 ### Phase 7 — De-CDN
 
-- [ ] npm: htmx, clusterize (or vendor), fontawesome, self-host Inter
-- [ ] Grep layout for remote asset URLs → none
-- [ ] Docker/CI updated
+- [x] npm: `htmx.org`, `clusterize.js`, `@fortawesome/fontawesome-free`, `@fontsource/inter`
+- [x] Vendored via `ClientApp` (`vendor.ts` + CSS imports in `main.css`); bundled into `wwwroot/dist`
+- [x] Grep layout for remote asset URLs → none
+- [x] Docker already runs `pnpm install` + `pnpm run build` on publish (includes fonts/webfonts)
 
 ---
 
@@ -252,13 +253,13 @@ pnpm run check
 
 ---
 
-## Current baseline (post Phase 6)
+## Current baseline (post Phase 7)
 
 | Asset | Role |
 |-------|------|
-| `ClientApp/` | TypeScript page controllers + components + DI |
-| `wwwroot/dist/` | Built JS/CSS (gitignored) |
-| CDNs (until Phase 7) | HTMX, Clusterize, FA, Google Fonts |
+| `ClientApp/` | TypeScript page controllers + components + DI + vendors |
+| `wwwroot/dist/` | Built JS/CSS/fonts (gitignored) |
+| CDNs | **None** for app assets |
 | Tooling | Vite+ / pnpm / Tailwind 4 / Vitest |
 
 ---
