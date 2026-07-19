@@ -67,4 +67,53 @@ describe("ConfirmSubmitService", () => {
 
     service.dispose();
   });
+
+  it("does not prompt again on a follow-up submit after accept", () => {
+    const form = document.createElement("form");
+    form.dataset.confirm = "Delete this item?";
+    document.body.appendChild(form);
+
+    const confirmFn = vi.fn(() => true);
+    const c = createTestContainer({ confirmFn });
+    const service = c.resolve(ConfirmSubmitService);
+    service.mount(document);
+
+    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    expect(confirmFn).toHaveBeenCalledTimes(1);
+
+    service.dispose();
+  });
+
+  it("stops further handlers when confirm is cancelled", () => {
+    const form = document.createElement("form");
+    form.dataset.confirm = "Delete?";
+    document.body.appendChild(form);
+
+    const confirmFn = vi.fn(() => false);
+    const later = vi.fn();
+    document.body.addEventListener("submit", later, true);
+
+    const c = createTestContainer({ confirmFn });
+    const service = c.resolve(ConfirmSubmitService);
+    service.mount(document);
+
+    // Register our service after `later` would normally order — capture + stopImmediate
+    // still prevents later capture listeners registered after mount if we mount first.
+    // Mount first, then add another capture listener that should not run on cancel.
+    document.body.removeEventListener("submit", later, true);
+    const afterConfirm = vi.fn();
+    document.body.addEventListener("submit", afterConfirm, true);
+
+    const event = new Event("submit", { bubbles: true, cancelable: true });
+    form.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    // Handlers registered after ours in capture phase are skipped via stopImmediatePropagation.
+    expect(afterConfirm).not.toHaveBeenCalled();
+
+    document.body.removeEventListener("submit", afterConfirm, true);
+    service.dispose();
+  });
 });
