@@ -4,11 +4,11 @@
  * Later: data-page controllers.
  */
 import "reflect-metadata";
-// Styles stay on legacy ~/css/site.css until Phase 5. Importing main.css here
-// would inject a second Tailwind (v4) preflight and break flex height chains.
+// Phase 5: Tailwind 4 pipeline → wwwroot/dist/css/site.css (linked from _Layout).
+import "../styles/main.css";
 import { bootstrap } from "../core/bootstrap";
 
-export const QUERYPLUS_CLIENT_VERSION = "0.4.0-phase4";
+export const QUERYPLUS_CLIENT_VERSION = "0.5.0-phase5";
 
 /** Side-effect marker so production bundles stay non-empty (CSS is co-emitted). */
 export function markClientAppLoaded(target: ParentNode = document): void {

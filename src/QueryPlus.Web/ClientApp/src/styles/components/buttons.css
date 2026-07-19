@@ -1,0 +1,152 @@
+@layer components {
+/*
+ * Buttons — modern with a hint of volume:
+ * soft outer shadow + light top inset highlight; press flattens slightly.
+ */
+.qp-btn {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium
+    transition focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1
+    disabled:cursor-not-allowed disabled:opacity-50;
+  transition-property: color, background-color, border-color, box-shadow, transform, filter;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.qp-btn i,
+.qp-btn .fa-solid,
+.qp-btn .fa-regular {
+  @apply text-[0.9em] leading-none;
+}
+
+.qp-btn-primary {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium
+    transition focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1
+    disabled:cursor-not-allowed disabled:opacity-50
+    border border-cyan-600/30 bg-cyan text-navy hover:bg-cyan-600;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 55%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.45) inset,
+    0 1px 2px rgba(11, 31, 58, 0.12),
+    0 2px 6px rgba(33, 187, 238, 0.28);
+}
+
+.qp-btn-primary:hover {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.4) inset,
+    0 2px 4px rgba(11, 31, 58, 0.14),
+    0 4px 10px rgba(33, 187, 238, 0.32);
+}
+
+.qp-btn-primary:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.2) inset,
+    0 1px 2px rgba(11, 31, 58, 0.16);
+}
+
+.qp-btn-secondary {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium
+    transition focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1
+    disabled:cursor-not-allowed disabled:opacity-50
+    border border-slate-300 bg-white text-navy hover:bg-slate-50;
+  background-image: linear-gradient(180deg, #ffffff 0%, #f4f6f8 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 1px 2px rgba(15, 23, 42, 0.08),
+    0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.qp-btn-secondary:hover {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 2px 4px rgba(15, 23, 42, 0.1),
+    0 3px 8px rgba(15, 23, 42, 0.08);
+}
+
+.qp-btn-secondary:active:not(:disabled) {
+  transform: translateY(1px);
+  background-image: linear-gradient(180deg, #f1f5f9 0%, #e8edf2 100%);
+  box-shadow:
+    0 1px 1px rgba(15, 23, 42, 0.08) inset,
+    0 1px 1px rgba(15, 23, 42, 0.06);
+}
+
+.qp-btn-danger {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium
+    transition focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1
+    disabled:cursor-not-allowed disabled:opacity-50
+    border border-red-700/40 bg-red-600 text-white hover:bg-red-700;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 55%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.25) inset,
+    0 1px 2px rgba(127, 29, 29, 0.2),
+    0 2px 6px rgba(220, 38, 38, 0.28);
+}
+
+.qp-btn-danger:hover {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.22) inset,
+    0 2px 4px rgba(127, 29, 29, 0.22),
+    0 4px 10px rgba(220, 38, 38, 0.32);
+}
+
+.qp-btn-danger:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 1px 2px rgba(127, 29, 29, 0.25);
+}
+
+.qp-btn-ghost {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium
+    transition focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1
+    disabled:cursor-not-allowed disabled:opacity-50
+    border border-transparent text-navy hover:bg-slate-100 hover:border-slate-200/80;
+  box-shadow: none;
+}
+
+.qp-btn-ghost:hover {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.qp-btn-ghost:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.qp-btn-accent {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium
+    transition focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1
+    disabled:cursor-not-allowed disabled:opacity-50
+    border border-leaf/50 bg-leaf text-navy hover:bg-leaf-600;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 55%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.4) inset,
+    0 1px 2px rgba(11, 31, 58, 0.1),
+    0 2px 6px rgba(159, 205, 107, 0.35);
+}
+
+.qp-btn-accent:hover {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 2px 4px rgba(11, 31, 58, 0.12),
+    0 4px 10px rgba(159, 205, 107, 0.4);
+}
+
+.qp-btn-accent:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 1px 2px rgba(11, 31, 58, 0.14);
+}
+
+.qp-btn:disabled,
+.qp-btn-primary:disabled,
+.qp-btn-secondary:disabled,
+.qp-btn-danger:disabled,
+.qp-btn-accent:disabled {
+  box-shadow: none;
+  transform: none;
+  background-image: none;
+}
+}

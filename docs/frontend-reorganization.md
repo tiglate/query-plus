@@ -1,7 +1,7 @@
 # Frontend reorganization plan
 
 **Branch:** `feature/reorganize-frontend`  
-**Status:** Approved — Phases 0–4 complete; next is Phase 5 (CSS modularization + layout switch)  
+**Status:** Approved — Phases 0–5 complete; next is Phase 6 (delete legacy JS)  
 **Last updated:** 2026-07-19
 
 This document is the source of truth for the TypeScript / Vite+ / DI frontend reorg. Resume from here if the session is interrupted.
@@ -206,9 +206,10 @@ class HomePageController extends PageController {
 
 ### Phase 5 — CSS modularization + layout switch
 
-- [ ] Split styles under `ClientApp/src/styles/**`
-- [ ] Layout points at `~/dist/css/site.css`
-- [ ] Visual parity checklist
+- [x] Split styles under `ClientApp/src/styles/**` (base, components, pages)
+- [x] Layout points at `~/dist/css/site.css` (Tailwind 4 via Vite)
+- [x] Media queries + home sheet flex rules verified in dist output
+- [x] Legacy `wwwroot/css/*` deprecated (no longer linked)
 
 ### Phase 6 — Delete legacy JS
 

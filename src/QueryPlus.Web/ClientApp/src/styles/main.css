@@ -1,7 +1,5 @@
 /*
- * QueryPlus ClientApp styles — Tailwind 4 entry.
- * Phase 0: theme + source detection; custom qp-* layers live under components/
- * until Phase 5 fully modularizes the legacy input.css.
+ * QueryPlus ClientApp styles — Tailwind 4 entry (Phase 5 modular layout).
  */
 
 @import "tailwindcss";
@@ -9,7 +7,6 @@
 /* Scan Razor + TS so utilities used only in cshtml are generated. */
 @source "../../../Pages/**/*.{cshtml,cs}";
 @source "../**/*.{ts,css}";
-@source "../../../wwwroot/js/**/*.js";
 
 @theme {
   --font-sans: "Inter", "Segoe UI", system-ui, sans-serif;
@@ -44,6 +41,13 @@
   --max-width-desktop: 100%;
 }
 
-/* Phase 0: keep legacy component CSS as a single import so the pipeline is proven.
-   Phase 5 will split this into base/components/pages modules. */
-@import "./legacy-components.css";
+@import "./base/base.css";
+@import "./components/layout.css";
+@import "./components/buttons.css";
+@import "./components/forms.css";
+@import "./components/tables.css";
+@import "./components/badges.css";
+@import "./components/nav.css";
+@import "./components/sheet-grid.css";
+@import "./pages/home.css";
+@import "./pages/admin.css";

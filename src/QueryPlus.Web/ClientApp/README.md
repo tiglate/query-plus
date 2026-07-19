@@ -25,9 +25,9 @@ Plan: [`docs/frontend-reorganization.md`](../../../docs/frontend-reorganization.
 | `src/styles/legacy-components.css` | Temporary port of `wwwroot/css/input.css` |
 | `tests/` | Vitest + jsdom |
 
-### Runtime (Phases 1–4)
+### Runtime (Phases 1–5)
 
-- `_Layout` loads only `~/dist/js/app.js` (module): shell + SheetGrid + page controllers via `body[data-page]`.
+- `_Layout` loads `~/dist/js/app.js` + `~/dist/css/site.css`.
 - **Page keys:** `home`, `admin-categories`, `admin-procedures`, `admin-procedure-edit`.
-- `wwwroot/js/site.js` and `sheet-grid.js` are deprecated stubs (not loaded).
-- CSS: layout still uses `~/css/site.css` until Phase 5.
+- Styles: modular Tailwind 4 under `src/styles/` (`main.css` + base/components/pages).
+- `wwwroot/js/site.js`, `sheet-grid.js`, and `wwwroot/css/*` are deprecated stubs (not loaded).

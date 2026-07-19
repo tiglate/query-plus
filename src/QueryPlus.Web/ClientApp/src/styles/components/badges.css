@@ -1,0 +1,13 @@
+@layer components {
+.qp-badge {
+  @apply inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium;
+}
+
+.qp-badge-ok {
+  @apply inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-leaf/30 text-navy;
+}
+
+.qp-badge-off {
+  @apply inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-slate-200 text-slate-700;
+}
+}
