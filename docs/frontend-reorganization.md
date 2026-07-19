@@ -1,7 +1,7 @@
 # Frontend reorganization plan
 
 **Branch:** `feature/reorganize-frontend`  
-**Status:** Approved — Phases 0–2 complete; next is Phase 3 (Home page controller)  
+**Status:** Approved — Phases 0–3 complete; next is Phase 4 (Admin pages)  
 **Last updated:** 2026-07-19
 
 This document is the source of truth for the TypeScript / Vite+ / DI frontend reorg. Resume from here if the session is interrupted.

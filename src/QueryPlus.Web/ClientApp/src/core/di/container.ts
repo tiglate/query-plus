@@ -3,6 +3,9 @@ import { HtmxBridge } from "../HtmxBridge";
 import { ConfirmSubmitService } from "../../components/confirm-submit/ConfirmSubmitService";
 import { NavDropdownService } from "../../components/nav-dropdown/NavDropdownService";
 import { SheetGridService } from "../../components/sheet-grid/SheetGridService";
+import { HomePageController } from "../../pages/home/HomePageController";
+import { HomeResultsService } from "../../pages/home/HomeResultsService";
+import { ResultsMaximize } from "../../pages/home/ResultsMaximize";
 import { SharedShellController } from "../../pages/shared/SharedShellController";
 import { TOKENS, type ConfirmFn } from "./tokens";
 
@@ -32,11 +35,7 @@ export function configureContainer(
         ((message: string) => globalThis.confirm(message)),
     });
 
-    container.registerSingleton(HtmxBridge);
-    container.registerSingleton(NavDropdownService);
-    container.registerSingleton(ConfirmSubmitService);
-    container.registerSingleton(SheetGridService);
-    container.registerSingleton(SharedShellController);
+    registerAppServices(container);
     configured = true;
   } else if (overrides) {
     // Test re-bind path: create a child container instead of mutating global mid-flight.
@@ -44,6 +43,17 @@ export function configureContainer(
   }
 
   return container;
+}
+
+function registerAppServices(c: DependencyContainer): void {
+  c.registerSingleton(HtmxBridge);
+  c.registerSingleton(NavDropdownService);
+  c.registerSingleton(ConfirmSubmitService);
+  c.registerSingleton(SheetGridService);
+  c.registerSingleton(HomeResultsService);
+  c.registerSingleton(ResultsMaximize);
+  c.registerSingleton(HomePageController);
+  c.registerSingleton(SharedShellController);
 }
 
 /** Fresh container for unit tests (does not touch the singleton app container). */
@@ -63,11 +73,7 @@ export function createTestContainer(overrides?: {
     useValue:
       overrides?.confirmFn ?? ((message: string) => globalThis.confirm(message)),
   });
-  child.registerSingleton(HtmxBridge);
-  child.registerSingleton(NavDropdownService);
-  child.registerSingleton(ConfirmSubmitService);
-  child.registerSingleton(SheetGridService);
-  child.registerSingleton(SharedShellController);
+  registerAppServices(child);
   return child;
 }
 
