@@ -81,7 +81,7 @@ src/QueryPlus.Web/
     dist/                   # Vite build output (gitignored)
       js/
       css/
-    lib/                    # optional libman/local assets (validation, etc.)
+    (no wwwroot/lib — Bootstrap/jQuery removed)
   vite.config.ts
   package.json
   pnpm-lock.yaml
@@ -276,6 +276,6 @@ pnpm run check
 ## Residual notes
 
 - Vite+ is relatively new; if `vp` misbehaves, keep the same folder layout and use plain Vite + Vitest + pnpm scripts.
-- Bootstrap under `wwwroot/lib` appears unused by layout (Tailwind UI) — confirm and drop later if true.
+- Bootstrap + jQuery under `wwwroot/lib` removed; client validation via `aspnet-client-validation`.
 - Fallback if Tailwind 4 + Vite+ friction blocks Phase 0: Vite + `@tailwindcss/vite` without abandoning v4.
 `)
