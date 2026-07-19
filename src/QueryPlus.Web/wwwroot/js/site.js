@@ -1,33 +1,109 @@
 // Lightweight helpers for HTMX-driven UI (no SPA framework).
+
+/**
+ * Home results grid — shared QueryPlusSheetGrid (Clusterize + Excel-like sheet).
+ */
+function destroyResultsClusterize() {
+  const panel = document.getElementById("results-panel");
+  if (!panel || !window.QueryPlusSheetGrid) return;
+  panel.querySelectorAll(".js-sheet-root").forEach((el) => QueryPlusSheetGrid.destroy(el));
+}
+
+function initResultsClusterize(root) {
+  if (!root || !window.QueryPlusSheetGrid) return;
+  // Home partial wraps the sheet root; mount the sheet itself.
+  const sheet =
+    root.matches?.(".js-sheet-root")
+      ? root
+      : root.querySelector?.(".js-sheet-root");
+  if (!sheet) {
+    destroyResultsClusterize();
+    return;
+  }
+  QueryPlusSheetGrid.mount(sheet);
+}
+
+function refreshHomeSheetLayout() {
+  const panel = document.getElementById("results-panel");
+  if (!panel || !window.QueryPlusSheetGrid) return;
+  panel.querySelectorAll(".js-sheet-root").forEach((el) => QueryPlusSheetGrid.refresh(el));
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  // Client-side sort for result grids: click on th[data-sort-col]
-  document.body.addEventListener("click", (e) => {
-    const th = e.target.closest("th[data-sort-col]");
-    if (!th) return;
-    const table = th.closest("table");
-    if (!table) return;
-    const colIndex = Number(th.dataset.sortCol);
-    const tbody = table.querySelector("tbody");
-    if (!tbody) return;
+  window.addEventListener("resize", () => {
+    refreshHomeSheetLayout();
+  });
+  wireNavDropdowns();
+});
 
-    const rows = Array.from(tbody.querySelectorAll("tr"));
-    const asc = th.dataset.sortDir !== "asc";
-    th.dataset.sortDir = asc ? "asc" : "desc";
+/**
+ * Header dropdowns (Admin → Categories / Procedures).
+ * Pure CSS :hover fails when the pointer crosses the gap between trigger and panel.
+ * Keep open while pointer is over the whole control, with a short leave delay.
+ */
+function wireNavDropdowns() {
+  document.querySelectorAll("[data-nav-dropdown]").forEach((root) => {
+    const trigger = root.querySelector("[data-nav-dropdown-trigger]");
+    const panel = root.querySelector("[data-nav-dropdown-panel]");
+    if (!trigger || !panel) return;
 
-    rows.sort((a, b) => {
-      const av = (a.children[colIndex]?.textContent || "").trim();
-      const bv = (b.children[colIndex]?.textContent || "").trim();
-      const an = Number(av.replace(",", "."));
-      const bn = Number(bv.replace(",", "."));
-      if (!Number.isNaN(an) && !Number.isNaN(bn) && av !== "" && bv !== "") {
-        return asc ? an - bn : bn - an;
+    let closeTimer = null;
+    const CLOSE_DELAY_MS = 250;
+
+    const open = () => {
+      if (closeTimer) {
+        clearTimeout(closeTimer);
+        closeTimer = null;
       }
-      return asc ? av.localeCompare(bv) : bv.localeCompare(av);
+      panel.hidden = false;
+      trigger.setAttribute("aria-expanded", "true");
+      root.classList.add("is-open");
+    };
+
+    const close = () => {
+      panel.hidden = true;
+      trigger.setAttribute("aria-expanded", "false");
+      root.classList.remove("is-open");
+    };
+
+    const scheduleClose = () => {
+      if (closeTimer) clearTimeout(closeTimer);
+      closeTimer = setTimeout(close, CLOSE_DELAY_MS);
+    };
+
+    root.addEventListener("mouseenter", open);
+    root.addEventListener("mouseleave", scheduleClose);
+
+    // Keyboard / click: toggle; keep focus-within open.
+    trigger.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (panel.hidden) open();
+      else close();
     });
 
-    rows.forEach((r) => tbody.appendChild(r));
+    root.addEventListener("focusin", open);
+    root.addEventListener("focusout", (e) => {
+      // Close only when focus leaves the whole dropdown control.
+      if (!root.contains(e.relatedTarget)) {
+        scheduleClose();
+      }
+    });
+
+    // Close when clicking outside.
+    document.addEventListener("click", (e) => {
+      if (!root.contains(e.target)) {
+        close();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !panel.hidden) {
+        close();
+        trigger.focus();
+      }
+    });
   });
-});
+}
 
 // Confirm delete forms
 document.body.addEventListener("submit", (e) => {
@@ -133,10 +209,11 @@ document.body.addEventListener("click", (e) => {
   window.location.href = url;
 });
 function clearExportableResults() {
+  destroyResultsClusterize();
   const panel = document.getElementById("results-panel");
   if (panel) {
     panel.innerHTML =
-      '<div class="js-results-root" data-export-ready="false" data-row-count="0"><p class="text-sm text-slate-500"></p></div>';
+      '<div class="js-results-root" data-export-ready="false" data-row-count="0"><p class="qp-results-empty text-xs text-slate-500"></p></div>';
   }
   const status = document.getElementById("export-status");
   if (status) status.innerHTML = "";
@@ -194,10 +271,23 @@ function wireHomeProcedureGuards() {
   updateHomeActionButtons();
 }
 
-// After Execute swaps results, enable Export only when data-export-ready=true.
+// After Execute swaps results: re-init Clusterize + export eligibility.
 document.body.addEventListener("htmx:afterSwap", (event) => {
   if (event.detail.target?.id === "results-panel") {
+    const root = event.detail.target.querySelector(".js-results-root");
+    if (root) {
+      initResultsClusterize(root);
+    } else {
+      destroyResultsClusterize();
+    }
     updateHomeActionButtons();
+  }
+});
+
+// When the results panel is about to be replaced, tear down Clusterize first.
+document.body.addEventListener("htmx:beforeSwap", (event) => {
+  if (event.detail.target?.id === "results-panel") {
+    destroyResultsClusterize();
   }
 });
 
@@ -304,6 +394,36 @@ document.body.addEventListener("htmx:configRequest", (event) => {
 });
 
 document.addEventListener("DOMContentLoaded", wireHomeProcedureGuards);
+document.addEventListener("DOMContentLoaded", wireParameterComboVisibility);
+
+/**
+ * Procedure edit form: show Combo values only when ParameterType is Combo.
+ * Disables the input when hidden so non-combo values are not posted.
+ */
+function updateParameterComboVisibility(row) {
+  if (!row) return;
+  const typeSelect = row.querySelector(".js-param-type");
+  const comboInput = row.querySelector(".js-param-combo-values");
+  if (!typeSelect || !comboInput) return;
+
+  const comboTypeValue =
+    comboInput.getAttribute("data-combo-type-value") || "6";
+  const isCombo = String(typeSelect.value) === String(comboTypeValue);
+
+  // Non-combo: hide + disable (not posted). Combo: show (readonly still applies on View).
+  comboInput.disabled = !isCombo;
+  comboInput.classList.toggle("hidden", !isCombo);
+}
+
+function wireParameterComboVisibility() {
+  document.querySelectorAll(".js-param-row").forEach((row) => {
+    updateParameterComboVisibility(row);
+    const typeSelect = row.querySelector(".js-param-type");
+    if (!typeSelect || typeSelect.dataset.comboWired === "1") return;
+    typeSelect.dataset.comboWired = "1";
+    typeSelect.addEventListener("change", () => updateParameterComboVisibility(row));
+  });
+}
 
 // Maximize / restore the results grid (hides procedure list + parameters).
 const RESULTS_MAX_STORAGE_KEY = "qp-home-results-maximized";
@@ -360,6 +480,10 @@ function wireResultsMaximize() {
   btn.addEventListener("click", (e) => {
     e.preventDefault();
     setResultsMaximized(!isResultsMaximized());
+    // Layout width changes — refresh Clusterize row metrics + header sync.
+    requestAnimationFrame(() => {
+      refreshHomeSheetLayout();
+    });
   });
 }
 

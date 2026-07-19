@@ -50,6 +50,8 @@ public abstract class ProcedureEditFormBase : PageModel
 
     public async Task<IActionResult> OnPostAddParameterAsync(CancellationToken cancellationToken)
     {
+        // Structural posts must not surface full-form validation (e.g. empty Caption while drafting).
+        ModelState.Clear();
         Input.Parameters.Add(new ParameterEditViewModel
         {
             Caption = "Param",
@@ -62,6 +64,7 @@ public abstract class ProcedureEditFormBase : PageModel
 
     public async Task<IActionResult> OnPostRemoveParameterAsync(int index, CancellationToken cancellationToken)
     {
+        ModelState.Clear();
         if (index >= 0 && index < Input.Parameters.Count)
         {
             Input.Parameters.RemoveAt(index);
@@ -73,6 +76,7 @@ public abstract class ProcedureEditFormBase : PageModel
 
     public async Task<IActionResult> OnPostAddColumnAsync(CancellationToken cancellationToken)
     {
+        ModelState.Clear();
         Input.Columns.Add(new ColumnEditViewModel
         {
             TechnicalName = "Column1",
@@ -86,6 +90,7 @@ public abstract class ProcedureEditFormBase : PageModel
 
     public async Task<IActionResult> OnPostRemoveColumnAsync(int index, CancellationToken cancellationToken)
     {
+        ModelState.Clear();
         if (index >= 0 && index < Input.Columns.Count)
         {
             Input.Columns.RemoveAt(index);
@@ -97,6 +102,8 @@ public abstract class ProcedureEditFormBase : PageModel
 
     public async Task<IActionResult> OnPostSyncMetadataAsync(CancellationToken cancellationToken)
     {
+        // Keep only sync-related errors, not full save validation for incomplete drafts.
+        ModelState.Clear();
         await LoadLookupsAsync(cancellationToken);
 
         var databaseName = Input.DatabaseName?.Trim() ?? string.Empty;

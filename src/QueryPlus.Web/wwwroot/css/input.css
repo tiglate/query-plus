@@ -34,14 +34,31 @@
     @apply flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-3 py-2;
   }
 
+  /* Toolbar actions in card headers read a bit larger than dense form buttons. */
+  .qp-card-header .qp-btn,
+  .qp-card-header .qp-btn-primary,
+  .qp-card-header .qp-btn-secondary,
+  .qp-card-header .qp-btn-danger,
+  .qp-card-header .qp-btn-ghost,
+  .qp-card-header .qp-btn-accent {
+    @apply text-sm;
+  }
+
   .qp-card-body {
     @apply p-3;
   }
 
+  /*
+   * Buttons — modern with a hint of volume:
+   * soft outer shadow + light top inset highlight; press flattens slightly.
+   */
   .qp-btn {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition
-      focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium
+      transition focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1
       disabled:cursor-not-allowed disabled:opacity-50;
+    transition-property: color, background-color, border-color, box-shadow, transform, filter;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .qp-btn i,
@@ -51,23 +68,120 @@
   }
 
   .qp-btn-primary {
-    @apply qp-btn bg-cyan text-navy hover:bg-cyan-600;
+    @apply qp-btn border border-cyan-600/30 bg-cyan text-navy hover:bg-cyan-600;
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 55%);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.45) inset,
+      0 1px 2px rgba(11, 31, 58, 0.12),
+      0 2px 6px rgba(33, 187, 238, 0.28);
+  }
+
+  .qp-btn-primary:hover {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.4) inset,
+      0 2px 4px rgba(11, 31, 58, 0.14),
+      0 4px 10px rgba(33, 187, 238, 0.32);
+  }
+
+  .qp-btn-primary:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.2) inset,
+      0 1px 2px rgba(11, 31, 58, 0.16);
   }
 
   .qp-btn-secondary {
     @apply qp-btn border border-slate-300 bg-white text-navy hover:bg-slate-50;
+    background-image: linear-gradient(180deg, #ffffff 0%, #f4f6f8 100%);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.9) inset,
+      0 1px 2px rgba(15, 23, 42, 0.08),
+      0 1px 3px rgba(15, 23, 42, 0.06);
+  }
+
+  .qp-btn-secondary:hover {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.95) inset,
+      0 2px 4px rgba(15, 23, 42, 0.1),
+      0 3px 8px rgba(15, 23, 42, 0.08);
+  }
+
+  .qp-btn-secondary:active:not(:disabled) {
+    transform: translateY(1px);
+    background-image: linear-gradient(180deg, #f1f5f9 0%, #e8edf2 100%);
+    box-shadow:
+      0 1px 1px rgba(15, 23, 42, 0.08) inset,
+      0 1px 1px rgba(15, 23, 42, 0.06);
   }
 
   .qp-btn-danger {
-    @apply qp-btn bg-red-600 text-white hover:bg-red-700;
+    @apply qp-btn border border-red-700/40 bg-red-600 text-white hover:bg-red-700;
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 55%);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.25) inset,
+      0 1px 2px rgba(127, 29, 29, 0.2),
+      0 2px 6px rgba(220, 38, 38, 0.28);
+  }
+
+  .qp-btn-danger:hover {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.22) inset,
+      0 2px 4px rgba(127, 29, 29, 0.22),
+      0 4px 10px rgba(220, 38, 38, 0.32);
+  }
+
+  .qp-btn-danger:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.12) inset,
+      0 1px 2px rgba(127, 29, 29, 0.25);
   }
 
   .qp-btn-ghost {
-    @apply qp-btn text-navy hover:bg-slate-100;
+    @apply qp-btn border border-transparent text-navy hover:bg-slate-100 hover:border-slate-200/80;
+    box-shadow: none;
+  }
+
+  .qp-btn-ghost:hover {
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  }
+
+  .qp-btn-ghost:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: none;
   }
 
   .qp-btn-accent {
-    @apply qp-btn bg-leaf text-navy hover:bg-leaf-600;
+    @apply qp-btn border border-leaf/50 bg-leaf text-navy hover:bg-leaf-600;
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 55%);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.4) inset,
+      0 1px 2px rgba(11, 31, 58, 0.1),
+      0 2px 6px rgba(159, 205, 107, 0.35);
+  }
+
+  .qp-btn-accent:hover {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.35) inset,
+      0 2px 4px rgba(11, 31, 58, 0.12),
+      0 4px 10px rgba(159, 205, 107, 0.4);
+  }
+
+  .qp-btn-accent:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.18) inset,
+      0 1px 2px rgba(11, 31, 58, 0.14);
+  }
+
+  .qp-btn:disabled,
+  .qp-btn-primary:disabled,
+  .qp-btn-secondary:disabled,
+  .qp-btn-danger:disabled,
+  .qp-btn-accent:disabled {
+    box-shadow: none;
+    transform: none;
+    background-image: none;
   }
 
   .qp-input {
@@ -141,7 +255,7 @@
      Closed control stays light-on-dark; options must be dark-on-light because
      native <option> lists often use a white popup and inherit the select color. */
   .qp-lang-select {
-    @apply rounded border-0 bg-white/10 px-2 py-1 text-xs text-white;
+    @apply rounded border-0 bg-white/10 px-2 py-1 text-sm text-white;
   }
 
   .qp-lang-select option {
@@ -150,7 +264,60 @@
   }
 
   .qp-nav-link {
-    @apply inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium hover:bg-white/10;
+    @apply inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-sm font-medium hover:bg-white/10;
+  }
+
+  /* Admin dropdown: panel sits under trigger; pt-1 is a live hover bridge (no margin gap). */
+  .qp-nav-dropdown-panel {
+    /* Ensure the bridge + menu sit above page content while open */
+    z-index: 50;
+  }
+
+  .qp-nav-dropdown.is-open > .qp-nav-link {
+    @apply bg-white/10;
+  }
+
+  /* Header chrome buttons (logout / login) — same soft volume language. */
+  .qp-header-btn {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background-color: rgba(255, 255, 255, 0.1);
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 60%);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.12) inset,
+      0 1px 2px rgba(0, 0, 0, 0.18);
+    transition: background-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+  }
+
+  .qp-header-btn:hover {
+    background-color: rgba(255, 255, 255, 0.18);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.16) inset,
+      0 2px 4px rgba(0, 0, 0, 0.22);
+  }
+
+  .qp-header-btn:active {
+    transform: translateY(1px);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.08) inset,
+      0 1px 1px rgba(0, 0, 0, 0.2);
+  }
+
+  .qp-header-btn-login {
+    border-color: rgba(14, 154, 167, 0.35);
+    background-color: #21bbee;
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0) 55%);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.45) inset,
+      0 1px 2px rgba(0, 0, 0, 0.18),
+      0 2px 6px rgba(33, 187, 238, 0.35);
+  }
+
+  .qp-header-btn-login:hover {
+    background-color: #0ea5e9;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.4) inset,
+      0 2px 4px rgba(0, 0, 0, 0.2),
+      0 4px 10px rgba(33, 187, 238, 0.4);
   }
 
   /*
@@ -269,5 +436,281 @@
     -webkit-line-clamp: 2;
     overflow: hidden;
     word-break: break-word;
+  }
+
+  /*
+   * Results grid via Clusterize.js
+   * -----------------------------
+   * Clusterize ships with `.clusterize-scroll { max-height: 200px }` — that
+   * is what was shrinking the grid. We override it and pin the scroll area
+   * to fill the remaining height of the results card body.
+   */
+  .qp-results-panel {
+    @apply flex min-h-0 flex-1 flex-col overflow-hidden p-0;
+  }
+
+  .qp-results-panel > .js-results-root {
+    @apply flex min-h-0 flex-1 flex-col overflow-hidden;
+    height: 100%;
+    min-height: 0;
+  }
+
+  /* Empty-state copy inside the results panel (avoids hugging the card edges). */
+  .qp-results-empty {
+    @apply px-3 py-3;
+  }
+
+  .qp-results-meta {
+    @apply flex shrink-0 flex-wrap items-center gap-x-3 gap-y-0.5 border-b border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600;
+  }
+
+  .qp-results-meta-count {
+    @apply font-medium tabular-nums text-navy;
+  }
+
+  .qp-results-meta-hint {
+    @apply inline-flex items-center gap-1 text-slate-500;
+  }
+
+  .qp-results-meta-hint i {
+    @apply text-[10px] opacity-70;
+  }
+
+  .qp-results-clusterize {
+    position: relative;
+    flex: 1 1 0%;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .qp-results-headers {
+    flex: 0 0 auto;
+    overflow: hidden;
+    border-bottom: 1px solid #b0b7c3;
+    box-shadow: 0 1px 0 rgba(11, 31, 58, 0.06);
+    z-index: 1;
+  }
+
+  /* Kill Clusterize's default 200px max-height and fill leftover space. */
+  .qp-results-scroll,
+  .qp-results-scroll.clusterize-scroll,
+  .clusterize-scroll.qp-results-scroll {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important; /* overrides clusterize.min.css */
+    overflow: auto !important;
+    background: #fff;
+  }
+
+  /*
+   * Excel-inspired sheet look, blended with QueryPlus navy/cyan palette.
+   * Scoped to results so admin grids keep the standard qp-table style.
+   */
+  .qp-sheet {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    table-layout: fixed;
+    font-size: 0.75rem; /* 12px at 14px root */
+    line-height: 1.25;
+    color: #1f2937;
+    background: #fff;
+  }
+
+  .qp-sheet-th {
+    @apply select-none font-semibold text-navy;
+    position: relative;
+    padding: 0.3rem 0.7rem 0.3rem 0.45rem;
+    background: linear-gradient(180deg, #f4f7fb 0%, #e6edf5 100%);
+    border: 1px solid #c5cdd8;
+    border-top: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: grab;
+    user-select: none;
+  }
+
+  .qp-sheet-th:first-child {
+    border-left: none;
+  }
+
+  .qp-sheet-th:hover {
+    background: linear-gradient(180deg, #eaf4fb 0%, #d7eaf6 100%);
+  }
+
+  .qp-sheet-th.is-dragging {
+    opacity: 0.55;
+    cursor: grabbing;
+  }
+
+  .qp-sheet-th.is-drop-target {
+    box-shadow: inset 2px 0 0 #21bbee;
+    background: linear-gradient(180deg, #e0f7fc 0%, #c5eef8 100%);
+  }
+
+  .qp-sheet-th[data-sort-dir="asc"],
+  .qp-sheet-th[data-sort-dir="desc"] {
+    background: linear-gradient(180deg, #d9f3f7 0%, #bfeaf1 100%);
+    box-shadow: inset 0 -2px 0 #0e9aa7; /* cyan accent like Excel underline */
+  }
+
+  .qp-sheet-th-label {
+    margin-right: 0.35rem;
+  }
+
+  .qp-sheet-th-sort {
+    font-size: 0.65em;
+    opacity: 0.35;
+    vertical-align: middle;
+  }
+
+  .qp-sheet-th[data-sort-dir="asc"] .qp-sheet-th-sort,
+  .qp-sheet-th[data-sort-dir="desc"] .qp-sheet-th-sort {
+    opacity: 0.9;
+    color: #0b1f3a;
+  }
+
+  /* Excel-like column resize handle on the right edge of each header. */
+  .qp-sheet-col-resizer {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    width: 7px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 2;
+  }
+
+  .qp-sheet-col-resizer:hover,
+  .qp-sheet-col-resizer:active {
+    background: rgba(33, 187, 238, 0.35);
+  }
+
+  body.qp-col-resizing {
+    cursor: col-resize !important;
+    user-select: none !important;
+  }
+
+  body.qp-col-resizing iframe {
+    pointer-events: none;
+  }
+
+  .qp-sheet-cell {
+    padding: 0.15rem 0.4rem;
+    border: 1px solid #d9dee7;
+    background: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Subtle Excel-like banded rows (navy-tinted, not pure gray). */
+  .qp-results-scroll .js-results-content > tr:nth-child(even of :not(.clusterize-extra-row):not(.clusterize-no-data)) .qp-sheet-cell,
+  .qp-results-scroll .js-results-content > tr:nth-child(even):not(.clusterize-extra-row):not(.clusterize-no-data) .qp-sheet-cell {
+    background: #f7fafc;
+  }
+
+  .qp-results-scroll .js-results-content > tr:not(.clusterize-extra-row):not(.clusterize-no-data):hover .qp-sheet-cell {
+    background: #e6f7fa; /* soft cyan hover — QueryPlus + spreadsheet feel */
+  }
+
+  /* Clusterize spacer / parity rows should not show grid chrome. */
+  .qp-results-scroll tr.clusterize-extra-row td,
+  .qp-results-scroll tr.clusterize-keep-parity td {
+    border: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  .qp-results-scroll tr.clusterize-extra-row:hover,
+  .qp-results-scroll tr.clusterize-no-data:hover {
+    background-color: transparent;
+  }
+
+  .qp-results-scroll tr.clusterize-no-data .qp-sheet-cell {
+    border: none;
+    color: #64748b;
+    text-align: center;
+    padding: 0.75rem;
+  }
+
+  /*
+   * Admin search screens (Categories / Procedures)
+   * -----------------------------------------------
+   * Toolbar + Filters stay natural height; Results card fills leftover viewport.
+   * Same flex height pattern as the home execution workspace.
+   */
+  .qp-admin-search-page {
+    @apply flex min-h-0 w-full flex-1 flex-col gap-3 overflow-hidden;
+    height: 100%;
+    max-height: 100%;
+  }
+
+  .qp-admin-results-card {
+    @apply flex min-h-0 flex-1 flex-col overflow-hidden;
+  }
+
+  .qp-admin-results-body {
+    @apply flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-3;
+  }
+
+  .qp-admin-results-pager {
+    @apply shrink-0 border-t border-slate-100 pt-2;
+  }
+
+  .qp-admin-results-pager nav {
+    @apply mt-0;
+  }
+
+  /*
+   * Shared sheet grid variants.
+   * Home fills the results panel; admin Results card fills remaining page height.
+   */
+  .qp-sheet-grid {
+    @apply w-full;
+  }
+
+  .qp-sheet-grid--admin {
+    @apply flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-slate-200 bg-white;
+  }
+
+  .qp-sheet-grid--admin .qp-results-clusterize {
+    @apply flex min-h-0 flex-1 flex-col overflow-hidden;
+  }
+
+  /* Fill the Results card; override Clusterize default max-height. */
+  .qp-sheet-grid--admin .qp-results-scroll,
+  .qp-sheet-grid--admin .qp-results-scroll.clusterize-scroll {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: auto !important;
+  }
+
+  /* Shared width for Category Description on Create / Edit / View. */
+  .qp-category-description {
+    @apply w-full max-w-3xl;
+  }
+
+  .qp-grid-actions {
+    @apply inline-flex flex-wrap items-center gap-0.5 whitespace-nowrap;
+  }
+
+  .qp-grid-actions form {
+    display: inline;
+  }
+
+  .qp-grid-actions .qp-btn,
+  .qp-grid-actions .qp-btn-ghost {
+    @apply text-xs;
+    padding: 0.15rem 0.4rem;
   }
 }

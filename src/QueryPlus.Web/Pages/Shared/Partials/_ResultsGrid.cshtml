@@ -3,12 +3,92 @@
 @{
     var hasRows = Model.Success && Model.Data is { Rows.Count: > 0 };
     var rowCount = hasRows ? Model.Data!.Rows.Count : 0;
+
+    var visibleColumns = new List<(string Caption, string Align, string? FormatMask, int SourceIndex)>();
+    if (hasRows)
+    {
+        for (var i = 0; i < Model.Data!.Columns.Count; i++)
+        {
+            var col = Model.Data.Columns[i];
+            var meta = Model.Columns.FirstOrDefault(c =>
+                string.Equals(c.TechnicalName, col.ColumnName, StringComparison.OrdinalIgnoreCase));
+            if (meta is { Visible: false })
+            {
+                continue;
+            }
+
+            var caption = meta?.Caption ?? col.ColumnName;
+            var align = meta?.Alignment switch
+            {
+                ColumnAlignment.Center => "center",
+                ColumnAlignment.Right => "right",
+                _ => "left"
+            };
+            visibleColumns.Add((caption, align, meta?.FormatMask, i));
+        }
+    }
+
+    string FormatCell(object? value, string? formatMask)
+    {
+        if (value is DBNull or null)
+        {
+            return "";
+        }
+
+        var text = value.ToString() ?? "";
+        if (formatMask is { Length: > 0 } && value is IFormattable formattable)
+        {
+            try
+            {
+                text = string.Format(System.Globalization.CultureInfo.CurrentCulture, formatMask, formattable);
+            }
+            catch
+            {
+                // keep raw text
+            }
+        }
+
+        return text;
+    }
+
+    SheetGridModel? sheet = null;
+    if (hasRows)
+    {
+        var cells = new List<IReadOnlyList<string>>(rowCount);
+        foreach (System.Data.DataRow row in Model.Data!.Rows)
+        {
+            var values = new string[visibleColumns.Count];
+            for (var c = 0; c < visibleColumns.Count; c++)
+            {
+                values[c] = FormatCell(row[visibleColumns[c].SourceIndex], visibleColumns[c].FormatMask);
+            }
+
+            cells.Add(values);
+        }
+
+        sheet = new SheetGridModel
+        {
+            Columns = visibleColumns
+                .Select(c => new SheetGridColumn
+                {
+                    Caption = c.Caption,
+                    Align = c.Align
+                })
+                .ToList(),
+            Cells = cells,
+            EmptyMessage = L["NoRecords"].Value,
+            MetaText = $"{Model.RowCount} {L["Home_Rows"].Value}",
+            ShowInteractionHint = true,
+            CssClass = "qp-sheet-grid--home"
+        };
+    }
 }
 
-<div class="js-results-root"
+<div class="js-results-root js-sheet-host"
      data-export-ready="@(hasRows ? "true" : "false")"
      data-row-count="@rowCount"
-     data-procedure-id="@Model.ProcedureId">
+     data-procedure-id="@Model.ProcedureId"
+     data-col-count="@visibleColumns.Count">
 @if (!Model.Success)
 {
     <div class="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
@@ -16,80 +96,12 @@
         @(Model.ErrorMessage ?? L["Home_ExportFailed"].Value)
     </div>
 }
-else if (!hasRows)
+else if (sheet is null)
 {
-    <p class="text-xs text-slate-500">@L["NoRecords"]</p>
+    <p class="qp-results-empty text-xs text-slate-500">@L["NoRecords"]</p>
 }
 else
 {
-    <div class="mb-1.5 text-xs text-slate-600">@Model.RowCount @L["Home_Rows"]</div>
-    @* Scroll is owned by #results-panel (.qp-home-column-scroll); no nested max-height. *@
-    <table class="qp-table" id="results-table">
-        <thead class="sticky top-0 z-10">
-            <tr>
-                @{
-                    var colIndex = 0;
-                }
-                @foreach (System.Data.DataColumn col in Model.Data!.Columns)
-                {
-                    var meta = Model.Columns.FirstOrDefault(c =>
-                        string.Equals(c.TechnicalName, col.ColumnName, StringComparison.OrdinalIgnoreCase));
-                    if (meta is { Visible: false })
-                    {
-                        colIndex++;
-                        continue;
-                    }
-                    var caption = meta?.Caption ?? col.ColumnName;
-                    var align = meta?.Alignment switch
-                    {
-                        ColumnAlignment.Center => "center",
-                        ColumnAlignment.Right => "right",
-                        _ => "left"
-                    };
-                    <th data-sort-col="@colIndex" class="cursor-pointer select-none" style="text-align:@align" title="Sort">
-                        @caption
-                    </th>
-                    colIndex++;
-                }
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (System.Data.DataRow row in Model.Data.Rows)
-        {
-            <tr>
-                @for (var i = 0; i < Model.Data.Columns.Count; i++)
-                {
-                    var col = Model.Data.Columns[i];
-                    var meta = Model.Columns.FirstOrDefault(c =>
-                        string.Equals(c.TechnicalName, col.ColumnName, StringComparison.OrdinalIgnoreCase));
-                    if (meta is { Visible: false })
-                    {
-                        continue;
-                    }
-                    var value = row[i];
-                    var text = value is DBNull or null ? "" : value.ToString();
-                    if (meta?.FormatMask is { Length: > 0 } mask && value is IFormattable)
-                    {
-                        try
-                        {
-                            text = string.Format(System.Globalization.CultureInfo.CurrentCulture, mask, value);
-                        }
-                        catch
-                        {
-                            // keep raw text
-                        }
-                    }
-                    var align = meta?.Alignment switch
-                    {
-                        ColumnAlignment.Center => "center",
-                        ColumnAlignment.Right => "right",
-                        _ => "left"
-                    };
-                    <td class="whitespace-nowrap" style="text-align:@align">@text</td>
-                }
-            </tr>
-        }
-        </tbody>
-    </table>
+    <partial name="Shared/Partials/_SheetGrid" model="sheet" />
 }
 </div>

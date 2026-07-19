@@ -10,22 +10,38 @@
 <div class="qp-page space-y-4">
     <div class="qp-card">
         <div class="qp-card-header">
-            <h1 class="qp-page-title">@L["Procedures_Edit"]</h1>
-            <a asp-page="Index" class="qp-btn-secondary"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> @L["Back"]</a>
-        </div>
-        <div class="qp-card-body">
-            <form method="post" novalidate>
-                <partial name="~/Pages/Shared/Partials/_ProcedureEditForm.cshtml" model="Model.Input" view-data="ViewData" />
-                <div class="mt-6 flex gap-2">
-                    <button type="submit" asp-page-handler="Save" class="qp-btn-primary"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> @L["Save"]</button>
-                    <a asp-page="View" asp-route-id="@Model.Input.Id" class="qp-btn-secondary"><i class="fa-solid fa-xmark" aria-hidden="true"></i> @L["Cancel"]</a>
-                </div>
-            </form>
+            <h1 class="qp-page-title">
+                <i class="fa-solid fa-pen-to-square text-cyan" aria-hidden="true"></i>
+                @L["Procedures_Edit"]
+            </h1>
+            <div class="flex flex-wrap items-center justify-end gap-1.5">
+                <button type="submit" form="procedure-form" formaction="?handler=Save" class="qp-btn-primary">
+                    <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                    @L["Save"]
+                </button>
+                <a asp-page="View" asp-route-id="@Model.Input.Id" class="qp-btn-secondary">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                    @L["Cancel"]
+                </a>
+                <a asp-page="Index" class="qp-btn-secondary">
+                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                    @L["Back"]
+                </a>
+            </div>
         </div>
     </div>
 
+    <form id="procedure-form" method="post" novalidate class="space-y-4">
+        <partial name="~/Pages/Shared/Partials/_ProcedureEditForm.cshtml" model="Model.Input" view-data="ViewData" />
+    </form>
+
     <div class="qp-card">
-        <div class="qp-card-header"><h2 class="font-semibold">@L["Audit"]</h2></div>
+        <div class="qp-card-header">
+            <h2 class="qp-section-title">
+                <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
+                @L["Audit"]
+            </h2>
+        </div>
         <div class="qp-card-body grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
             <div><span class="text-slate-500">@L["Id"]</span><div>@Model.Input.Id</div></div>
             <div><span class="text-slate-500">@L["CreatedAt"]</span><div>@(Model.Input.CreatedAt?.ToLocalTime().ToString("g") ?? "—")</div></div>
