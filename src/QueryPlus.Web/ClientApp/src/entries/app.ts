@@ -4,7 +4,8 @@
  * Later: data-page controllers.
  */
 import "reflect-metadata";
-import "../styles/main.css";
+// Styles stay on legacy ~/css/site.css until Phase 5. Importing main.css here
+// would inject a second Tailwind (v4) preflight and break flex height chains.
 import { bootstrap } from "../core/bootstrap";
 
 export const QUERYPLUS_CLIENT_VERSION = "0.1.0-phase1";

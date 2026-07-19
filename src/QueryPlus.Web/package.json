@@ -12,8 +12,11 @@
     "preview": "vp preview",
     "dev:vite": "vite",
     "build:vite": "vite build",
-    "test:vitest": "vitest run"
+    "test:vitest": "vitest run",
+    "build:css:legacy": "npx --yes tailwindcss@3.4.17 -i ./wwwroot/css/input.css -o ./wwwroot/css/site.css --minify",
+    "watch:css:legacy": "npx --yes tailwindcss@3.4.17 -i ./wwwroot/css/input.css -o ./wwwroot/css/site.css --watch"
   },
+
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.11",
     "@types/node": "^24.0.0",

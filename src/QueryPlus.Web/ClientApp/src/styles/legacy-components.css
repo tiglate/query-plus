@@ -686,9 +686,22 @@
   /*
    * Shared sheet grid variants.
    * Home fills the results panel; admin Results card fills remaining page height.
+   *
+   * Critical: the intermediate .qp-sheet-grid host must participate in the flex
+   * height chain. Otherwise Clusterize's scroll area grows with content
+   * (max-height: none) and never shows a vertical scrollbar.
    */
   .qp-sheet-grid {
     @apply w-full;
+  }
+
+  .qp-sheet-grid--home {
+    @apply flex min-h-0 w-full flex-1 flex-col overflow-hidden;
+    height: 100%;
+  }
+
+  .qp-sheet-grid--home .qp-results-clusterize {
+    @apply flex min-h-0 flex-1 flex-col overflow-hidden;
   }
 
   .qp-sheet-grid--admin {
@@ -700,6 +713,8 @@
   }
 
   /* Fill the Results card; override Clusterize default max-height. */
+  .qp-sheet-grid--home .qp-results-scroll,
+  .qp-sheet-grid--home .qp-results-scroll.clusterize-scroll,
   .qp-sheet-grid--admin .qp-results-scroll,
   .qp-sheet-grid--admin .qp-results-scroll.clusterize-scroll {
     flex: 1 1 0% !important;
