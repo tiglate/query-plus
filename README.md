@@ -39,7 +39,7 @@ docker/
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [Docker](https://www.docker.com/) (SQL Server + Keycloak)
-- Optional (ClientApp / CSS): [Node.js 22+](https://nodejs.org/) + [pnpm](https://pnpm.io/) 10+ (or [Vite+](https://viteplus.dev/) `vp`)
+- [Node.js 22+](https://nodejs.org/) + [pnpm](https://pnpm.io/) 10+ for ClientApp (or [Vite+](https://viteplus.dev/) `vp`) — required for first build and any frontend work
 
 ## Quick start (local)
 
