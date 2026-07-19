@@ -14,6 +14,9 @@ export default defineConfig({
   plugins: [tailwindcss()],
   root: rootDir,
   publicDir: false,
+  // ASP.NET serves built assets under /dist/* (wwwroot/dist). Without this,
+  // font/CSS url() paths resolve to /fonts/... and 404.
+  base: "/dist/",
   resolve: {
     alias: {
       "@": path.resolve(clientApp, "src"),
