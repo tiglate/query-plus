@@ -1,6 +1,14 @@
 /*
  * QueryPlus ClientApp styles — Tailwind 4 entry (Phase 5 modular layout).
+ * Phase 7: third-party CSS from npm (no CDNs).
  */
+
+@import "clusterize.js/clusterize.css";
+@import "@fortawesome/fontawesome-free/css/all.min.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
 
 @import "tailwindcss";
 

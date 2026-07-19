@@ -2,11 +2,11 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   markClientAppLoaded,
   QUERYPLUS_CLIENT_VERSION,
-} from "../src/entries/app";
+} from "../src/clientMeta";
 
 describe("ClientApp smoke", () => {
   it("exports a client version marker", () => {
-    expect(QUERYPLUS_CLIENT_VERSION).toMatch(/phase6/);
+    expect(QUERYPLUS_CLIENT_VERSION).toMatch(/phase7/);
   });
 
   it("runs under jsdom", () => {

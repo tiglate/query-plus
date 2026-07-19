@@ -26,6 +26,7 @@ Plan: [`docs/frontend-reorganization.md`](../../../docs/frontend-reorganization.
 
 ## Runtime
 
-- `_Layout` loads only `~/dist/js/app.js` + `~/dist/css/site.css` (plus CDNs until Phase 7).
+- `_Layout` loads only `~/dist/js/app.js` + `~/dist/css/site.css` (no CDNs).
+- Vendors (npm): `htmx.org`, `clusterize.js`, `@fortawesome/fontawesome-free`, `@fontsource/inter`.
 - **Page keys:** `home`, `admin-categories`, `admin-procedures`, `admin-procedure-edit`.
-- No legacy `wwwroot/js` or `wwwroot/css` sources — ClientApp is the single frontend source of truth.
+- ClientApp is the single frontend source of truth.

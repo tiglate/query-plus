@@ -41,6 +41,10 @@ export default defineConfig({
           if (name.endsWith(".css") || name.includes(".css")) {
             return "css/site.css";
           }
+          // Font Awesome / Inter webfonts
+          if (/\.(woff2?|ttf|eot|svg)$/i.test(name)) {
+            return "fonts/[name]-[hash][extname]";
+          }
           return "assets/[name]-[hash][extname]";
         },
       },

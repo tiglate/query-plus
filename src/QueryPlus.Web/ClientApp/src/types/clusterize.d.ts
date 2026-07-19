@@ -1,4 +1,4 @@
-/** Minimal typings for Clusterize.js (CDN global until Phase 7). */
+/** Minimal typings for Clusterize.js (npm `clusterize.js`). */
 interface ClusterizeOptions {
   rows: string[];
   scrollElem: HTMLElement;
@@ -21,9 +21,13 @@ interface ClusterizeConstructor {
   new (options: ClusterizeOptions): ClusterizeInstance;
 }
 
-declare const Clusterize: ClusterizeConstructor;
+declare module "clusterize.js" {
+  const Clusterize: ClusterizeConstructor;
+  export default Clusterize;
+}
 
 interface Window {
   Clusterize?: ClusterizeConstructor;
+  htmx?: unknown;
   QueryPlusSheetGrid?: import("../components/sheet-grid/types").QueryPlusSheetGridApi;
 }

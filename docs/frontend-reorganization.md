@@ -1,7 +1,7 @@
 # Frontend reorganization plan
 
 **Branch:** `feature/reorganize-frontend`  
-**Status:** Approved — Phases 0–6 complete; next is Phase 7 (de-CDN)  
+**Status:** Complete — Phases 0–7 done (no CDNs; ClientApp is the frontend source of truth)  
 **Last updated:** 2026-07-19
 
 This document is the source of truth for the TypeScript / Vite+ / DI frontend reorg. Resume from here if the session is interrupted.

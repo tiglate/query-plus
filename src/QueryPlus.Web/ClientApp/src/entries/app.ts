@@ -1,25 +1,21 @@
 /**
  * Global ClientApp shell entry.
- * Phase 1: DI bootstrap + shared shell (nav dropdown, confirm submit, CSRF).
- * Later: data-page controllers.
+ * Vendors (htmx, clusterize) + DI bootstrap + page controllers.
+ * Font Awesome / Inter / Clusterize CSS load via styles/main.css.
  */
 import "reflect-metadata";
-// Phase 5: Tailwind 4 pipeline → wwwroot/dist/css/site.css (linked from _Layout).
 import "../styles/main.css";
+import {
+  markClientAppLoaded,
+  QUERYPLUS_CLIENT_VERSION,
+} from "../clientMeta";
 import { bootstrap } from "../core/bootstrap";
 
-export const QUERYPLUS_CLIENT_VERSION = "0.6.0-phase6";
+export { markClientAppLoaded, QUERYPLUS_CLIENT_VERSION };
 
-/** Side-effect marker so production bundles stay non-empty (CSS is co-emitted). */
-export function markClientAppLoaded(target: ParentNode = document): void {
-  const root =
-    target instanceof Document ? target.documentElement : (target as Element);
-  if ("setAttribute" in root) {
-    root.setAttribute("data-qp-client", QUERYPLUS_CLIENT_VERSION);
-  }
-}
-
-function start(): void {
+async function start(): Promise<void> {
+  // Dynamic import keeps Vitest free of htmx's jsdom XPath init.
+  await import("../vendor");
   markClientAppLoaded(document);
   bootstrap();
 }
@@ -27,9 +23,14 @@ function start(): void {
 // Skip auto-start under Vitest (tests import symbols from this module).
 if (typeof document !== "undefined" && import.meta.env.MODE !== "test") {
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", start, { once: true });
+    document.addEventListener(
+      "DOMContentLoaded",
+      () => {
+        void start();
+      },
+      { once: true },
+    );
   } else {
-    start();
+    void start();
   }
 }
-

@@ -90,7 +90,7 @@ Configure Keycloak client redirect URIs to match that URL if needed (`docker/key
 Frontend TypeScript and Tailwind 4 live under `src/QueryPlus.Web/ClientApp/`.  
 See **[docs/frontend-reorganization.md](docs/frontend-reorganization.md)** for the full migration plan.
 
-**Current (Phases 0–6):** Frontend source of truth is `ClientApp/` (Vite+ / Tailwind 4 / TypeScript). `_Layout` loads only `~/dist/js/app.js` and `~/dist/css/site.css`. Legacy `wwwroot/js` and `wwwroot/css` are removed. External libs (HTMX, Clusterize, Font Awesome, fonts) still use CDNs until Phase 7. Build ClientApp before first run if `wwwroot/dist` is missing (`pnpm run build` or `dotnet build` auto-builds when dist is absent).
+**Current (Phases 0–7 complete):** Frontend source of truth is `ClientApp/` (Vite+ / Tailwind 4 / TypeScript). `_Layout` loads only `~/dist/js/app.js` and `~/dist/css/site.css` — no CDNs (HTMX, Clusterize, Font Awesome, and Inter are npm-bundled into `dist`). Build ClientApp before first run if `wwwroot/dist` is missing (`pnpm run build` or `dotnet build` auto-builds when dist is absent).
 
 ```bash
 cd src/QueryPlus.Web
