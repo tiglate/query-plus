@@ -394,6 +394,36 @@ document.body.addEventListener("htmx:configRequest", (event) => {
 });
 
 document.addEventListener("DOMContentLoaded", wireHomeProcedureGuards);
+document.addEventListener("DOMContentLoaded", wireParameterComboVisibility);
+
+/**
+ * Procedure edit form: show Combo values only when ParameterType is Combo.
+ * Disables the input when hidden so non-combo values are not posted.
+ */
+function updateParameterComboVisibility(row) {
+  if (!row) return;
+  const typeSelect = row.querySelector(".js-param-type");
+  const comboInput = row.querySelector(".js-param-combo-values");
+  if (!typeSelect || !comboInput) return;
+
+  const comboTypeValue =
+    comboInput.getAttribute("data-combo-type-value") || "6";
+  const isCombo = String(typeSelect.value) === String(comboTypeValue);
+
+  // Non-combo: hide + disable (not posted). Combo: show (readonly still applies on View).
+  comboInput.disabled = !isCombo;
+  comboInput.classList.toggle("hidden", !isCombo);
+}
+
+function wireParameterComboVisibility() {
+  document.querySelectorAll(".js-param-row").forEach((row) => {
+    updateParameterComboVisibility(row);
+    const typeSelect = row.querySelector(".js-param-type");
+    if (!typeSelect || typeSelect.dataset.comboWired === "1") return;
+    typeSelect.dataset.comboWired = "1";
+    typeSelect.addEventListener("change", () => updateParameterComboVisibility(row));
+  });
+}
 
 // Maximize / restore the results grid (hides procedure list + parameters).
 const RESULTS_MAX_STORAGE_KEY = "qp-home-results-maximized";

@@ -5,22 +5,43 @@
     ViewData["Title"] = L["Categories_New"].Value;
 }
 
-<div class="qp-page">
-    <div class="qp-card max-w-3xl">
+<div class="qp-page space-y-4">
+    <div class="qp-card">
         <div class="qp-card-header">
-            <h1 class="qp-page-title">@L["Categories_New"]</h1>
-            <a asp-page="Index" class="qp-btn-secondary"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> @L["Back"]</a>
+            <h1 class="qp-page-title">
+                <i class="fa-solid fa-folder-plus text-cyan" aria-hidden="true"></i>
+                @L["Categories_New"]
+            </h1>
+            <div class="flex flex-wrap items-center justify-end gap-1.5">
+                <button type="submit" form="category-form" class="qp-btn-primary">
+                    <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                    @L["Save"]
+                </button>
+                <a asp-page="Index" class="qp-btn-secondary">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                    @L["Cancel"]
+                </a>
+                <a asp-page="Index" class="qp-btn-secondary">
+                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                    @L["Back"]
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="qp-card">
+        <div class="qp-card-header">
+            <h2 class="qp-section-title">
+                <i class="fa-solid fa-folder" aria-hidden="true"></i>
+                @L["Categories_Title"]
+            </h2>
         </div>
         <div class="qp-card-body">
-            <form method="post" class="space-y-4">
-                <div>
+            <form id="category-form" method="post">
+                <div class="qp-category-description">
                     <label class="qp-label" asp-for="Input.Description">@L["Description"]</label>
                     <input class="qp-input" asp-for="Input.Description" />
                     <span asp-validation-for="Input.Description" class="text-sm text-red-600"></span>
-                </div>
-                <div class="flex gap-2">
-                    <button type="submit" class="qp-btn-primary"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> @L["Save"]</button>
-                    <a asp-page="Index" class="qp-btn-secondary"><i class="fa-solid fa-xmark" aria-hidden="true"></i> @L["Cancel"]</a>
                 </div>
             </form>
         </div>

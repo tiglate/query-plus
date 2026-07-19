@@ -41,7 +41,7 @@
   <data name="Categories_View" xml:space="preserve"><value>Detalhe da categoria</value></data>
   <data name="Categories_Saved" xml:space="preserve"><value>Categoria salva com sucesso.</value></data>
   <data name="Categories_Deleted" xml:space="preserve"><value>Categoria excluída.</value></data>
-  <data name="Procedures_Title" xml:space="preserve"><value>Procedures</value></data>
+  <data name="Procedures_Title" xml:space="preserve"><value>Procedure</value></data>
   <data name="Procedures_New" xml:space="preserve"><value>Nova procedure</value></data>
   <data name="Procedures_Edit" xml:space="preserve"><value>Editar procedure</value></data>
   <data name="Procedures_View" xml:space="preserve"><value>Detalhe da procedure</value></data>

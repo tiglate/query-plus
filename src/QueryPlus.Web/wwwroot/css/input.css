@@ -695,6 +695,11 @@
     overflow: auto !important;
   }
 
+  /* Shared width for Category Description on Create / Edit / View. */
+  .qp-category-description {
+    @apply w-full max-w-3xl;
+  }
+
   .qp-grid-actions {
     @apply inline-flex flex-wrap items-center gap-0.5 whitespace-nowrap;
   }
