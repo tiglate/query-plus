@@ -101,7 +101,7 @@
                         @User.Identity.Name
                     </span>
                     <form method="post" action="/Account/Logout">
-                        <button type="submit" class="inline-flex items-center gap-1.5 rounded bg-white/10 px-2.5 py-1 text-sm font-medium hover:bg-white/20">
+                        <button type="submit" class="qp-header-btn inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-sm font-medium">
                             <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
                             @L["Logout"]
                         </button>
@@ -109,7 +109,7 @@
                 }
                 else
                 {
-                    <a href="/Account/Login" class="inline-flex items-center gap-1.5 rounded bg-cyan px-2.5 py-1 text-sm font-semibold text-navy hover:bg-cyan-600">
+                    <a href="/Account/Login" class="qp-header-btn qp-header-btn-login inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-sm font-semibold text-navy">
                         <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
                         @L["Login"]
                     </a>

@@ -580,7 +580,7 @@ function clearExportableResults() {
   const panel = document.getElementById("results-panel");
   if (panel) {
     panel.innerHTML =
-      '<div class="js-results-root" data-export-ready="false" data-row-count="0"><p class="text-xs text-slate-500"></p></div>';
+      '<div class="js-results-root" data-export-ready="false" data-row-count="0"><p class="qp-results-empty text-xs text-slate-500"></p></div>';
   }
   const status = document.getElementById("export-status");
   if (status) status.innerHTML = "";
