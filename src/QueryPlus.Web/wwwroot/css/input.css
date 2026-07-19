@@ -141,7 +141,7 @@
      Closed control stays light-on-dark; options must be dark-on-light because
      native <option> lists often use a white popup and inherit the select color. */
   .qp-lang-select {
-    @apply rounded border-0 bg-white/10 px-2 py-1 text-xs text-white;
+    @apply rounded border-0 bg-white/10 px-2 py-1 text-sm text-white;
   }
 
   .qp-lang-select option {
@@ -150,7 +150,7 @@
   }
 
   .qp-nav-link {
-    @apply inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium hover:bg-white/10;
+    @apply inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-sm font-medium hover:bg-white/10;
   }
 
   /*
@@ -289,11 +289,19 @@
   }
 
   .qp-results-meta {
-    @apply flex shrink-0 items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600;
+    @apply flex shrink-0 flex-wrap items-center gap-x-3 gap-y-0.5 border-b border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600;
   }
 
   .qp-results-meta-count {
     @apply font-medium tabular-nums text-navy;
+  }
+
+  .qp-results-meta-hint {
+    @apply inline-flex items-center gap-1 text-slate-500;
+  }
+
+  .qp-results-meta-hint i {
+    @apply text-[10px] opacity-70;
   }
 
   .qp-results-clusterize {
@@ -330,7 +338,8 @@
    * Scoped to results so admin grids keep the standard qp-table style.
    */
   .qp-sheet {
-    width: 100%;
+    width: max-content;
+    min-width: 100%;
     border-collapse: collapse;
     border-spacing: 0;
     table-layout: fixed;
@@ -343,14 +352,14 @@
   .qp-sheet-th {
     @apply select-none font-semibold text-navy;
     position: relative;
-    padding: 0.3rem 0.45rem;
+    padding: 0.3rem 0.7rem 0.3rem 0.45rem;
     background: linear-gradient(180deg, #f4f7fb 0%, #e6edf5 100%);
     border: 1px solid #c5cdd8;
     border-top: none;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    cursor: pointer;
+    cursor: grab;
     user-select: none;
   }
 
@@ -360,6 +369,16 @@
 
   .qp-sheet-th:hover {
     background: linear-gradient(180deg, #eaf4fb 0%, #d7eaf6 100%);
+  }
+
+  .qp-sheet-th.is-dragging {
+    opacity: 0.55;
+    cursor: grabbing;
+  }
+
+  .qp-sheet-th.is-drop-target {
+    box-shadow: inset 2px 0 0 #21bbee;
+    background: linear-gradient(180deg, #e0f7fc 0%, #c5eef8 100%);
   }
 
   .qp-sheet-th[data-sort-dir="asc"],
@@ -382,6 +401,31 @@
   .qp-sheet-th[data-sort-dir="desc"] .qp-sheet-th-sort {
     opacity: 0.9;
     color: #0b1f3a;
+  }
+
+  /* Excel-like column resize handle on the right edge of each header. */
+  .qp-sheet-col-resizer {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    width: 7px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 2;
+  }
+
+  .qp-sheet-col-resizer:hover,
+  .qp-sheet-col-resizer:active {
+    background: rgba(33, 187, 238, 0.35);
+  }
+
+  body.qp-col-resizing {
+    cursor: col-resize !important;
+    user-select: none !important;
+  }
+
+  body.qp-col-resizing iframe {
+    pointer-events: none;
   }
 
   .qp-sheet-cell {

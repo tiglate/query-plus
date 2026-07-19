@@ -1,8 +1,31 @@
 // Lightweight helpers for HTMX-driven UI (no SPA framework).
 
-/** Active Clusterize instance + sort payload for the home results grid. */
+/**
+ * Home results grid (Clusterize.js)
+ * ---------------------------------
+ * Structured client state: columns + cell matrix.
+ * - Auto-width from header + sample of ~200 rows (canvas measureText)
+ * - User resize via header edge drag
+ * - User reorder via header drag-and-drop
+ * - Sort via click (not drag)
+ */
 let resultsClusterize = null;
-let resultsGridState = null; // { rows: string[], cells: string[][], root: Element }
+/** @type {null | {
+ *   root: Element,
+ *   columns: { caption: string, align: string, width: number }[],
+ *   cells: string[][],
+ *   sortCol: number | null,
+ *   sortAsc: boolean,
+ *   suppressClick: boolean
+ * }} */
+let resultsGridState = null;
+
+const RESULTS_COL_MIN = 48;
+const RESULTS_COL_MAX = 480;
+const RESULTS_COL_PAD = 28; // cell padding + sort icon room
+const RESULTS_WIDTH_SAMPLE = 200;
+
+let measureCanvasCtx = null;
 
 function destroyResultsClusterize() {
   if (resultsClusterize) {
@@ -16,104 +39,155 @@ function destroyResultsClusterize() {
   resultsGridState = null;
 }
 
-function fitResultsHeaderColumns(root) {
-  if (!root) return;
+function escapeHtml(text) {
+  return String(text ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function getMeasureContext(root) {
+  if (!measureCanvasCtx) {
+    const canvas = document.createElement("canvas");
+    measureCanvasCtx = canvas.getContext("2d");
+  }
+  // Match rendered sheet font when possible.
+  const sample =
+    root?.querySelector(".qp-sheet-th") ||
+    root?.querySelector(".qp-sheet") ||
+    document.body;
+  const style = window.getComputedStyle(sample);
+  const weight = style.fontWeight || "600";
+  const size = style.fontSize || "12px";
+  const family = style.fontFamily || "Inter, Segoe UI, system-ui, sans-serif";
+  measureCanvasCtx.font = `${weight} ${size} ${family}`;
+  return measureCanvasCtx;
+}
+
+function measureTextWidth(ctx, text) {
+  if (!text) return 0;
+  // Cap super-long strings so a single outlier doesn't dominate.
+  const sample = text.length > 80 ? text.slice(0, 80) + "…" : text;
+  return ctx.measureText(sample).width;
+}
+
+/**
+ * Auto column widths from header captions + a sample of data rows.
+ * O(columns × sampleSize) — cheap even for large result sets.
+ */
+function autoSizeColumns(columns, cells, root) {
+  const ctx = getMeasureContext(root);
+  const sample = Math.min(RESULTS_WIDTH_SAMPLE, cells.length);
+
+  for (let c = 0; c < columns.length; c++) {
+    let maxPx = measureTextWidth(ctx, columns[c].caption || "");
+    for (let r = 0; r < sample; r++) {
+      const w = measureTextWidth(ctx, cells[r]?.[c] || "");
+      if (w > maxPx) maxPx = w;
+    }
+    columns[c].width = Math.round(
+      Math.min(RESULTS_COL_MAX, Math.max(RESULTS_COL_MIN, maxPx + RESULTS_COL_PAD))
+    );
+  }
+}
+
+function totalColumnsWidth(columns) {
+  return columns.reduce((sum, col) => sum + (col.width || RESULTS_COL_MIN), 0);
+}
+
+function buildRowHtml(rowCells, columns) {
+  let html = "<tr>";
+  for (let c = 0; c < columns.length; c++) {
+    const align = columns[c].align || "left";
+    html +=
+      `<td class="qp-sheet-cell" style="text-align:${align}">` +
+      escapeHtml(rowCells[c] ?? "") +
+      "</td>";
+  }
+  html += "</tr>";
+  return html;
+}
+
+function buildAllRowHtml(state) {
+  const rows = new Array(state.cells.length);
+  for (let i = 0; i < state.cells.length; i++) {
+    rows[i] = buildRowHtml(state.cells[i], state.columns);
+  }
+  return rows;
+}
+
+function applyColumnWidths(root, columns) {
+  const total = totalColumnsWidth(columns);
   const headerTable = root.querySelector(".js-results-headers-table");
   const bodyTable = root.querySelector(".js-results-body-table");
-  if (!headerTable || !bodyTable) return;
+  const headerGroup = root.querySelector(".js-results-colgroup-header");
+  const bodyGroup = root.querySelector(".js-results-colgroup-body");
+  if (!headerTable || !bodyTable || !headerGroup || !bodyGroup) return;
 
-  const firstDataRow = bodyTable.querySelector(
-    "tbody tr:not(.clusterize-extra-row):not(.clusterize-no-data)"
-  );
-  if (!firstDataRow) return;
+  const colsHtml = columns
+    .map((col) => `<col style="width:${col.width}px">`)
+    .join("");
+  headerGroup.innerHTML = colsHtml;
+  bodyGroup.innerHTML = colsHtml;
 
-  const headerCells = headerTable.querySelectorAll("thead th");
-  const bodyCells = firstDataRow.children;
-  if (!headerCells.length || bodyCells.length < headerCells.length) return;
+  headerTable.style.width = total + "px";
+  bodyTable.style.width = total + "px";
+  headerTable.style.minWidth = total + "px";
+  bodyTable.style.minWidth = total + "px";
+}
 
-  // Keep header table width aligned with the body table (incl. scrollbar gap).
-  headerTable.style.width = bodyTable.offsetWidth + "px";
+function renderResultsHeaders(state) {
+  const row = state.root.querySelector(".js-results-header-row");
+  if (!row) return;
 
-  for (let i = 0; i < headerCells.length; i++) {
-    const w = bodyCells[i]?.getBoundingClientRect().width;
-    if (w) {
-      headerCells[i].style.width = w + "px";
-      headerCells[i].style.minWidth = w + "px";
-      headerCells[i].style.maxWidth = w + "px";
-    }
+  const parts = [];
+  for (let c = 0; c < state.columns.length; c++) {
+    const col = state.columns[c];
+    const sorted = state.sortCol === c;
+    const sortClass = sorted
+      ? state.sortAsc
+        ? "fa-sort-up"
+        : "fa-sort-down"
+      : "fa-sort";
+    const dirAttr = sorted
+      ? ` data-sort-dir="${state.sortAsc ? "asc" : "desc"}"`
+      : "";
+    parts.push(
+      `<th class="qp-sheet-th" draggable="true" data-col-index="${c}" data-sort-col="${c}"` +
+        ` style="text-align:${col.align || "left"}" title="Click to sort · Drag to reorder · Drag edge to resize"${dirAttr}>` +
+        `<span class="qp-sheet-th-label">${escapeHtml(col.caption)}</span>` +
+        `<i class="fa-solid ${sortClass} qp-sheet-th-sort" aria-hidden="true"></i>` +
+        `<span class="qp-sheet-col-resizer" data-resize-col="${c}" title="Resize column"></span>` +
+        `</th>`
+    );
   }
+  row.innerHTML = parts.join("");
+  applyColumnWidths(state.root, state.columns);
+  wireHeaderInteractions(state);
 }
 
 function syncResultsHeaderScroll(root) {
   const scroll = root?.querySelector(".js-results-scroll");
   const headers = root?.querySelector(".qp-results-headers");
   if (!scroll || !headers) return;
-
   const headerTable = headers.querySelector("table");
   if (!headerTable) return;
   headerTable.style.marginLeft = -scroll.scrollLeft + "px";
 }
 
-function initResultsClusterize(root) {
-  destroyResultsClusterize();
-  if (!root || typeof Clusterize === "undefined") return;
-
-  const scroll = root.querySelector(".js-results-scroll");
-  const content = root.querySelector(".js-results-content");
-  const dataEl = root.querySelector(".js-results-data");
-  if (!scroll || !content || !dataEl) return;
-
-  let payload = { rows: [], cells: [] };
+function refreshResultsClusterize() {
+  if (!resultsGridState || !resultsClusterize) return;
+  const rows = buildAllRowHtml(resultsGridState);
+  resultsClusterize.update(rows);
+  applyColumnWidths(resultsGridState.root, resultsGridState.columns);
+  syncResultsHeaderScroll(resultsGridState.root);
   try {
-    payload = JSON.parse(dataEl.textContent || "{}");
+    resultsClusterize.refresh(true);
   } catch {
-    payload = { rows: [], cells: [] };
+    // ignore
   }
-
-  const rows = Array.isArray(payload.rows) ? payload.rows : [];
-  const cells = Array.isArray(payload.cells) ? payload.cells : [];
-
-  resultsGridState = { rows, cells, root };
-
-  resultsClusterize = new Clusterize({
-    rows,
-    scrollElem: scroll,
-    contentElem: content,
-    tag: "tr",
-    rows_in_block: 50,
-    blocks_in_cluster: 4,
-    callbacks: {
-      clusterChanged: function () {
-        fitResultsHeaderColumns(root);
-        syncResultsHeaderScroll(root);
-      },
-    },
-  });
-
-  // Wait until the flex layout has a real height, then refresh Clusterize metrics.
-  const settleLayout = () => {
-    fitResultsHeaderColumns(root);
-    syncResultsHeaderScroll(root);
-    try {
-      resultsClusterize?.refresh(true);
-    } catch {
-      // ignore
-    }
-  };
-  requestAnimationFrame(() => {
-    requestAnimationFrame(settleLayout);
-  });
-  // Extra settle after fonts/maximize transitions.
-  setTimeout(settleLayout, 50);
-
-  // Horizontal header sync.
-  scroll.addEventListener(
-    "scroll",
-    () => {
-      syncResultsHeaderScroll(root);
-    },
-    { passive: true }
-  );
 }
 
 function compareSortValues(av, bv, asc) {
@@ -127,59 +201,254 @@ function compareSortValues(av, bv, asc) {
   return asc ? a.localeCompare(b) : b.localeCompare(a);
 }
 
-function sortResultsClusterize(colIndex, asc) {
-  if (!resultsGridState || !resultsClusterize) return;
+function sortResultsGrid(colIndex) {
+  if (!resultsGridState) return;
+  const state = resultsGridState;
+  const asc = state.sortCol === colIndex ? !state.sortAsc : true;
+  state.sortCol = colIndex;
+  state.sortAsc = asc;
 
-  const { rows, cells } = resultsGridState;
-  const indices = rows.map((_, i) => i);
+  const indices = state.cells.map((_, i) => i);
   indices.sort((ia, ib) =>
-    compareSortValues(cells[ia]?.[colIndex], cells[ib]?.[colIndex], asc)
+    compareSortValues(state.cells[ia]?.[colIndex], state.cells[ib]?.[colIndex], asc)
   );
+  state.cells = indices.map((i) => state.cells[i]);
 
-  resultsGridState.rows = indices.map((i) => rows[i]);
-  resultsGridState.cells = indices.map((i) => cells[i]);
-  resultsClusterize.update(resultsGridState.rows);
-  fitResultsHeaderColumns(resultsGridState.root);
+  renderResultsHeaders(state);
+  refreshResultsClusterize();
+}
+
+function reorderResultsColumn(fromIndex, toIndex) {
+  if (!resultsGridState || fromIndex === toIndex) return;
+  if (fromIndex < 0 || toIndex < 0) return;
+  const state = resultsGridState;
+  if (fromIndex >= state.columns.length || toIndex >= state.columns.length) return;
+
+  const [col] = state.columns.splice(fromIndex, 1);
+  state.columns.splice(toIndex, 0, col);
+
+  for (let r = 0; r < state.cells.length; r++) {
+    const row = state.cells[r];
+    const [val] = row.splice(fromIndex, 1);
+    row.splice(toIndex, 0, val);
+  }
+
+  // Sort column index follows the moved column when possible.
+  if (state.sortCol === fromIndex) {
+    state.sortCol = toIndex;
+  } else if (state.sortCol !== null) {
+    if (fromIndex < state.sortCol && toIndex >= state.sortCol) state.sortCol -= 1;
+    else if (fromIndex > state.sortCol && toIndex <= state.sortCol) state.sortCol += 1;
+  }
+
+  renderResultsHeaders(state);
+  refreshResultsClusterize();
+}
+
+function wireHeaderInteractions(state) {
+  const row = state.root.querySelector(".js-results-header-row");
+  if (!row || row.dataset.wired === "1") {
+    // Always re-bind after innerHTML rebuild.
+  }
+  row.dataset.wired = "1";
+
+  // --- Sort (click, not after drag/resize) ---
+  row.querySelectorAll(".qp-sheet-th").forEach((th) => {
+    th.addEventListener("click", (e) => {
+      if (e.target.closest(".qp-sheet-col-resizer")) return;
+      if (state.suppressClick) {
+        state.suppressClick = false;
+        return;
+      }
+      const colIndex = Number(th.dataset.colIndex);
+      if (Number.isNaN(colIndex)) return;
+      sortResultsGrid(colIndex);
+    });
+  });
+
+  // --- Resize ---
+  row.querySelectorAll(".qp-sheet-col-resizer").forEach((handle) => {
+    handle.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const colIndex = Number(handle.dataset.resizeCol);
+      if (Number.isNaN(colIndex) || !state.columns[colIndex]) return;
+
+      const startX = e.clientX;
+      const startW = state.columns[colIndex].width;
+      state.suppressClick = true;
+      document.body.classList.add("qp-col-resizing");
+
+      const onMove = (ev) => {
+        const delta = ev.clientX - startX;
+        state.columns[colIndex].width = Math.round(
+          Math.min(RESULTS_COL_MAX, Math.max(RESULTS_COL_MIN, startW + delta))
+        );
+        applyColumnWidths(state.root, state.columns);
+      };
+      const onUp = () => {
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+        document.body.classList.remove("qp-col-resizing");
+        // Allow a short window so the click event after mouseup is suppressed.
+        setTimeout(() => {
+          state.suppressClick = false;
+        }, 0);
+        try {
+          resultsClusterize?.refresh(true);
+        } catch {
+          // ignore
+        }
+      };
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    });
+  });
+
+  // --- Reorder (HTML5 DnD) ---
+  let dragFrom = null;
+  row.querySelectorAll(".qp-sheet-th").forEach((th) => {
+    th.addEventListener("dragstart", (e) => {
+      if (e.target.closest(".qp-sheet-col-resizer")) {
+        e.preventDefault();
+        return;
+      }
+      dragFrom = Number(th.dataset.colIndex);
+      state.suppressClick = true;
+      th.classList.add("is-dragging");
+      e.dataTransfer.effectAllowed = "move";
+      try {
+        e.dataTransfer.setData("text/plain", String(dragFrom));
+      } catch {
+        // ignore
+      }
+    });
+    th.addEventListener("dragend", () => {
+      th.classList.remove("is-dragging");
+      row.querySelectorAll(".qp-sheet-th").forEach((el) =>
+        el.classList.remove("is-drop-target")
+      );
+      dragFrom = null;
+      setTimeout(() => {
+        state.suppressClick = false;
+      }, 0);
+    });
+    th.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      th.classList.add("is-drop-target");
+    });
+    th.addEventListener("dragleave", () => {
+      th.classList.remove("is-drop-target");
+    });
+    th.addEventListener("drop", (e) => {
+      e.preventDefault();
+      th.classList.remove("is-drop-target");
+      const toIndex = Number(th.dataset.colIndex);
+      const fromIndex =
+        dragFrom !== null
+          ? dragFrom
+          : Number(e.dataTransfer.getData("text/plain"));
+      if (Number.isNaN(fromIndex) || Number.isNaN(toIndex)) return;
+      reorderResultsColumn(fromIndex, toIndex);
+    });
+  });
+}
+
+function initResultsClusterize(root) {
+  destroyResultsClusterize();
+  if (!root || typeof Clusterize === "undefined") return;
+
+  const scroll = root.querySelector(".js-results-scroll");
+  const content = root.querySelector(".js-results-content");
+  const dataEl = root.querySelector(".js-results-data");
+  if (!scroll || !content || !dataEl) return;
+
+  let payload = { columns: [], cells: [] };
+  try {
+    payload = JSON.parse(dataEl.textContent || "{}");
+  } catch {
+    payload = { columns: [], cells: [] };
+  }
+
+  const columns = (Array.isArray(payload.columns) ? payload.columns : []).map(
+    (c) => ({
+      caption: c.caption || "",
+      align: c.align || "left",
+      width: RESULTS_COL_MIN,
+    })
+  );
+  const cells = Array.isArray(payload.cells) ? payload.cells : [];
+  if (!columns.length) return;
+
+  // Auto-size once from a data sample (fast; ignores full million-row cost).
+  autoSizeColumns(columns, cells, root);
+
+  resultsGridState = {
+    root,
+    columns,
+    cells,
+    sortCol: null,
+    sortAsc: true,
+    suppressClick: false,
+  };
+
+  renderResultsHeaders(resultsGridState);
+  const rows = buildAllRowHtml(resultsGridState);
+
+  resultsClusterize = new Clusterize({
+    rows,
+    scrollElem: scroll,
+    contentElem: content,
+    tag: "tr",
+    rows_in_block: 50,
+    blocks_in_cluster: 4,
+    callbacks: {
+      clusterChanged: function () {
+        syncResultsHeaderScroll(root);
+      },
+    },
+  });
+
+  const settleLayout = () => {
+    applyColumnWidths(root, resultsGridState.columns);
+    syncResultsHeaderScroll(root);
+    try {
+      resultsClusterize?.refresh(true);
+    } catch {
+      // ignore
+    }
+  };
+  requestAnimationFrame(() => {
+    requestAnimationFrame(settleLayout);
+  });
+  setTimeout(settleLayout, 50);
+
+  scroll.addEventListener(
+    "scroll",
+    () => {
+      syncResultsHeaderScroll(root);
+    },
+    { passive: true }
+  );
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Client-side sort: works for Clusterize-backed home grid and plain tables.
+  // Plain admin tables still support click-to-sort (non-Clusterize).
   document.body.addEventListener("click", (e) => {
+    if (e.target.closest(".js-results-root")) return; // handled by sheet headers
     const th = e.target.closest("th[data-sort-col]");
     if (!th) return;
+    const table = th.closest("table");
+    const tbody = table?.querySelector("tbody");
+    if (!tbody) return;
 
     const colIndex = Number(th.dataset.sortCol);
     const asc = th.dataset.sortDir !== "asc";
     th.dataset.sortDir = asc ? "asc" : "desc";
-
-    // Clear other header sort markers / icons in the same header row.
     th.parentElement?.querySelectorAll("th[data-sort-col]").forEach((other) => {
-      if (other !== th) {
-        delete other.dataset.sortDir;
-        const icon = other.querySelector(".qp-sheet-th-sort");
-        if (icon) {
-          icon.classList.remove("fa-sort-up", "fa-sort-down");
-          icon.classList.add("fa-sort");
-        }
-      }
+      if (other !== th) delete other.dataset.sortDir;
     });
-    const sortIcon = th.querySelector(".qp-sheet-th-sort");
-    if (sortIcon) {
-      sortIcon.classList.remove("fa-sort", "fa-sort-up", "fa-sort-down");
-      sortIcon.classList.add(asc ? "fa-sort-up" : "fa-sort-down");
-    }
-
-    const root = th.closest(".js-results-root");
-    if (root?.querySelector(".js-results-content") && resultsGridState) {
-      sortResultsClusterize(colIndex, asc);
-      return;
-    }
-
-    // Fallback: plain DOM table sort (admin or non-clusterized grids).
-    const table = th.closest("table");
-    if (!table) return;
-    const tbody = table.querySelector("tbody");
-    if (!tbody) return;
 
     const bodyRows = Array.from(tbody.querySelectorAll("tr"));
     bodyRows.sort((a, b) => {
@@ -190,10 +459,10 @@ document.addEventListener("DOMContentLoaded", () => {
     bodyRows.forEach((r) => tbody.appendChild(r));
   });
 
-  // Keep header column widths in sync on window resize.
   window.addEventListener("resize", () => {
     if (resultsGridState?.root) {
-      fitResultsHeaderColumns(resultsGridState.root);
+      applyColumnWidths(resultsGridState.root, resultsGridState.columns);
+      syncResultsHeaderScroll(resultsGridState.root);
       try {
         resultsClusterize?.refresh(true);
       } catch {
@@ -551,7 +820,8 @@ function wireResultsMaximize() {
     // Layout width changes — refresh Clusterize row metrics + header sync.
     requestAnimationFrame(() => {
       if (resultsGridState?.root) {
-        fitResultsHeaderColumns(resultsGridState.root);
+        applyColumnWidths(resultsGridState.root, resultsGridState.columns);
+        syncResultsHeaderScroll(resultsGridState.root);
         try {
           resultsClusterize?.refresh(true);
         } catch {

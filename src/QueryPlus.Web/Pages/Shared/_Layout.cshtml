@@ -56,11 +56,11 @@
                             <i class="fa-solid fa-chevron-down text-[0.65rem] opacity-80" aria-hidden="true"></i>
                         </button>
                         <div class="invisible absolute left-0 z-20 mt-1 w-48 rounded-md border border-slate-200 bg-white py-1 text-navy opacity-0 shadow-lg transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-                            <a asp-page="/Admin/Categories/Index" class="flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-cyan-50">
+                            <a asp-page="/Admin/Categories/Index" class="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-cyan-50">
                                 <i class="fa-solid fa-folder text-slate-500" aria-hidden="true"></i>
                                 @L["Nav_Categories"]
                             </a>
-                            <a asp-page="/Admin/Procedures/Index" class="flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-cyan-50">
+                            <a asp-page="/Admin/Procedures/Index" class="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-cyan-50">
                                 <i class="fa-solid fa-database text-slate-500" aria-hidden="true"></i>
                                 @L["Nav_Procedures"]
                             </a>
@@ -74,7 +74,7 @@
                 </nav>
             </div>
             <div class="flex items-center gap-2">
-                <form method="post" asp-page="/Culture" class="flex items-center gap-1.5 text-xs">
+                <form method="post" asp-page="/Culture" class="flex items-center gap-1.5 text-sm">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
                     <label class="sr-only" for="culture">@L["Language"]</label>
@@ -96,12 +96,12 @@
                 </form>
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <span class="hidden items-center gap-1.5 text-xs text-white/80 sm:inline-flex">
+                    <span class="hidden items-center gap-1.5 text-sm text-white/80 sm:inline-flex">
                         <i class="fa-solid fa-user" aria-hidden="true"></i>
                         @User.Identity.Name
                     </span>
                     <form method="post" action="/Account/Logout">
-                        <button type="submit" class="inline-flex items-center gap-1.5 rounded bg-white/10 px-2.5 py-1 text-xs font-medium hover:bg-white/20">
+                        <button type="submit" class="inline-flex items-center gap-1.5 rounded bg-white/10 px-2.5 py-1 text-sm font-medium hover:bg-white/20">
                             <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
                             @L["Logout"]
                         </button>
@@ -109,7 +109,7 @@
                 }
                 else
                 {
-                    <a href="/Account/Login" class="inline-flex items-center gap-1.5 rounded bg-cyan px-2.5 py-1 text-xs font-semibold text-navy hover:bg-cyan-600">
+                    <a href="/Account/Login" class="inline-flex items-center gap-1.5 rounded bg-cyan px-2.5 py-1 text-sm font-semibold text-navy hover:bg-cyan-600">
                         <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
                         @L["Login"]
                     </a>
