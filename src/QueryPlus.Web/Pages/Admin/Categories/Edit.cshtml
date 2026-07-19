@@ -8,8 +8,8 @@
 <div class="qp-page space-y-4">
     <div class="qp-card max-w-3xl">
         <div class="qp-card-header">
-            <h1 class="text-xl font-semibold">@L["Categories_Edit"]</h1>
-            <a asp-page="Index" class="qp-btn-secondary">@L["Back"]</a>
+            <h1 class="qp-page-title">@L["Categories_Edit"]</h1>
+            <a asp-page="Index" class="qp-btn-secondary"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> @L["Back"]</a>
         </div>
         <div class="qp-card-body">
             <form method="post" class="space-y-4">
@@ -24,8 +24,8 @@
                     <span asp-validation-for="Input.Description" class="text-sm text-red-600"></span>
                 </div>
                 <div class="flex gap-2">
-                    <button type="submit" class="qp-btn-primary">@L["Save"]</button>
-                    <a asp-page="View" asp-route-id="@Model.Input.Id" class="qp-btn-secondary">@L["Cancel"]</a>
+                    <button type="submit" class="qp-btn-primary"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> @L["Save"]</button>
+                    <a asp-page="View" asp-route-id="@Model.Input.Id" class="qp-btn-secondary"><i class="fa-solid fa-xmark" aria-hidden="true"></i> @L["Cancel"]</a>
                 </div>
             </form>
         </div>

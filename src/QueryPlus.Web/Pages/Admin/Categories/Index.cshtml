@@ -8,11 +8,17 @@
 <div class="qp-page space-y-4">
     <div class="qp-card">
         <div class="qp-card-header">
-            <h1 class="text-xl font-semibold text-navy">@L["Categories_Title"]</h1>
-            <a asp-page="Create" class="qp-btn-primary">@L["Create"]</a>
+            <h1 class="qp-page-title">
+                <i class="fa-solid fa-folder" aria-hidden="true"></i>
+                @L["Categories_Title"]
+            </h1>
+            <a asp-page="Create" class="qp-btn-primary">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                @L["Create"]
+            </a>
         </div>
         <div class="qp-card-body">
-            <form method="get" class="mb-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+            <form method="get" class="mb-3 grid grid-cols-1 gap-2 md:grid-cols-4">
                 <div class="md:col-span-2">
                     <label class="qp-label" asp-for="Description">@L["Description"]</label>
                     <input class="qp-input" asp-for="Description" />
@@ -26,9 +32,15 @@
                         <option value="100">100</option>
                     </select>
                 </div>
-                <div class="flex items-end gap-2">
-                    <button type="submit" class="qp-btn-primary">@L["Search"]</button>
-                    <a asp-page="./Index" class="qp-btn-secondary">@L["Clear"]</a>
+                <div class="flex items-end gap-1.5">
+                    <button type="submit" class="qp-btn-primary">
+                        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                        @L["Search"]
+                    </button>
+                    <a asp-page="./Index" class="qp-btn-secondary">
+                        <i class="fa-solid fa-eraser" aria-hidden="true"></i>
+                        @L["Clear"]
+                    </a>
                 </div>
             </form>
 
@@ -57,15 +69,24 @@
                                 <td>@item.Description</td>
                                 <td>@item.CreatedAt.ToLocalTime().ToString("g")</td>
                                 <td>@(item.UpdatedAt?.ToLocalTime().ToString("g") ?? "—")</td>
-                                <td class="space-x-1 whitespace-nowrap">
-                                    <a class="qp-btn-ghost" asp-page="View" asp-route-id="@item.Id">@L["View"]</a>
-                                    <a class="qp-btn-ghost" asp-page="Edit" asp-route-id="@item.Id">@L["Edit"]</a>
+                                <td class="space-x-0.5 whitespace-nowrap">
+                                    <a class="qp-btn-ghost" asp-page="View" asp-route-id="@item.Id">
+                                        <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                                        @L["View"]
+                                    </a>
+                                    <a class="qp-btn-ghost" asp-page="Edit" asp-route-id="@item.Id">
+                                        <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                                        @L["Edit"]
+                                    </a>
                                     <form method="post" asp-page-handler="Delete" asp-route-id="@item.Id" class="inline"
                                           data-confirm="@L["ConfirmDelete"]">
                                         <input type="hidden" name="Description" value="@Model.Description" />
                                         <input type="hidden" name="PageNumber" value="@Model.PageNumber" />
                                         <input type="hidden" name="PageSize" value="@Model.PageSize" />
-                                        <button type="submit" class="qp-btn-ghost text-red-700">@L["Delete"]</button>
+                                        <button type="submit" class="qp-btn-ghost text-red-700">
+                                            <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                            @L["Delete"]
+                                        </button>
                                     </form>
                                 </td>
                             </tr>

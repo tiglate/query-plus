@@ -3,30 +3,51 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    /* Slightly denser than browser default (16px), still compact for data screens. */
+    font-size: 14px;
+  }
+
   body {
-    @apply bg-slate-100 text-navy antialiased;
+    @apply bg-slate-100 text-navy antialiased leading-snug;
   }
 }
 
 @layer components {
   .qp-page {
-    @apply w-full px-4 py-4 lg:px-6;
+    @apply w-full px-3 py-3 lg:px-4;
+  }
+
+  .qp-page-title {
+    @apply inline-flex items-center gap-1.5 text-base font-semibold text-navy;
+  }
+
+  .qp-section-title {
+    @apply inline-flex items-center gap-1.5 text-sm font-semibold text-navy;
   }
 
   .qp-card {
-    @apply rounded-lg border border-slate-200 bg-white shadow-sm;
+    @apply rounded-md border border-slate-200 bg-white shadow-sm;
   }
 
   .qp-card-header {
-    @apply flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3;
+    @apply flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-3 py-2;
   }
 
   .qp-card-body {
-    @apply p-4;
+    @apply p-3;
   }
 
   .qp-btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition
+      focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1
+      disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .qp-btn i,
+  .qp-btn .fa-solid,
+  .qp-btn .fa-regular {
+    @apply text-[0.9em] leading-none;
   }
 
   .qp-btn-primary {
@@ -50,11 +71,12 @@
   }
 
   .qp-input {
-    @apply w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-navy shadow-sm focus:border-cyan focus:outline-none focus:ring-1 focus:ring-cyan;
+    @apply w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-navy shadow-sm
+      focus:border-cyan focus:outline-none focus:ring-1 focus:ring-cyan;
   }
 
   .qp-label {
-    @apply mb-1 block text-sm font-medium text-navy;
+    @apply mb-0.5 block text-xs font-medium text-navy;
   }
 
   .qp-label-required {
@@ -66,11 +88,11 @@
   }
 
   .qp-field-error {
-    @apply mt-1 block text-sm text-red-600;
+    @apply mt-0.5 block text-xs text-red-600;
   }
 
   .qp-validation-summary {
-    @apply rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700;
+    @apply rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700;
   }
 
   .qp-validation-summary ul {
@@ -84,7 +106,7 @@
   }
 
   .qp-table {
-    @apply w-full border-collapse text-left text-sm;
+    @apply w-full border-collapse text-left text-xs;
   }
 
   .qp-table thead {
@@ -92,11 +114,11 @@
   }
 
   .qp-table th {
-    @apply px-3 py-2 font-semibold;
+    @apply px-2 py-1.5 font-semibold;
   }
 
   .qp-table td {
-    @apply border-b border-slate-100 px-3 py-2 align-top;
+    @apply border-b border-slate-100 px-2 py-1.5 align-top;
   }
 
   .qp-table tbody tr:hover {
@@ -104,7 +126,7 @@
   }
 
   .qp-badge {
-    @apply inline-flex rounded-full px-2 py-0.5 text-xs font-medium;
+    @apply inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium;
   }
 
   .qp-badge-ok {
@@ -119,11 +141,133 @@
      Closed control stays light-on-dark; options must be dark-on-light because
      native <option> lists often use a white popup and inherit the select color. */
   .qp-lang-select {
-    @apply rounded border-0 bg-white/10 px-2 py-1 text-sm text-white;
+    @apply rounded border-0 bg-white/10 px-2 py-1 text-xs text-white;
   }
 
   .qp-lang-select option {
     color: #0b1f3a; /* navy */
     background-color: #ffffff;
+  }
+
+  .qp-nav-link {
+    @apply inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium hover:bg-white/10;
+  }
+
+  /*
+   * Home execution layout
+   * ---------------------
+   * Body is h-dvh with fixed header/footer; main is flex-1 min-h-0.
+   * Home page fills main and never grows past it. Each column body scrolls
+   * independently (overflow-y: auto → scrollbar only when content overflows).
+   */
+  .qp-home-page {
+    @apply flex min-h-0 w-full flex-1 flex-col gap-3 overflow-hidden;
+    height: 100%;
+    max-height: 100%;
+  }
+
+  .qp-home-toolbar {
+    @apply shrink-0;
+  }
+
+  .qp-home-workspace {
+    @apply flex min-h-0 flex-1 flex-col overflow-hidden;
+  }
+
+  .qp-home-columns {
+    @apply grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-hidden;
+    align-items: stretch;
+  }
+
+  /* Desktop: procedures 20% | parameters 15% | results remaining (~65%). */
+  @media (min-width: 1280px) {
+    .qp-home-columns {
+      grid-template-columns: minmax(0, 20%) minmax(0, 15%) minmax(0, 1fr);
+    }
+  }
+
+  /* Results maximized: hide procedure + parameters; grid uses full workspace. */
+  .qp-home-columns.is-results-maximized {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .qp-home-columns.is-results-maximized > .qp-home-column-side {
+    display: none;
+  }
+
+  .qp-home-columns.is-results-maximized > .qp-home-column-results {
+    max-height: none;
+    min-height: 0;
+  }
+
+  .qp-home-column {
+    @apply flex min-h-0 flex-col overflow-hidden;
+  }
+
+  .qp-home-column-header {
+    @apply shrink-0;
+  }
+
+  .qp-home-column-footer {
+    @apply shrink-0 border-t border-slate-100 px-2.5 py-1.5 text-[11px] text-slate-500;
+  }
+
+  /* Independent vertical scroll; scrollbar only when content overflows. */
+  .qp-home-column-scroll {
+    @apply min-h-0 flex-1;
+    overflow-x: auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  @media (max-width: 1279px) {
+    .qp-home-page {
+      height: auto;
+      max-height: none;
+      overflow: visible;
+    }
+
+    .qp-home-workspace {
+      overflow: visible;
+    }
+
+    .qp-home-columns {
+      overflow: visible;
+    }
+
+    .qp-home-column {
+      max-height: min(40vh, 22rem);
+    }
+
+    .qp-home-column-results {
+      max-height: min(60vh, 32rem);
+    }
+  }
+
+  /* Outlook-style procedure list item: fixed height, truncated caption + description. */
+  .qp-procedure-item {
+    @apply flex w-full flex-col justify-center border-b border-slate-100 border-l-4 border-l-transparent
+      px-2.5 text-left transition-colors hover:bg-slate-50 focus:outline-none focus-visible:bg-cyan-50
+      focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyan-500;
+    height: 3.75rem;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .qp-procedure-item.is-selected {
+    @apply border-l-cyan bg-cyan-50;
+  }
+
+  .qp-procedure-item-caption {
+    @apply block truncate text-xs font-bold leading-tight text-navy;
+  }
+
+  .qp-procedure-item-description {
+    @apply mt-0.5 block text-[11px] leading-snug text-slate-500;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    word-break: break-word;
   }
 }

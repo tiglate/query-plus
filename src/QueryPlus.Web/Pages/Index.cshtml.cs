@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Localization;
 using QueryPlus.Application.Abstractions;
 using QueryPlus.Application.Common;
@@ -46,7 +45,7 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public int? ProcedureId { get; set; }
 
-    public List<SelectListItem> ProcedureOptions { get; private set; } = [];
+    public IReadOnlyList<ProcedureLookupDto> AccessibleProcedures { get; private set; } = [];
     public ProcedureDetailDto? SelectedProcedure { get; private set; }
 
     public async Task OnGetAsync(CancellationToken cancellationToken)
@@ -55,6 +54,12 @@ public class IndexModel : PageModel
         if (ProcedureId is > 0)
         {
             SelectedProcedure = await _procedures.GetByIdAsync(ProcedureId.Value, cancellationToken);
+            // Drop selection if the procedure is no longer accessible / does not exist.
+            if (SelectedProcedure is null || AccessibleProcedures.All(p => p.Id != ProcedureId))
+            {
+                ProcedureId = null;
+                SelectedProcedure = null;
+            }
         }
     }
 
@@ -84,7 +89,6 @@ public class IndexModel : PageModel
             return Content(
                 $"""
                  <p class="text-sm text-slate-500">{_L["Home_NoProcedure"]}</p>
-                 <textarea id="procedure-description" class="qp-input bg-slate-50" rows="2" readonly hx-swap-oob="true"></textarea>
                  """,
                 "text/html");
         }
@@ -95,7 +99,6 @@ public class IndexModel : PageModel
             return Content(
                 $"""
                  <p class="text-sm text-slate-500">{_L["Home_NoProcedure"]}</p>
-                 <textarea id="procedure-description" class="qp-input bg-slate-50" rows="2" readonly hx-swap-oob="true"></textarea>
                  """,
                 "text/html");
         }
@@ -277,11 +280,7 @@ public class IndexModel : PageModel
 
     private async Task LoadProceduresAsync(CancellationToken cancellationToken)
     {
-        var list = await _procedures.GetAccessibleForCurrentUserAsync(cancellationToken);
-        ProcedureOptions = list
-            .Select(p => new SelectListItem(p.Caption, p.Id.ToString(), ProcedureId == p.Id))
-            .ToList();
-        ProcedureOptions.Insert(0, new SelectListItem(_L["Home_NoProcedure"], ""));
+        AccessibleProcedures = await _procedures.GetAccessibleForCurrentUserAsync(cancellationToken);
     }
 
     private Dictionary<string, string?> CollectParameters()

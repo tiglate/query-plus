@@ -850,3 +850,36 @@ BEGIN
     WHERE work_start_time >= ISNULL(@After, '00:00')
     ORDER BY work_start_time;
 END
+GO
+-- Large result set for UI scrollbar / grid performance testing (default 1,000 rows).
+IF OBJECT_ID('dbo.Sp_Demo_Large_Result', 'P') IS NOT NULL DROP PROCEDURE dbo.Sp_Demo_Large_Result;
+GO
+CREATE PROCEDURE dbo.Sp_Demo_Large_Result
+    @RowCount INT = 1000
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @RowCount IS NULL OR @RowCount < 1
+        SET @RowCount = 1000;
+    IF @RowCount > 10000
+        SET @RowCount = 10000;
+
+    ;WITH n AS (
+        SELECT 1 AS n
+        UNION ALL
+        SELECT n + 1 FROM n WHERE n < @RowCount
+    )
+    SELECT
+        n AS RowId,
+        'ITEM-' + RIGHT('0000' + CAST(n AS VARCHAR(10)), 4) AS ItemCode,
+        'Sample product description for row ' + CAST(n AS VARCHAR(10))
+            + ' — used to exercise vertical scrolling in the results grid.' AS Description,
+        CAST((n % 12) + 1 AS INT) AS CategoryId,
+        CAST(10.00 + (n % 250) * 1.37 AS DECIMAL(18, 2)) AS Amount,
+        DATEADD(DAY, -(n % 730), CAST(SYSUTCDATETIME() AS DATE)) AS OrderDate,
+        CASE WHEN n % 3 = 0 THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END AS IsActive
+    FROM n
+    ORDER BY n
+    OPTION (MAXRECURSION 0);
+END

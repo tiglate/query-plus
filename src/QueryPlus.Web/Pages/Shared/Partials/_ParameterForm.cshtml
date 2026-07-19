@@ -86,7 +86,5 @@ else
     </div>
 }
 
-@* Keep procedureId for posts *@
+@* Keep procedureId for posts (main form also has #procedureId). *@
 <input type="hidden" name="procedureId" value="@Model.Id" />
-<textarea id="procedure-description" class="qp-input bg-slate-50" rows="2" readonly
-          hx-swap-oob="true">@Model.Description</textarea>
