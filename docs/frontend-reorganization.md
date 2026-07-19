@@ -1,7 +1,7 @@
 # Frontend reorganization plan
 
 **Branch:** `feature/reorganize-frontend`  
-**Status:** Approved — Phases 0–1 complete; next is Phase 2 (SheetGrid)  
+**Status:** Approved — Phases 0–2 complete; next is Phase 3 (Home page controller)  
 **Last updated:** 2026-07-19
 
 This document is the source of truth for the TypeScript / Vite+ / DI frontend reorg. Resume from here if the session is interrupted.
@@ -185,9 +185,10 @@ class HomePageController extends PageController {
 
 ### Phase 2 — SheetGrid component
 
-- [ ] Port `sheet-grid.js` → TS + DI
-- [ ] Temporary global re-export
-- [ ] Tests: pure helpers, mount/destroy with Clusterize mock
+- [x] Port `sheet-grid.js` → TS + DI (`SheetGrid` / `SheetGridService`)
+- [x] Temporary global re-export via `installGlobalBridge()` (layout drops `sheet-grid.js` script)
+- [x] Tests: pure helpers, mount/destroy with Clusterize mock
+- [x] Fix home `.qp-sheet-grid--home` flex height chain (vertical scrollbar)
 
 ### Phase 3 — Home page controller
 

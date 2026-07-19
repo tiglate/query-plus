@@ -2,6 +2,7 @@ import { container, type DependencyContainer } from "tsyringe";
 import { HtmxBridge } from "../HtmxBridge";
 import { ConfirmSubmitService } from "../../components/confirm-submit/ConfirmSubmitService";
 import { NavDropdownService } from "../../components/nav-dropdown/NavDropdownService";
+import { SheetGridService } from "../../components/sheet-grid/SheetGridService";
 import { SharedShellController } from "../../pages/shared/SharedShellController";
 import { TOKENS, type ConfirmFn } from "./tokens";
 
@@ -34,6 +35,7 @@ export function configureContainer(
     container.registerSingleton(HtmxBridge);
     container.registerSingleton(NavDropdownService);
     container.registerSingleton(ConfirmSubmitService);
+    container.registerSingleton(SheetGridService);
     container.registerSingleton(SharedShellController);
     configured = true;
   } else if (overrides) {
@@ -64,6 +66,7 @@ export function createTestContainer(overrides?: {
   child.registerSingleton(HtmxBridge);
   child.registerSingleton(NavDropdownService);
   child.registerSingleton(ConfirmSubmitService);
+  child.registerSingleton(SheetGridService);
   child.registerSingleton(SharedShellController);
   return child;
 }

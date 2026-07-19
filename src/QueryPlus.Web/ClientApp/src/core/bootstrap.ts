@@ -1,5 +1,6 @@
-import { getAppContainer, configureContainer } from "./di/container";
+import { SheetGridService } from "../components/sheet-grid/SheetGridService";
 import { SharedShellController } from "../pages/shared/SharedShellController";
+import { configureContainer, getAppContainer } from "./di/container";
 
 export interface BootstrapOptions {
   /** Document root; defaults to global document. */
@@ -9,7 +10,7 @@ export interface BootstrapOptions {
 }
 
 /**
- * Configure DI and mount the shared shell (layout behaviors).
+ * Configure DI, install sheet-grid global bridge, mount shared shell.
  * Page-specific controllers are added in later phases via data-page.
  */
 export function bootstrap(options: BootstrapOptions = {}): SharedShellController {
@@ -17,6 +18,10 @@ export function bootstrap(options: BootstrapOptions = {}): SharedShellController
     options.document ? { document: options.document } : undefined,
   );
   const c = getAppContainer();
+
+  // site.js / admin @section Scripts still call window.QueryPlusSheetGrid.
+  c.resolve(SheetGridService).installGlobalBridge();
+
   const shell = c.resolve(SharedShellController);
   const root = options.document ?? document;
   shell.mount(root);

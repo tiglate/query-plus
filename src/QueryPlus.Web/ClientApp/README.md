@@ -25,8 +25,9 @@ Plan: [`docs/frontend-reorganization.md`](../../../docs/frontend-reorganization.
 | `src/styles/legacy-components.css` | Temporary port of `wwwroot/css/input.css` |
 | `tests/` | Vitest + jsdom |
 
-### Phase 1 runtime
+### Runtime (Phases 1–2)
 
-- `_Layout` loads `~/dist/js/app.js` (module): nav dropdown, confirm forms, CSRF.
-- Legacy `wwwroot/js/site.js` still handles home/admin until Phases 3–4.
+- `_Layout` loads `~/dist/js/app.js` (module): nav dropdown, confirm forms, CSRF, **SheetGrid** (`window.QueryPlusSheetGrid`).
+- Legacy `wwwroot/js/site.js` still handles home/admin page wiring until Phases 3–4.
+- `wwwroot/js/sheet-grid.js` is deprecated (no longer loaded).
 - CSS: layout still uses `~/css/site.css` until Phase 5.

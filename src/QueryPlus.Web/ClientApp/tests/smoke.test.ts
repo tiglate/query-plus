@@ -6,7 +6,7 @@ import {
 
 describe("ClientApp smoke", () => {
   it("exports a client version marker", () => {
-    expect(QUERYPLUS_CLIENT_VERSION).toMatch(/phase1/);
+    expect(QUERYPLUS_CLIENT_VERSION).toMatch(/phase2/);
   });
 
   it("runs under jsdom", () => {
