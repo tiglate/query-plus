@@ -1,0 +1,76 @@
+@model QueryPlus.Web.Models.SheetGridModel
+@using System.Text.Json
+@{
+    var payloadJson = JsonSerializer.Serialize(new
+    {
+        columns = Model.Columns.Select(c => new
+        {
+            caption = c.Caption,
+            align = c.Align,
+            html = c.IsHtml,
+            sortable = c.Sortable,
+            width = c.Width
+        }),
+        cells = Model.Cells
+    }).Replace("</", "<\\/", StringComparison.Ordinal);
+
+    var colCount = Math.Max(Model.Columns.Count, 1);
+    var hostClass = string.IsNullOrWhiteSpace(Model.CssClass)
+        ? "qp-sheet-grid"
+        : "qp-sheet-grid " + Model.CssClass;
+}
+
+<div class="@hostClass js-sheet-root" data-col-count="@colCount">
+@if (Model.Cells.Count == 0)
+{
+    <p class="qp-results-empty text-xs text-slate-500">@(Model.EmptyMessage ?? "No records found.")</p>
+}
+else
+{
+    @if (!string.IsNullOrWhiteSpace(Model.MetaHtml))
+    {
+        <div class="qp-results-meta shrink-0">
+            @Html.Raw(Model.MetaHtml)
+        </div>
+    }
+    else if (!string.IsNullOrWhiteSpace(Model.MetaText) || Model.ShowInteractionHint)
+    {
+        <div class="qp-results-meta shrink-0">
+            @if (!string.IsNullOrWhiteSpace(Model.MetaText))
+            {
+                <span class="qp-results-meta-count">@Model.MetaText</span>
+            }
+            @if (Model.ShowInteractionHint)
+            {
+                <span class="qp-results-meta-hint">
+                    <i class="fa-solid fa-up-down-left-right" aria-hidden="true"></i>
+                    Drag headers to reorder · Drag edges to resize
+                </span>
+            }
+        </div>
+    }
+
+    <div class="clusterize qp-results-clusterize">
+        <div class="clusterize-headers qp-results-headers qp-sheet-headers">
+            <table class="qp-sheet js-sheet-headers-table js-results-headers-table">
+                <colgroup class="js-sheet-colgroup-header js-results-colgroup-header"></colgroup>
+                <thead>
+                    <tr class="js-sheet-header-row js-results-header-row"></tr>
+                </thead>
+            </table>
+        </div>
+        <div class="clusterize-scroll qp-results-scroll js-sheet-scroll js-results-scroll">
+            <table class="qp-sheet js-sheet-body-table js-results-body-table">
+                <colgroup class="js-sheet-colgroup-body js-results-colgroup-body"></colgroup>
+                <tbody class="clusterize-content js-sheet-content js-results-content">
+                    <tr class="clusterize-no-data">
+                        <td class="qp-sheet-cell" colspan="@colCount">@(Model.EmptyMessage ?? "No records found.")</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="application/json" class="js-sheet-data js-results-data">@Html.Raw(payloadJson)</script>
+}
+</div>

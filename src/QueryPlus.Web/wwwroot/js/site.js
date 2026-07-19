@@ -1,476 +1,109 @@
 // Lightweight helpers for HTMX-driven UI (no SPA framework).
 
 /**
- * Home results grid (Clusterize.js)
- * ---------------------------------
- * Structured client state: columns + cell matrix.
- * - Auto-width from header + sample of ~200 rows (canvas measureText)
- * - User resize via header edge drag
- * - User reorder via header drag-and-drop
- * - Sort via click (not drag)
+ * Home results grid — shared QueryPlusSheetGrid (Clusterize + Excel-like sheet).
  */
-let resultsClusterize = null;
-/** @type {null | {
- *   root: Element,
- *   columns: { caption: string, align: string, width: number }[],
- *   cells: string[][],
- *   sortCol: number | null,
- *   sortAsc: boolean,
- *   suppressClick: boolean
- * }} */
-let resultsGridState = null;
-
-const RESULTS_COL_MIN = 48;
-const RESULTS_COL_MAX = 480;
-const RESULTS_COL_PAD = 28; // cell padding + sort icon room
-const RESULTS_WIDTH_SAMPLE = 200;
-
-let measureCanvasCtx = null;
-
 function destroyResultsClusterize() {
-  if (resultsClusterize) {
-    try {
-      resultsClusterize.destroy(true);
-    } catch {
-      // instance may already be gone after HTMX swap
-    }
-    resultsClusterize = null;
-  }
-  resultsGridState = null;
-}
-
-function escapeHtml(text) {
-  return String(text ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function getMeasureContext(root) {
-  if (!measureCanvasCtx) {
-    const canvas = document.createElement("canvas");
-    measureCanvasCtx = canvas.getContext("2d");
-  }
-  // Match rendered sheet font when possible.
-  const sample =
-    root?.querySelector(".qp-sheet-th") ||
-    root?.querySelector(".qp-sheet") ||
-    document.body;
-  const style = window.getComputedStyle(sample);
-  const weight = style.fontWeight || "600";
-  const size = style.fontSize || "12px";
-  const family = style.fontFamily || "Inter, Segoe UI, system-ui, sans-serif";
-  measureCanvasCtx.font = `${weight} ${size} ${family}`;
-  return measureCanvasCtx;
-}
-
-function measureTextWidth(ctx, text) {
-  if (!text) return 0;
-  // Cap super-long strings so a single outlier doesn't dominate.
-  const sample = text.length > 80 ? text.slice(0, 80) + "…" : text;
-  return ctx.measureText(sample).width;
-}
-
-/**
- * Auto column widths from header captions + a sample of data rows.
- * O(columns × sampleSize) — cheap even for large result sets.
- */
-function autoSizeColumns(columns, cells, root) {
-  const ctx = getMeasureContext(root);
-  const sample = Math.min(RESULTS_WIDTH_SAMPLE, cells.length);
-
-  for (let c = 0; c < columns.length; c++) {
-    let maxPx = measureTextWidth(ctx, columns[c].caption || "");
-    for (let r = 0; r < sample; r++) {
-      const w = measureTextWidth(ctx, cells[r]?.[c] || "");
-      if (w > maxPx) maxPx = w;
-    }
-    columns[c].width = Math.round(
-      Math.min(RESULTS_COL_MAX, Math.max(RESULTS_COL_MIN, maxPx + RESULTS_COL_PAD))
-    );
-  }
-}
-
-function totalColumnsWidth(columns) {
-  return columns.reduce((sum, col) => sum + (col.width || RESULTS_COL_MIN), 0);
-}
-
-function buildRowHtml(rowCells, columns) {
-  let html = "<tr>";
-  for (let c = 0; c < columns.length; c++) {
-    const align = columns[c].align || "left";
-    html +=
-      `<td class="qp-sheet-cell" style="text-align:${align}">` +
-      escapeHtml(rowCells[c] ?? "") +
-      "</td>";
-  }
-  html += "</tr>";
-  return html;
-}
-
-function buildAllRowHtml(state) {
-  const rows = new Array(state.cells.length);
-  for (let i = 0; i < state.cells.length; i++) {
-    rows[i] = buildRowHtml(state.cells[i], state.columns);
-  }
-  return rows;
-}
-
-function applyColumnWidths(root, columns) {
-  const total = totalColumnsWidth(columns);
-  const headerTable = root.querySelector(".js-results-headers-table");
-  const bodyTable = root.querySelector(".js-results-body-table");
-  const headerGroup = root.querySelector(".js-results-colgroup-header");
-  const bodyGroup = root.querySelector(".js-results-colgroup-body");
-  if (!headerTable || !bodyTable || !headerGroup || !bodyGroup) return;
-
-  const colsHtml = columns
-    .map((col) => `<col style="width:${col.width}px">`)
-    .join("");
-  headerGroup.innerHTML = colsHtml;
-  bodyGroup.innerHTML = colsHtml;
-
-  headerTable.style.width = total + "px";
-  bodyTable.style.width = total + "px";
-  headerTable.style.minWidth = total + "px";
-  bodyTable.style.minWidth = total + "px";
-}
-
-function renderResultsHeaders(state) {
-  const row = state.root.querySelector(".js-results-header-row");
-  if (!row) return;
-
-  const parts = [];
-  for (let c = 0; c < state.columns.length; c++) {
-    const col = state.columns[c];
-    const sorted = state.sortCol === c;
-    const sortClass = sorted
-      ? state.sortAsc
-        ? "fa-sort-up"
-        : "fa-sort-down"
-      : "fa-sort";
-    const dirAttr = sorted
-      ? ` data-sort-dir="${state.sortAsc ? "asc" : "desc"}"`
-      : "";
-    parts.push(
-      `<th class="qp-sheet-th" draggable="true" data-col-index="${c}" data-sort-col="${c}"` +
-        ` style="text-align:${col.align || "left"}" title="Click to sort · Drag to reorder · Drag edge to resize"${dirAttr}>` +
-        `<span class="qp-sheet-th-label">${escapeHtml(col.caption)}</span>` +
-        `<i class="fa-solid ${sortClass} qp-sheet-th-sort" aria-hidden="true"></i>` +
-        `<span class="qp-sheet-col-resizer" data-resize-col="${c}" title="Resize column"></span>` +
-        `</th>`
-    );
-  }
-  row.innerHTML = parts.join("");
-  applyColumnWidths(state.root, state.columns);
-  wireHeaderInteractions(state);
-}
-
-function syncResultsHeaderScroll(root) {
-  const scroll = root?.querySelector(".js-results-scroll");
-  const headers = root?.querySelector(".qp-results-headers");
-  if (!scroll || !headers) return;
-  const headerTable = headers.querySelector("table");
-  if (!headerTable) return;
-  headerTable.style.marginLeft = -scroll.scrollLeft + "px";
-}
-
-function refreshResultsClusterize() {
-  if (!resultsGridState || !resultsClusterize) return;
-  const rows = buildAllRowHtml(resultsGridState);
-  resultsClusterize.update(rows);
-  applyColumnWidths(resultsGridState.root, resultsGridState.columns);
-  syncResultsHeaderScroll(resultsGridState.root);
-  try {
-    resultsClusterize.refresh(true);
-  } catch {
-    // ignore
-  }
-}
-
-function compareSortValues(av, bv, asc) {
-  const a = (av || "").trim();
-  const b = (bv || "").trim();
-  const an = Number(a.replace(",", "."));
-  const bn = Number(b.replace(",", "."));
-  if (!Number.isNaN(an) && !Number.isNaN(bn) && a !== "" && b !== "") {
-    return asc ? an - bn : bn - an;
-  }
-  return asc ? a.localeCompare(b) : b.localeCompare(a);
-}
-
-function sortResultsGrid(colIndex) {
-  if (!resultsGridState) return;
-  const state = resultsGridState;
-  const asc = state.sortCol === colIndex ? !state.sortAsc : true;
-  state.sortCol = colIndex;
-  state.sortAsc = asc;
-
-  const indices = state.cells.map((_, i) => i);
-  indices.sort((ia, ib) =>
-    compareSortValues(state.cells[ia]?.[colIndex], state.cells[ib]?.[colIndex], asc)
-  );
-  state.cells = indices.map((i) => state.cells[i]);
-
-  renderResultsHeaders(state);
-  refreshResultsClusterize();
-}
-
-function reorderResultsColumn(fromIndex, toIndex) {
-  if (!resultsGridState || fromIndex === toIndex) return;
-  if (fromIndex < 0 || toIndex < 0) return;
-  const state = resultsGridState;
-  if (fromIndex >= state.columns.length || toIndex >= state.columns.length) return;
-
-  const [col] = state.columns.splice(fromIndex, 1);
-  state.columns.splice(toIndex, 0, col);
-
-  for (let r = 0; r < state.cells.length; r++) {
-    const row = state.cells[r];
-    const [val] = row.splice(fromIndex, 1);
-    row.splice(toIndex, 0, val);
-  }
-
-  // Sort column index follows the moved column when possible.
-  if (state.sortCol === fromIndex) {
-    state.sortCol = toIndex;
-  } else if (state.sortCol !== null) {
-    if (fromIndex < state.sortCol && toIndex >= state.sortCol) state.sortCol -= 1;
-    else if (fromIndex > state.sortCol && toIndex <= state.sortCol) state.sortCol += 1;
-  }
-
-  renderResultsHeaders(state);
-  refreshResultsClusterize();
-}
-
-function wireHeaderInteractions(state) {
-  const row = state.root.querySelector(".js-results-header-row");
-  if (!row || row.dataset.wired === "1") {
-    // Always re-bind after innerHTML rebuild.
-  }
-  row.dataset.wired = "1";
-
-  // --- Sort (click, not after drag/resize) ---
-  row.querySelectorAll(".qp-sheet-th").forEach((th) => {
-    th.addEventListener("click", (e) => {
-      if (e.target.closest(".qp-sheet-col-resizer")) return;
-      if (state.suppressClick) {
-        state.suppressClick = false;
-        return;
-      }
-      const colIndex = Number(th.dataset.colIndex);
-      if (Number.isNaN(colIndex)) return;
-      sortResultsGrid(colIndex);
-    });
-  });
-
-  // --- Resize ---
-  row.querySelectorAll(".qp-sheet-col-resizer").forEach((handle) => {
-    handle.addEventListener("mousedown", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const colIndex = Number(handle.dataset.resizeCol);
-      if (Number.isNaN(colIndex) || !state.columns[colIndex]) return;
-
-      const startX = e.clientX;
-      const startW = state.columns[colIndex].width;
-      state.suppressClick = true;
-      document.body.classList.add("qp-col-resizing");
-
-      const onMove = (ev) => {
-        const delta = ev.clientX - startX;
-        state.columns[colIndex].width = Math.round(
-          Math.min(RESULTS_COL_MAX, Math.max(RESULTS_COL_MIN, startW + delta))
-        );
-        applyColumnWidths(state.root, state.columns);
-      };
-      const onUp = () => {
-        document.removeEventListener("mousemove", onMove);
-        document.removeEventListener("mouseup", onUp);
-        document.body.classList.remove("qp-col-resizing");
-        // Allow a short window so the click event after mouseup is suppressed.
-        setTimeout(() => {
-          state.suppressClick = false;
-        }, 0);
-        try {
-          resultsClusterize?.refresh(true);
-        } catch {
-          // ignore
-        }
-      };
-      document.addEventListener("mousemove", onMove);
-      document.addEventListener("mouseup", onUp);
-    });
-  });
-
-  // --- Reorder (HTML5 DnD) ---
-  let dragFrom = null;
-  row.querySelectorAll(".qp-sheet-th").forEach((th) => {
-    th.addEventListener("dragstart", (e) => {
-      if (e.target.closest(".qp-sheet-col-resizer")) {
-        e.preventDefault();
-        return;
-      }
-      dragFrom = Number(th.dataset.colIndex);
-      state.suppressClick = true;
-      th.classList.add("is-dragging");
-      e.dataTransfer.effectAllowed = "move";
-      try {
-        e.dataTransfer.setData("text/plain", String(dragFrom));
-      } catch {
-        // ignore
-      }
-    });
-    th.addEventListener("dragend", () => {
-      th.classList.remove("is-dragging");
-      row.querySelectorAll(".qp-sheet-th").forEach((el) =>
-        el.classList.remove("is-drop-target")
-      );
-      dragFrom = null;
-      setTimeout(() => {
-        state.suppressClick = false;
-      }, 0);
-    });
-    th.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
-      th.classList.add("is-drop-target");
-    });
-    th.addEventListener("dragleave", () => {
-      th.classList.remove("is-drop-target");
-    });
-    th.addEventListener("drop", (e) => {
-      e.preventDefault();
-      th.classList.remove("is-drop-target");
-      const toIndex = Number(th.dataset.colIndex);
-      const fromIndex =
-        dragFrom !== null
-          ? dragFrom
-          : Number(e.dataTransfer.getData("text/plain"));
-      if (Number.isNaN(fromIndex) || Number.isNaN(toIndex)) return;
-      reorderResultsColumn(fromIndex, toIndex);
-    });
-  });
+  const panel = document.getElementById("results-panel");
+  if (!panel || !window.QueryPlusSheetGrid) return;
+  panel.querySelectorAll(".js-sheet-root").forEach((el) => QueryPlusSheetGrid.destroy(el));
 }
 
 function initResultsClusterize(root) {
-  destroyResultsClusterize();
-  if (!root || typeof Clusterize === "undefined") return;
-
-  const scroll = root.querySelector(".js-results-scroll");
-  const content = root.querySelector(".js-results-content");
-  const dataEl = root.querySelector(".js-results-data");
-  if (!scroll || !content || !dataEl) return;
-
-  let payload = { columns: [], cells: [] };
-  try {
-    payload = JSON.parse(dataEl.textContent || "{}");
-  } catch {
-    payload = { columns: [], cells: [] };
+  if (!root || !window.QueryPlusSheetGrid) return;
+  // Home partial wraps the sheet root; mount the sheet itself.
+  const sheet =
+    root.matches?.(".js-sheet-root")
+      ? root
+      : root.querySelector?.(".js-sheet-root");
+  if (!sheet) {
+    destroyResultsClusterize();
+    return;
   }
+  QueryPlusSheetGrid.mount(sheet);
+}
 
-  const columns = (Array.isArray(payload.columns) ? payload.columns : []).map(
-    (c) => ({
-      caption: c.caption || "",
-      align: c.align || "left",
-      width: RESULTS_COL_MIN,
-    })
-  );
-  const cells = Array.isArray(payload.cells) ? payload.cells : [];
-  if (!columns.length) return;
-
-  // Auto-size once from a data sample (fast; ignores full million-row cost).
-  autoSizeColumns(columns, cells, root);
-
-  resultsGridState = {
-    root,
-    columns,
-    cells,
-    sortCol: null,
-    sortAsc: true,
-    suppressClick: false,
-  };
-
-  renderResultsHeaders(resultsGridState);
-  const rows = buildAllRowHtml(resultsGridState);
-
-  resultsClusterize = new Clusterize({
-    rows,
-    scrollElem: scroll,
-    contentElem: content,
-    tag: "tr",
-    rows_in_block: 50,
-    blocks_in_cluster: 4,
-    callbacks: {
-      clusterChanged: function () {
-        syncResultsHeaderScroll(root);
-      },
-    },
-  });
-
-  const settleLayout = () => {
-    applyColumnWidths(root, resultsGridState.columns);
-    syncResultsHeaderScroll(root);
-    try {
-      resultsClusterize?.refresh(true);
-    } catch {
-      // ignore
-    }
-  };
-  requestAnimationFrame(() => {
-    requestAnimationFrame(settleLayout);
-  });
-  setTimeout(settleLayout, 50);
-
-  scroll.addEventListener(
-    "scroll",
-    () => {
-      syncResultsHeaderScroll(root);
-    },
-    { passive: true }
-  );
+function refreshHomeSheetLayout() {
+  const panel = document.getElementById("results-panel");
+  if (!panel || !window.QueryPlusSheetGrid) return;
+  panel.querySelectorAll(".js-sheet-root").forEach((el) => QueryPlusSheetGrid.refresh(el));
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Plain admin tables still support click-to-sort (non-Clusterize).
-  document.body.addEventListener("click", (e) => {
-    if (e.target.closest(".js-results-root")) return; // handled by sheet headers
-    const th = e.target.closest("th[data-sort-col]");
-    if (!th) return;
-    const table = th.closest("table");
-    const tbody = table?.querySelector("tbody");
-    if (!tbody) return;
-
-    const colIndex = Number(th.dataset.sortCol);
-    const asc = th.dataset.sortDir !== "asc";
-    th.dataset.sortDir = asc ? "asc" : "desc";
-    th.parentElement?.querySelectorAll("th[data-sort-col]").forEach((other) => {
-      if (other !== th) delete other.dataset.sortDir;
-    });
-
-    const bodyRows = Array.from(tbody.querySelectorAll("tr"));
-    bodyRows.sort((a, b) => {
-      const av = (a.children[colIndex]?.textContent || "").trim();
-      const bv = (b.children[colIndex]?.textContent || "").trim();
-      return compareSortValues(av, bv, asc);
-    });
-    bodyRows.forEach((r) => tbody.appendChild(r));
-  });
-
   window.addEventListener("resize", () => {
-    if (resultsGridState?.root) {
-      applyColumnWidths(resultsGridState.root, resultsGridState.columns);
-      syncResultsHeaderScroll(resultsGridState.root);
-      try {
-        resultsClusterize?.refresh(true);
-      } catch {
-        // ignore
-      }
-    }
+    refreshHomeSheetLayout();
   });
+  wireNavDropdowns();
 });
+
+/**
+ * Header dropdowns (Admin → Categories / Procedures).
+ * Pure CSS :hover fails when the pointer crosses the gap between trigger and panel.
+ * Keep open while pointer is over the whole control, with a short leave delay.
+ */
+function wireNavDropdowns() {
+  document.querySelectorAll("[data-nav-dropdown]").forEach((root) => {
+    const trigger = root.querySelector("[data-nav-dropdown-trigger]");
+    const panel = root.querySelector("[data-nav-dropdown-panel]");
+    if (!trigger || !panel) return;
+
+    let closeTimer = null;
+    const CLOSE_DELAY_MS = 250;
+
+    const open = () => {
+      if (closeTimer) {
+        clearTimeout(closeTimer);
+        closeTimer = null;
+      }
+      panel.hidden = false;
+      trigger.setAttribute("aria-expanded", "true");
+      root.classList.add("is-open");
+    };
+
+    const close = () => {
+      panel.hidden = true;
+      trigger.setAttribute("aria-expanded", "false");
+      root.classList.remove("is-open");
+    };
+
+    const scheduleClose = () => {
+      if (closeTimer) clearTimeout(closeTimer);
+      closeTimer = setTimeout(close, CLOSE_DELAY_MS);
+    };
+
+    root.addEventListener("mouseenter", open);
+    root.addEventListener("mouseleave", scheduleClose);
+
+    // Keyboard / click: toggle; keep focus-within open.
+    trigger.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (panel.hidden) open();
+      else close();
+    });
+
+    root.addEventListener("focusin", open);
+    root.addEventListener("focusout", (e) => {
+      // Close only when focus leaves the whole dropdown control.
+      if (!root.contains(e.relatedTarget)) {
+        scheduleClose();
+      }
+    });
+
+    // Close when clicking outside.
+    document.addEventListener("click", (e) => {
+      if (!root.contains(e.target)) {
+        close();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !panel.hidden) {
+        close();
+        trigger.focus();
+      }
+    });
+  });
+}
 
 // Confirm delete forms
 document.body.addEventListener("submit", (e) => {
@@ -819,15 +452,7 @@ function wireResultsMaximize() {
     setResultsMaximized(!isResultsMaximized());
     // Layout width changes — refresh Clusterize row metrics + header sync.
     requestAnimationFrame(() => {
-      if (resultsGridState?.root) {
-        applyColumnWidths(resultsGridState.root, resultsGridState.columns);
-        syncResultsHeaderScroll(resultsGridState.root);
-        try {
-          resultsClusterize?.refresh(true);
-        } catch {
-          // ignore
-        }
-      }
+      refreshHomeSheetLayout();
     });
   });
 }

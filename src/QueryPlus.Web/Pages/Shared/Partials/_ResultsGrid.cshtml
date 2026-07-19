@@ -1,11 +1,9 @@
 @model ExecutionResultDto
-@using System.Text.Json
 @inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> L
 @{
     var hasRows = Model.Success && Model.Data is { Rows.Count: > 0 };
     var rowCount = hasRows ? Model.Data!.Rows.Count : 0;
 
-    // Visible columns (metadata may hide technical columns).
     var visibleColumns = new List<(string Caption, string Align, string? FormatMask, int SourceIndex)>();
     if (hasRows)
     {
@@ -53,14 +51,10 @@
         return text;
     }
 
-    // Structured payload: client builds row HTML, auto-sizes, reorders, and resizes.
-    var columnsPayload = visibleColumns
-        .Select(c => new { caption = c.Caption, align = c.Align })
-        .ToList();
-
-    var cellValues = new List<string[]>(rowCount);
+    SheetGridModel? sheet = null;
     if (hasRows)
     {
+        var cells = new List<IReadOnlyList<string>>(rowCount);
         foreach (System.Data.DataRow row in Model.Data!.Rows)
         {
             var values = new string[visibleColumns.Count];
@@ -69,16 +63,28 @@
                 values[c] = FormatCell(row[visibleColumns[c].SourceIndex], visibleColumns[c].FormatMask);
             }
 
-            cellValues.Add(values);
+            cells.Add(values);
         }
-    }
 
-    // Prevent accidental </script> breakout in the HTML document.
-    var payloadJson = JsonSerializer.Serialize(new { columns = columnsPayload, cells = cellValues })
-        .Replace("</", "<\\/", StringComparison.Ordinal);
+        sheet = new SheetGridModel
+        {
+            Columns = visibleColumns
+                .Select(c => new SheetGridColumn
+                {
+                    Caption = c.Caption,
+                    Align = c.Align
+                })
+                .ToList(),
+            Cells = cells,
+            EmptyMessage = L["NoRecords"].Value,
+            MetaText = $"{Model.RowCount} {L["Home_Rows"].Value}",
+            ShowInteractionHint = true,
+            CssClass = "qp-sheet-grid--home"
+        };
+    }
 }
 
-<div class="js-results-root"
+<div class="js-results-root js-sheet-host"
      data-export-ready="@(hasRows ? "true" : "false")"
      data-row-count="@rowCount"
      data-procedure-id="@Model.ProcedureId"
@@ -90,42 +96,12 @@
         @(Model.ErrorMessage ?? L["Home_ExportFailed"].Value)
     </div>
 }
-else if (!hasRows)
+else if (sheet is null)
 {
     <p class="qp-results-empty text-xs text-slate-500">@L["NoRecords"]</p>
 }
 else
 {
-    <div class="qp-results-meta shrink-0">
-        <span class="qp-results-meta-count">@Model.RowCount @L["Home_Rows"]</span>
-        <span class="qp-results-meta-hint">
-            <i class="fa-solid fa-up-down-left-right" aria-hidden="true"></i>
-            Drag headers to reorder · Drag edges to resize
-        </span>
-    </div>
-
-    @* Clusterize.js: header table + virtualized scroll body. Headers rebuilt client-side. *@
-    <div class="clusterize qp-results-clusterize">
-        <div class="clusterize-headers qp-results-headers">
-            <table class="qp-sheet js-results-headers-table">
-                <colgroup class="js-results-colgroup-header"></colgroup>
-                <thead>
-                    <tr class="js-results-header-row"></tr>
-                </thead>
-            </table>
-        </div>
-        <div class="clusterize-scroll qp-results-scroll js-results-scroll">
-            <table class="qp-sheet js-results-body-table">
-                <colgroup class="js-results-colgroup-body"></colgroup>
-                <tbody class="clusterize-content js-results-content">
-                    <tr class="clusterize-no-data">
-                        <td class="qp-sheet-cell" colspan="@Math.Max(visibleColumns.Count, 1)">@L["NoRecords"]</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <script type="application/json" class="js-results-data">@Html.Raw(payloadJson)</script>
+    <partial name="Shared/Partials/_SheetGrid" model="sheet" />
 }
 </div>

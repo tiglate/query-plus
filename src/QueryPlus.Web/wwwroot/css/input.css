@@ -267,6 +267,16 @@
     @apply inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-sm font-medium hover:bg-white/10;
   }
 
+  /* Admin dropdown: panel sits under trigger; pt-1 is a live hover bridge (no margin gap). */
+  .qp-nav-dropdown-panel {
+    /* Ensure the bridge + menu sit above page content while open */
+    z-index: 50;
+  }
+
+  .qp-nav-dropdown.is-open > .qp-nav-link {
+    @apply bg-white/10;
+  }
+
   /* Header chrome buttons (logout / login) — same soft volume language. */
   .qp-header-btn {
     border: 1px solid rgba(255, 255, 255, 0.14);
@@ -629,5 +639,73 @@
     color: #64748b;
     text-align: center;
     padding: 0.75rem;
+  }
+
+  /*
+   * Admin search screens (Categories / Procedures)
+   * -----------------------------------------------
+   * Toolbar + Filters stay natural height; Results card fills leftover viewport.
+   * Same flex height pattern as the home execution workspace.
+   */
+  .qp-admin-search-page {
+    @apply flex min-h-0 w-full flex-1 flex-col gap-3 overflow-hidden;
+    height: 100%;
+    max-height: 100%;
+  }
+
+  .qp-admin-results-card {
+    @apply flex min-h-0 flex-1 flex-col overflow-hidden;
+  }
+
+  .qp-admin-results-body {
+    @apply flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-3;
+  }
+
+  .qp-admin-results-pager {
+    @apply shrink-0 border-t border-slate-100 pt-2;
+  }
+
+  .qp-admin-results-pager nav {
+    @apply mt-0;
+  }
+
+  /*
+   * Shared sheet grid variants.
+   * Home fills the results panel; admin Results card fills remaining page height.
+   */
+  .qp-sheet-grid {
+    @apply w-full;
+  }
+
+  .qp-sheet-grid--admin {
+    @apply flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-slate-200 bg-white;
+  }
+
+  .qp-sheet-grid--admin .qp-results-clusterize {
+    @apply flex min-h-0 flex-1 flex-col overflow-hidden;
+  }
+
+  /* Fill the Results card; override Clusterize default max-height. */
+  .qp-sheet-grid--admin .qp-results-scroll,
+  .qp-sheet-grid--admin .qp-results-scroll.clusterize-scroll {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: auto !important;
+  }
+
+  .qp-grid-actions {
+    @apply inline-flex flex-wrap items-center gap-0.5 whitespace-nowrap;
+  }
+
+  .qp-grid-actions form {
+    display: inline;
+  }
+
+  .qp-grid-actions .qp-btn,
+  .qp-grid-actions .qp-btn-ghost {
+    @apply text-xs;
+    padding: 0.15rem 0.4rem;
   }
 }

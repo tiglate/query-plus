@@ -28,6 +28,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/clusterize.js/0.19.0/clusterize.min.js"
             crossorigin="anonymous"
             referrerpolicy="no-referrer"></script>
+    <script src="~/js/sheet-grid.js" asp-append-version="true"></script>
     @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
     @{
         var af = Antiforgery.GetAndStoreTokens(Context);
@@ -49,21 +50,37 @@
                         <i class="fa-solid fa-house" aria-hidden="true"></i>
                         @L["Nav_Home"]
                     </a>
-                    <div class="relative group">
-                        <button type="button" class="qp-nav-link @(path.StartsWith("/Admin") ? "bg-white/10 text-cyan" : "")">
+                    @* JS-managed dropdown (CSS hover alone fails across the button→menu gap). *@
+                    <div class="qp-nav-dropdown relative" data-nav-dropdown>
+                        <button type="button"
+                                class="qp-nav-link @(path.StartsWith("/Admin") ? "bg-white/10 text-cyan" : "")"
+                                data-nav-dropdown-trigger
+                                aria-haspopup="true"
+                                aria-expanded="false"
+                                id="nav-admin-trigger">
                             <i class="fa-solid fa-gear" aria-hidden="true"></i>
                             @L["Nav_Admin"]
                             <i class="fa-solid fa-chevron-down text-[0.65rem] opacity-80" aria-hidden="true"></i>
                         </button>
-                        <div class="invisible absolute left-0 z-20 mt-1 w-48 rounded-md border border-slate-200 bg-white py-1 text-navy opacity-0 shadow-lg transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-                            <a asp-page="/Admin/Categories/Index" class="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-cyan-50">
-                                <i class="fa-solid fa-folder text-slate-500" aria-hidden="true"></i>
-                                @L["Nav_Categories"]
-                            </a>
-                            <a asp-page="/Admin/Procedures/Index" class="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-cyan-50">
-                                <i class="fa-solid fa-database text-slate-500" aria-hidden="true"></i>
-                                @L["Nav_Procedures"]
-                            </a>
+                        <div class="qp-nav-dropdown-panel absolute left-0 top-full z-50 w-48 pt-1"
+                             data-nav-dropdown-panel
+                             role="menu"
+                             aria-labelledby="nav-admin-trigger"
+                             hidden>
+                            <div class="rounded-md border border-slate-200 bg-white py-1 text-navy shadow-lg">
+                                <a asp-page="/Admin/Categories/Index"
+                                   role="menuitem"
+                                   class="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-cyan-50">
+                                    <i class="fa-solid fa-folder text-slate-500" aria-hidden="true"></i>
+                                    @L["Nav_Categories"]
+                                </a>
+                                <a asp-page="/Admin/Procedures/Index"
+                                   role="menuitem"
+                                   class="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-cyan-50">
+                                    <i class="fa-solid fa-database text-slate-500" aria-hidden="true"></i>
+                                    @L["Nav_Procedures"]
+                                </a>
+                            </div>
                         </div>
                     </div>
                     <a asp-page="/Support"
