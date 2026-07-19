@@ -110,4 +110,6 @@
   <data name="Pagination_Next" xml:space="preserve"><value>Next</value></data>
   <data name="Pagination_PageSize" xml:space="preserve"><value>Per page</value></data>
   <data name="Pagination_Summary" xml:space="preserve"><value>Showing {0}–{1} of {2}</value></data>
+  <data name="Home_MaximizeGrid" xml:space="preserve"><value>Maximize</value></data>
+  <data name="Home_RestoreGrid" xml:space="preserve"><value>Restore</value></data>
 </root>

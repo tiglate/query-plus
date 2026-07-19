@@ -9,10 +9,10 @@
 <div class="qp-page space-y-4">
     <div class="qp-card">
         <div class="qp-card-header">
-            <h1 class="text-xl font-semibold">@L["Procedures_View"]</h1>
+            <h1 class="qp-page-title">@L["Procedures_View"]</h1>
             <div class="flex gap-2">
-                <a asp-page="Edit" asp-route-id="@Model.Input.Id" class="qp-btn-primary">@L["Edit"]</a>
-                <a asp-page="Index" class="qp-btn-secondary">@L["Back"]</a>
+                <a asp-page="Edit" asp-route-id="@Model.Input.Id" class="qp-btn-primary"><i class="fa-solid fa-pen" aria-hidden="true"></i> @L["Edit"]</a>
+                <a asp-page="Index" class="qp-btn-secondary"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> @L["Back"]</a>
             </div>
         </div>
         <div class="qp-card-body">

@@ -13,8 +13,11 @@
      data-msg-required-params-multi="@L["Home_RequiredParametersMissing"]">
     <div class="qp-card qp-home-toolbar shrink-0">
         <div class="qp-card-header">
-            <h1 class="text-xl font-semibold text-navy">@L["Home_Title"]</h1>
-            <div class="flex flex-wrap gap-2">
+            <h1 class="qp-page-title">
+                <i class="fa-solid fa-play text-cyan" aria-hidden="true"></i>
+                @L["Home_Title"]
+            </h1>
+            <div class="flex flex-wrap gap-1.5">
                 <button type="button"
                         id="btn-execute"
                         class="qp-btn-primary"
@@ -25,6 +28,7 @@
                         hx-indicator="#exec-indicator"
                         disabled="@(!hasProcedure)"
                         title="@L["Home_SelectProcedureRequired"]">
+                    <i class="fa-solid fa-play" aria-hidden="true"></i>
                     @L["Home_Execute"]
                 </button>
                 <button type="button"
@@ -33,6 +37,7 @@
                         data-clear-url="@Url.Page("/Index")"
                         disabled="@(!hasProcedure)"
                         title="@L["Home_SelectProcedureRequired"]">
+                    <i class="fa-solid fa-eraser" aria-hidden="true"></i>
                     @L["Clear"]
                 </button>
                 <button type="button"
@@ -44,9 +49,12 @@
                         hx-swap="innerHTML"
                         disabled="disabled"
                         title="@L["Home_ExportRequiresData"]">
+                    <i class="fa-solid fa-file-excel" aria-hidden="true"></i>
                     @L["Home_Export"]
                 </button>
-                <span id="exec-indicator" class="htmx-indicator text-sm text-slate-500">…</span>
+                <span id="exec-indicator" class="htmx-indicator text-xs text-slate-500">
+                    <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+                </span>
             </div>
         </div>
     </div>
@@ -62,10 +70,13 @@
 
         <div class="qp-home-columns">
             @* Column 1 (~20%): procedure list (Outlook-style inbox) *@
-            <section class="qp-card qp-home-column" aria-label="@L["Home_SelectProcedure"]">
+            <section class="qp-card qp-home-column qp-home-column-side" aria-label="@L["Home_SelectProcedure"]">
                 <div class="qp-card-header qp-home-column-header">
-                    <h2 class="font-semibold">@L["Home_SelectProcedure"]</h2>
-                    <span class="text-xs font-normal text-slate-500">@Model.AccessibleProcedures.Count</span>
+                    <h2 class="qp-section-title">
+                        <i class="fa-solid fa-list" aria-hidden="true"></i>
+                        @L["Home_SelectProcedure"]
+                    </h2>
+                    <span class="text-[11px] font-normal text-slate-500">@Model.AccessibleProcedures.Count</span>
                 </div>
                 <div id="procedure-list"
                      class="qp-home-column-scroll qp-procedure-list"
@@ -73,7 +84,7 @@
                      aria-label="@L["Home_SelectProcedure"]">
                     @if (Model.AccessibleProcedures.Count == 0)
                     {
-                        <p class="px-3 py-4 text-sm text-slate-500">@L["NoRecords"]</p>
+                        <p class="px-3 py-3 text-xs text-slate-500">@L["NoRecords"]</p>
                     }
                     else
                     {
@@ -104,10 +115,13 @@
                 </p>
             </section>
 
-            @* Column 2 (~20%): parameters *@
-            <section class="qp-card qp-home-column" aria-label="@L["Home_Parameters"]">
+            @* Column 2 (~15%): parameters *@
+            <section class="qp-card qp-home-column qp-home-column-side" aria-label="@L["Home_Parameters"]">
                 <div class="qp-card-header qp-home-column-header">
-                    <h2 class="font-semibold">@L["Home_Parameters"]</h2>
+                    <h2 class="qp-section-title">
+                        <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+                        @L["Home_Parameters"]
+                    </h2>
                 </div>
                 <div class="qp-card-body qp-home-column-scroll" id="parameters-panel">
                     @if (Model.SelectedProcedure is not null)
@@ -116,7 +130,7 @@
                     }
                     else
                     {
-                        <p class="text-sm text-slate-500">@L["Home_NoProcedure"]</p>
+                        <p class="text-xs text-slate-500">@L["Home_NoProcedure"]</p>
                     }
                 </div>
             </section>
@@ -124,8 +138,23 @@
             @* Column 3 (~60%): results grid *@
             <section class="qp-card qp-home-column qp-home-column-results" aria-label="@L["Home_Results"]">
                 <div class="qp-card-header qp-home-column-header">
-                    <h2 class="font-semibold">@L["Home_Results"]</h2>
-                    <div id="export-status"></div>
+                    <h2 class="qp-section-title">
+                        <i class="fa-solid fa-table" aria-hidden="true"></i>
+                        @L["Home_Results"]
+                    </h2>
+                    <div class="flex items-center gap-1.5">
+                        <div id="export-status"></div>
+                        <button type="button"
+                                id="btn-toggle-results-max"
+                                class="qp-btn-ghost"
+                                aria-pressed="false"
+                                data-label-maximize="@L["Home_MaximizeGrid"]"
+                                data-label-restore="@L["Home_RestoreGrid"]"
+                                title="@L["Home_MaximizeGrid"]">
+                            <i class="fa-solid fa-expand js-results-max-icon" aria-hidden="true"></i>
+                            <span class="js-results-max-label">@L["Home_MaximizeGrid"]</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="qp-card-body qp-home-column-scroll" id="results-panel"
                      data-export-ready="false">

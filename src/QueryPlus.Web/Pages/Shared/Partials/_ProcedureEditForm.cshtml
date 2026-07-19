@@ -48,7 +48,7 @@
         <span asp-validation-for="RoleEntitlement" class="qp-field-error"></span>
     </div>
     <div class="flex items-end gap-2">
-        <label class="inline-flex items-center gap-2 text-sm font-medium">
+        <label class="inline-flex items-center gap-2 text-xs font-medium">
             <input type="checkbox" asp-for="Enabled" disabled="@isReadOnly" class="h-4 w-4 rounded border-slate-300 text-cyan" />
             @L["Enabled"]
         </label>
@@ -73,6 +73,7 @@
                 formnovalidate
                 disabled="@(!canSync)"
                 title="@L["Procedures_SyncMetadata_Hint"]">
+            <i class="fa-solid fa-rotate" aria-hidden="true"></i>
             @L["Procedures_SyncMetadata"]
         </button>
         <span id="sync-metadata-hint" class="text-xs text-slate-500 @(canSync ? "hidden" : "")">
@@ -83,10 +84,11 @@
 
 <div class="mt-6">
     <div class="mb-2 flex items-center justify-between">
-        <h2 class="text-lg font-semibold">@L["Procedures_Parameters"]</h2>
+        <h2 class="qp-section-title"><i class="fa-solid fa-sliders" aria-hidden="true"></i> @L["Procedures_Parameters"]</h2>
         @if (!isReadOnly)
         {
             <button type="submit" formaction="?handler=AddParameter" class="qp-btn-secondary" formnovalidate>
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
                 @L["Procedures_AddParameter"]
             </button>
         }
@@ -130,6 +132,7 @@
                     {
                         <td>
                             <button type="submit" formaction="?handler=RemoveParameter&index=@i" class="qp-btn-ghost text-red-700" formnovalidate>
+                                <i class="fa-solid fa-trash" aria-hidden="true"></i>
                                 @L["Remove"]
                             </button>
                         </td>
@@ -147,10 +150,11 @@
 
 <div class="mt-6">
     <div class="mb-2 flex items-center justify-between">
-        <h2 class="text-lg font-semibold">@L["Procedures_Columns"]</h2>
+        <h2 class="qp-section-title"><i class="fa-solid fa-table-columns" aria-hidden="true"></i> @L["Procedures_Columns"]</h2>
         @if (!isReadOnly)
         {
             <button type="submit" formaction="?handler=AddColumn" class="qp-btn-secondary" formnovalidate>
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
                 @L["Procedures_AddColumn"]
             </button>
         }
@@ -191,6 +195,7 @@
                     {
                         <td>
                             <button type="submit" formaction="?handler=RemoveColumn&index=@i" class="qp-btn-ghost text-red-700" formnovalidate>
+                                <i class="fa-solid fa-trash" aria-hidden="true"></i>
                                 @L["Remove"]
                             </button>
                         </td>
