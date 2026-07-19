@@ -1985,5 +1985,73 @@
         "visible": true
       }
     ]
+  },
+  {
+    "caption": "Test - 1,000 Rows",
+    "category": "Demo - Mixed",
+    "description": "Generates 1,000 sample rows (default) for testing vertical scrollbars in the results grid. Optional row count, max 10,000.",
+    "procedureName": "dbo.Sp_Demo_Large_Result",
+    "role": "user",
+    "parameters": [
+      {
+        "caption": "Row count",
+        "name": "@RowCount",
+        "type": "Numeric",
+        "default": "1000",
+        "combo": null,
+        "required": false
+      }
+    ],
+    "columns": [
+      {
+        "tech": "RowId",
+        "caption": "Row #",
+        "align": "Right",
+        "format": "{0:n0}",
+        "visible": true
+      },
+      {
+        "tech": "ItemCode",
+        "caption": "Code",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Description",
+        "caption": "Description",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "CategoryId",
+        "caption": "Category",
+        "align": "Right",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Amount",
+        "caption": "Amount",
+        "align": "Right",
+        "format": "{0:c}",
+        "visible": true
+      },
+      {
+        "tech": "OrderDate",
+        "caption": "Order Date",
+        "align": "Center",
+        "format": "{0:d}",
+        "visible": true
+      },
+      {
+        "tech": "IsActive",
+        "caption": "Active",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      }
+    ]
   }
 ]

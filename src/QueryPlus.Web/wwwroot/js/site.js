@@ -39,10 +39,36 @@ document.body.addEventListener("submit", (e) => {
   }
 });
 
-// Home screen action buttons
+// Home screen action buttons — procedure id lives in a hidden input (list selection).
+function getProcedureIdInput() {
+  return (
+    document.getElementById("procedureId") ||
+    document.querySelector("#exec-form .js-procedure-select") ||
+    document.querySelector(".js-procedure-select")
+  );
+}
+
 function hasSelectedProcedure() {
-  const select = document.querySelector(".js-procedure-select") || document.getElementById("procedureId");
+  const select = getProcedureIdInput();
   return !!(select?.value || "").trim() && Number(select.value) > 0;
+}
+
+function selectProcedureItem(item) {
+  if (!item) return;
+  const id = item.getAttribute("data-procedure-id") || "";
+  const input = getProcedureIdInput();
+  if (input) {
+    input.value = id;
+  }
+
+  document.querySelectorAll(".js-procedure-item").forEach((el) => {
+    const selected = el === item;
+    el.classList.toggle("is-selected", selected);
+    el.setAttribute("aria-selected", selected ? "true" : "false");
+  });
+
+  clearExportableResults();
+  updateHomeActionButtons();
 }
 
 function hasExportableResults() {
@@ -68,8 +94,10 @@ function setExportEnabled(enabled) {
 }
 
 function updateHomeActionButtons() {
-  const select = document.querySelector(".js-procedure-select") || document.getElementById("procedureId");
-  if (!select) return;
+  // Home page may not be mounted (admin screens).
+  if (!document.getElementById("exec-form") && !document.querySelector(".js-procedure-item")) {
+    return;
+  }
 
   const hasProcedure = hasSelectedProcedure();
 
@@ -116,17 +144,17 @@ function clearExportableResults() {
 }
 
 function wireHomeProcedureGuards() {
-  const select = document.querySelector(".js-procedure-select") || document.getElementById("procedureId");
-  if (!select) return;
+  const form = document.getElementById("exec-form");
+  if (!form && !document.querySelector(".js-procedure-item")) return;
 
-  select.addEventListener("change", () => {
-    // Changing procedure/params context invalidates prior results for export.
-    clearExportableResults();
-    updateHomeActionButtons();
+  // Outlook-style list: click selects procedure, updates hidden id, loads params via HTMX.
+  document.body.addEventListener("click", (e) => {
+    const item = e.target.closest?.(".js-procedure-item");
+    if (!item) return;
+    selectProcedureItem(item);
   });
 
   // Parameter edits after Execute invalidate export eligibility client-side.
-  const form = document.getElementById("exec-form");
   if (form) {
     // Enter in a parameter field would otherwise full-post the form and wipe the UI
     // (POST without a page handler re-renders without loading the procedure list).

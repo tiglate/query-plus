@@ -22,74 +22,73 @@ else if (!hasRows)
 else
 {
     <div class="mb-2 text-sm text-slate-600">@Model.RowCount @L["Home_Rows"]</div>
-    <div class="max-h-[70vh] overflow-auto">
-        <table class="qp-table" id="results-table">
-            <thead class="sticky top-0">
-                <tr>
-                    @{
-                        var colIndex = 0;
-                    }
-                    @foreach (System.Data.DataColumn col in Model.Data!.Columns)
+    @* Scroll is owned by #results-panel (.qp-home-column-scroll); no nested max-height. *@
+    <table class="qp-table" id="results-table">
+        <thead class="sticky top-0 z-10">
+            <tr>
+                @{
+                    var colIndex = 0;
+                }
+                @foreach (System.Data.DataColumn col in Model.Data!.Columns)
+                {
+                    var meta = Model.Columns.FirstOrDefault(c =>
+                        string.Equals(c.TechnicalName, col.ColumnName, StringComparison.OrdinalIgnoreCase));
+                    if (meta is { Visible: false })
                     {
-                        var meta = Model.Columns.FirstOrDefault(c =>
-                            string.Equals(c.TechnicalName, col.ColumnName, StringComparison.OrdinalIgnoreCase));
-                        if (meta is { Visible: false })
-                        {
-                            colIndex++;
-                            continue;
-                        }
-                        var caption = meta?.Caption ?? col.ColumnName;
-                        var align = meta?.Alignment switch
-                        {
-                            ColumnAlignment.Center => "center",
-                            ColumnAlignment.Right => "right",
-                            _ => "left"
-                        };
-                        <th data-sort-col="@colIndex" class="cursor-pointer select-none" style="text-align:@align" title="Sort">
-                            @caption
-                        </th>
                         colIndex++;
+                        continue;
                     }
-                </tr>
-            </thead>
-            <tbody>
-            @foreach (System.Data.DataRow row in Model.Data.Rows)
-            {
-                <tr>
-                    @for (var i = 0; i < Model.Data.Columns.Count; i++)
+                    var caption = meta?.Caption ?? col.ColumnName;
+                    var align = meta?.Alignment switch
                     {
-                        var col = Model.Data.Columns[i];
-                        var meta = Model.Columns.FirstOrDefault(c =>
-                            string.Equals(c.TechnicalName, col.ColumnName, StringComparison.OrdinalIgnoreCase));
-                        if (meta is { Visible: false })
-                        {
-                            continue;
-                        }
-                        var value = row[i];
-                        var text = value is DBNull or null ? "" : value.ToString();
-                        if (meta?.FormatMask is { Length: > 0 } mask && value is IFormattable)
-                        {
-                            try
-                            {
-                                text = string.Format(System.Globalization.CultureInfo.CurrentCulture, mask, value);
-                            }
-                            catch
-                            {
-                                // keep raw text
-                            }
-                        }
-                        var align = meta?.Alignment switch
-                        {
-                            ColumnAlignment.Center => "center",
-                            ColumnAlignment.Right => "right",
-                            _ => "left"
-                        };
-                        <td class="whitespace-nowrap" style="text-align:@align">@text</td>
+                        ColumnAlignment.Center => "center",
+                        ColumnAlignment.Right => "right",
+                        _ => "left"
+                    };
+                    <th data-sort-col="@colIndex" class="cursor-pointer select-none" style="text-align:@align" title="Sort">
+                        @caption
+                    </th>
+                    colIndex++;
+                }
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (System.Data.DataRow row in Model.Data.Rows)
+        {
+            <tr>
+                @for (var i = 0; i < Model.Data.Columns.Count; i++)
+                {
+                    var col = Model.Data.Columns[i];
+                    var meta = Model.Columns.FirstOrDefault(c =>
+                        string.Equals(c.TechnicalName, col.ColumnName, StringComparison.OrdinalIgnoreCase));
+                    if (meta is { Visible: false })
+                    {
+                        continue;
                     }
-                </tr>
-            }
-            </tbody>
-        </table>
-    </div>
+                    var value = row[i];
+                    var text = value is DBNull or null ? "" : value.ToString();
+                    if (meta?.FormatMask is { Length: > 0 } mask && value is IFormattable)
+                    {
+                        try
+                        {
+                            text = string.Format(System.Globalization.CultureInfo.CurrentCulture, mask, value);
+                        }
+                        catch
+                        {
+                            // keep raw text
+                        }
+                    }
+                    var align = meta?.Alignment switch
+                    {
+                        ColumnAlignment.Center => "center",
+                        ColumnAlignment.Right => "right",
+                        _ => "left"
+                    };
+                    <td class="whitespace-nowrap" style="text-align:@align">@text</td>
+                }
+            </tr>
+        }
+        </tbody>
+    </table>
 }
 </div>

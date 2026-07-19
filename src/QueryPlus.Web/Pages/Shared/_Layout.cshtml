@@ -22,8 +22,9 @@
     }
     <meta name="csrf-token" content="@af.RequestToken" />
 </head>
-<body class="min-h-screen flex flex-col font-sans">
-    <header class="bg-navy text-white shadow">
+@* h-dvh + overflow-hidden: chrome stays fixed; main scrolls for admin pages; home fills main and scrolls per-column. *@
+<body class="flex h-dvh flex-col overflow-hidden font-sans">
+    <header class="shrink-0 bg-navy text-white shadow">
         <div class="flex w-full items-center justify-between gap-4 px-4 py-3 lg:px-6">
             <div class="flex items-center gap-8">
                 <a asp-page="/Index" class="flex items-center gap-2 text-lg font-semibold tracking-tight">
@@ -89,19 +90,19 @@
         </div>
     </header>
 
-    <main class="flex-1 w-full">
+    <main class="flex min-h-0 w-full flex-1 flex-col overflow-y-auto">
         @if (TempData["Success"] is string success)
         {
-            <div class="mx-4 mt-4 rounded border border-leaf bg-leaf/20 px-4 py-2 text-sm text-navy lg:mx-6">@success</div>
+            <div class="mx-4 mt-4 shrink-0 rounded border border-leaf bg-leaf/20 px-4 py-2 text-sm text-navy lg:mx-6">@success</div>
         }
         @if (TempData["Error"] is string error)
         {
-            <div class="mx-4 mt-4 rounded border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800 lg:mx-6">@error</div>
+            <div class="mx-4 mt-4 shrink-0 rounded border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800 lg:mx-6">@error</div>
         }
         @RenderBody()
     </main>
 
-    <footer class="border-t border-slate-200 bg-white">
+    <footer class="shrink-0 border-t border-slate-200 bg-white">
         <div class="flex w-full items-center justify-between px-4 py-3 text-xs text-slate-500 lg:px-6">
             <span>&copy; @DateTime.UtcNow.Year QueryPlus</span>
             <span>@L["Footer_Tagline"]</span>

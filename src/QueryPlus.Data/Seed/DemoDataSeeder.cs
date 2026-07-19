@@ -95,16 +95,7 @@ public sealed class DemoDataSeeder
             return;
         }
 
-        // Idempotent: if USA Presidents procedure already registered, only backfill IsRequired flags.
-        if (await _db.Procedures.AnyAsync(
-                p => p.ProcedureName == "dbo.Sp_USA_President_List" || p.ProcedureName == "Sp_USA_President_List",
-                cancellationToken))
-        {
-            await BackfillRequiredFlagsAsync(cancellationToken);
-            _logger.LogInformation("Demo catalog already present; skipped full procedure metadata seed.");
-            return;
-        }
-
+        // Ensure categories exist for every catalog entry.
         var categories = new Dictionary<string, Category>(StringComparer.OrdinalIgnoreCase);
         foreach (var categoryName in entries.Select(e => e.Category).Distinct(StringComparer.OrdinalIgnoreCase))
         {
@@ -120,62 +111,105 @@ public sealed class DemoDataSeeder
             categories[categoryName] = existing;
         }
 
+        // Idempotent: only insert procedures that are not already registered (by technical name).
+        var existingNames = await _db.Procedures
+            .AsNoTracking()
+            .Select(p => p.ProcedureName)
+            .ToListAsync(cancellationToken);
+        var existingSet = new HashSet<string>(existingNames, StringComparer.OrdinalIgnoreCase);
+
+        var added = 0;
         foreach (var entry in entries)
         {
+            if (existingSet.Contains(entry.ProcedureName)
+                || existingSet.Contains(entry.ProcedureName.Replace("dbo.", "", StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            // Also treat bare vs dbo-prefixed as the same.
+            var bare = entry.ProcedureName.Contains('.')
+                ? entry.ProcedureName[(entry.ProcedureName.LastIndexOf('.') + 1)..]
+                : entry.ProcedureName;
+            if (existingSet.Contains(bare) || existingSet.Contains("dbo." + bare))
+            {
+                continue;
+            }
+
             if (!categories.TryGetValue(entry.Category, out var category))
             {
                 continue;
             }
 
-            var procedure = new Procedure
-            {
-                IdCategory = category.IdCategory,
-                Caption = entry.Caption,
-                DatabaseName = databaseName,
-                ProcedureName = entry.ProcedureName,
-                Enabled = true,
-                RoleEntitlement = string.IsNullOrWhiteSpace(entry.Role) ? "user" : entry.Role,
-                Description = entry.Description,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            foreach (var p in entry.Parameters)
-            {
-                var paramType = ParseParameterType(p.Type);
-                // Prefer explicit flag; otherwise treat missing default as required (except boolean).
-                var isRequired = p.Required
-                    ?? (paramType != ParameterType.Boolean && string.IsNullOrWhiteSpace(p.Default));
-
-                procedure.Parameters.Add(new ProcedureParameter
-                {
-                    Caption = p.Caption,
-                    Name = p.Name.StartsWith('@') ? p.Name : "@" + p.Name,
-                    ParameterType = paramType,
-                    DefaultValue = p.Default,
-                    ComboValues = p.Combo,
-                    IsRequired = isRequired,
-                    CreatedAt = DateTime.UtcNow
-                });
-            }
-
-            foreach (var c in entry.Columns)
-            {
-                procedure.Columns.Add(new ProcedureColumn
-                {
-                    TechnicalName = c.Tech,
-                    Caption = c.Caption,
-                    Alignment = ParseAlignment(c.Align),
-                    FormatMask = c.Format,
-                    Visible = c.Visible,
-                    CreatedAt = DateTime.UtcNow
-                });
-            }
-
+            var procedure = BuildProcedureFromCatalog(entry, category.IdCategory, databaseName);
             _db.Procedures.Add(procedure);
+            existingSet.Add(entry.ProcedureName);
+            added++;
         }
 
-        await _db.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("Seeded {Count} demo procedures into catalog.", entries.Count);
+        if (added > 0)
+        {
+            await _db.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation("Seeded {Count} new demo procedure(s) into catalog.", added);
+        }
+        else
+        {
+            _logger.LogInformation("Demo catalog up to date; no new procedures to seed.");
+        }
+
+        await BackfillRequiredFlagsAsync(cancellationToken);
+    }
+
+    private static Procedure BuildProcedureFromCatalog(
+        CatalogEntry entry,
+        int categoryId,
+        string databaseName)
+    {
+        var procedure = new Procedure
+        {
+            IdCategory = categoryId,
+            Caption = entry.Caption,
+            DatabaseName = databaseName,
+            ProcedureName = entry.ProcedureName,
+            Enabled = true,
+            RoleEntitlement = string.IsNullOrWhiteSpace(entry.Role) ? "user" : entry.Role,
+            Description = entry.Description,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        foreach (var p in entry.Parameters)
+        {
+            var paramType = ParseParameterType(p.Type);
+            // Prefer explicit flag; otherwise treat missing default as required (except boolean).
+            var isRequired = p.Required
+                ?? (paramType != ParameterType.Boolean && string.IsNullOrWhiteSpace(p.Default));
+
+            procedure.Parameters.Add(new ProcedureParameter
+            {
+                Caption = p.Caption,
+                Name = p.Name.StartsWith('@') ? p.Name : "@" + p.Name,
+                ParameterType = paramType,
+                DefaultValue = p.Default,
+                ComboValues = p.Combo,
+                IsRequired = isRequired,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        foreach (var c in entry.Columns)
+        {
+            procedure.Columns.Add(new ProcedureColumn
+            {
+                TechnicalName = c.Tech,
+                Caption = c.Caption,
+                Alignment = ParseAlignment(c.Align),
+                FormatMask = c.Format,
+                Visible = c.Visible,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        return procedure;
     }
 
     private static string ResolveSeedFile(string fileName)
