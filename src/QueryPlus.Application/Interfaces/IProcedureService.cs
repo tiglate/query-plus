@@ -1,10 +1,11 @@
+using QueryPlus.Application.DTOs.Common;
 using QueryPlus.Application.DTOs.Procedures;
 
 namespace QueryPlus.Application.Interfaces;
 
 public interface IProcedureService
 {
-    Task<IReadOnlyList<ProcedureListItemDto>> SearchAsync(
+    Task<PagedResult<ProcedureListItemDto>> SearchAsync(
         ProcedureFilterDto filter,
         CancellationToken cancellationToken = default);
 

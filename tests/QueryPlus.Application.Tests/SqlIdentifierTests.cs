@@ -22,4 +22,6 @@ public class SqlIdentifierTests
         var act = () => SqlIdentifier.BuildThreePartName("Sales", bad);
         act.Should().Throw<ArgumentException>();
     }
+
+    // Additional coverage lives in SqlIdentifierSecurityTests.
 }

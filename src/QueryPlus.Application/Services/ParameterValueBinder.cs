@@ -21,7 +21,13 @@ public static class ParameterValueBinder
         var rawLookup = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
         foreach (var (key, value) in rawValues)
         {
-            rawLookup[SqlIdentifier.NormalizeParameterName(key)] = value;
+            // Ignore attacker-supplied garbage keys; only catalog names are used.
+            if (!TryNormalizeParameterName(key, out var normalizedKey))
+            {
+                continue;
+            }
+
+            rawLookup[normalizedKey] = value;
         }
 
         foreach (var definition in definitions)
@@ -73,7 +79,12 @@ public static class ParameterValueBinder
         var rawLookup = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
         foreach (var (key, value) in rawValues)
         {
-            rawLookup[SqlIdentifier.NormalizeParameterName(key)] = value;
+            if (!TryNormalizeParameterName(key, out var normalizedKey))
+            {
+                continue;
+            }
+
+            rawLookup[normalizedKey] = value;
         }
 
         var missing = new List<string>();
@@ -111,6 +122,25 @@ public static class ParameterValueBinder
         return string.IsNullOrWhiteSpace(effectiveValue);
     }
 
+    private static bool TryNormalizeParameterName(string name, out string normalized)
+    {
+        normalized = string.Empty;
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return false;
+        }
+
+        try
+        {
+            normalized = SqlIdentifier.NormalizeParameterName(name);
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+    }
+
     private static object? ConvertValue(
         ParameterType type,
         string? raw,
@@ -126,13 +156,12 @@ public static class ParameterValueBinder
 
         return type switch
         {
-            ParameterType.FreeText => value,
+            ParameterType.FreeText => ParameterSecurity.SanitizeAndValidateFreeText(value),
             ParameterType.Combo => ValidateCombo(value, definition),
             ParameterType.Numeric => ParseNumeric(value),
-            ParameterType.Date => DateOnly.Parse(value, CultureInfo.InvariantCulture)
-                .ToDateTime(TimeOnly.MinValue),
-            ParameterType.Time => TimeOnly.Parse(value, CultureInfo.InvariantCulture).ToTimeSpan(),
-            ParameterType.DateTime => DateTime.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind),
+            ParameterType.Date => ParseDate(value),
+            ParameterType.Time => ParseTime(value),
+            ParameterType.DateTime => ParseDateTime(value),
             ParameterType.Boolean => ParseBoolean(value),
             _ => throw new FormatException($"Unsupported parameter type '{type}'.")
         };
@@ -140,14 +169,61 @@ public static class ParameterValueBinder
 
     private static string ValidateCombo(string value, ProcedureParameter definition)
     {
+        // Combo is a closed allow-list — reject anything not explicitly configured.
         var options = JsonHelpers.ParseStringArray(definition.ComboValues);
-        if (options.Count > 0 &&
-            !options.Contains(value, StringComparer.OrdinalIgnoreCase))
+        if (options.Count == 0)
+        {
+            throw new FormatException("Combo parameter has no allowed options configured.");
+        }
+
+        if (!options.Contains(value, StringComparer.OrdinalIgnoreCase))
         {
             throw new FormatException($"Value '{value}' is not in the allowed combo options.");
         }
 
-        return value;
+        // Return the canonical option text (prevents mixed-case / look-alike tricks).
+        return options.First(o => string.Equals(o, value, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static DateTime ParseDate(string value)
+    {
+        if (!DateOnly.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var date)
+            && !DateOnly.TryParse(value, CultureInfo.CurrentCulture, DateTimeStyles.None, out date))
+        {
+            throw new FormatException($"'{value}' is not a valid date.");
+        }
+
+        return date.ToDateTime(TimeOnly.MinValue);
+    }
+
+    private static TimeSpan ParseTime(string value)
+    {
+        if (!TimeOnly.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var time)
+            && !TimeOnly.TryParse(value, CultureInfo.CurrentCulture, DateTimeStyles.None, out time))
+        {
+            throw new FormatException($"'{value}' is not a valid time.");
+        }
+
+        return time.ToTimeSpan();
+    }
+
+    private static DateTime ParseDateTime(string value)
+    {
+        if (!DateTime.TryParse(
+                value,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind | DateTimeStyles.AllowWhiteSpaces,
+                out var dt)
+            && !DateTime.TryParse(
+                value,
+                CultureInfo.CurrentCulture,
+                DateTimeStyles.AllowWhiteSpaces,
+                out dt))
+        {
+            throw new FormatException($"'{value}' is not a valid date/time.");
+        }
+
+        return dt;
     }
 
     private static object ParseNumeric(string value)

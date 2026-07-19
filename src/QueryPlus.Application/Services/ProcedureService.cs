@@ -1,6 +1,7 @@
 using AutoMapper;
 using FluentValidation;
 using QueryPlus.Application.Abstractions;
+using QueryPlus.Application.DTOs.Common;
 using QueryPlus.Application.DTOs.Procedures;
 using QueryPlus.Application.Interfaces;
 using QueryPlus.Application.Mapping;
@@ -36,7 +37,7 @@ public sealed class ProcedureService : IProcedureService
         _saveValidator = saveValidator;
     }
 
-    public async Task<IReadOnlyList<ProcedureListItemDto>> SearchAsync(
+    public async Task<PagedResult<ProcedureListItemDto>> SearchAsync(
         ProcedureFilterDto filter,
         CancellationToken cancellationToken = default)
     {
@@ -50,8 +51,23 @@ public sealed class ProcedureService : IProcedureService
             ProcedureName = filter.ProcedureName
         };
 
-        var items = await _procedures.SearchAsync(criteria, cancellationToken);
-        return _mapper.Map<IReadOnlyList<ProcedureListItemDto>>(items);
+        var (page, pageSize) = PagedResult<ProcedureListItemDto>.Normalize(filter.Page, filter.PageSize);
+
+        var (items, totalCount) = await _procedures.SearchAsync(criteria, page, pageSize, cancellationToken);
+
+        if (totalCount > 0 && (page - 1) * pageSize >= totalCount)
+        {
+            (page, pageSize) = PagedResult<ProcedureListItemDto>.Normalize(page, pageSize, totalCount);
+            (items, totalCount) = await _procedures.SearchAsync(criteria, page, pageSize, cancellationToken);
+        }
+
+        return new PagedResult<ProcedureListItemDto>
+        {
+            Items = _mapper.Map<IReadOnlyList<ProcedureListItemDto>>(items),
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 
     public async Task<ProcedureDetailDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)

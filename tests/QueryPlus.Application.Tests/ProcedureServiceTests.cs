@@ -37,6 +37,36 @@ public class ProcedureServiceTests
     }
 
     [Fact]
+    public async Task SearchAsync_ReturnsPagedResult()
+    {
+        var entities = new List<Procedure>
+        {
+            new()
+            {
+                IdProcedure = 1,
+                IdCategory = 1,
+                Caption = "Sales Report",
+                DatabaseName = "Sales",
+                ProcedureName = "dbo.usp_Sales",
+                RoleEntitlement = "user",
+                Category = new Category { IdCategory = 1, Description = "Sales" }
+            }
+        };
+        _procedures.SearchAsync(Arg.Any<ProcedureSearchCriteria>(), 1, 20, Arg.Any<CancellationToken>())
+            .Returns((entities, 1));
+
+        var result = await _sut.SearchAsync(new ProcedureFilterDto
+        {
+            Caption = "Sales",
+            Page = 1,
+            PageSize = 20
+        });
+
+        result.TotalCount.Should().Be(1);
+        result.Items.Should().ContainSingle(i => i.Caption == "Sales Report");
+    }
+
+    [Fact]
     public async Task GetByIdAsync_ReturnsDto_WhenFound()
     {
         _procedures.GetByIdWithDetailsAsync(1).Returns(new Procedure

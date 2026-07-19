@@ -17,6 +17,15 @@
                     <label class="qp-label" asp-for="Description">@L["Description"]</label>
                     <input class="qp-input" asp-for="Description" />
                 </div>
+                <div>
+                    <label class="qp-label" asp-for="PageSize">@L["Pagination_PageSize"]</label>
+                    <select class="qp-input" asp-for="PageSize">
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
                 <div class="flex items-end gap-2">
                     <button type="submit" class="qp-btn-primary">@L["Search"]</button>
                     <a asp-page="./Index" class="qp-btn-secondary">@L["Clear"]</a>
@@ -53,6 +62,9 @@
                                     <a class="qp-btn-ghost" asp-page="Edit" asp-route-id="@item.Id">@L["Edit"]</a>
                                     <form method="post" asp-page-handler="Delete" asp-route-id="@item.Id" class="inline"
                                           data-confirm="@L["ConfirmDelete"]">
+                                        <input type="hidden" name="Description" value="@Model.Description" />
+                                        <input type="hidden" name="PageNumber" value="@Model.PageNumber" />
+                                        <input type="hidden" name="PageSize" value="@Model.PageSize" />
                                         <button type="submit" class="qp-btn-ghost text-red-700">@L["Delete"]</button>
                                     </form>
                                 </td>
@@ -62,6 +74,8 @@
                     </tbody>
                 </table>
             </div>
+
+            <partial name="Partials/_Pager" model="Model.Pager" />
         </div>
     </div>
 </div>

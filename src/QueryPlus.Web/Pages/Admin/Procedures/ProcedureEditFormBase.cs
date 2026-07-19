@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Localization;
-using QueryPlus.Application.DTOs.Categories;
 using QueryPlus.Application.Interfaces;
 using QueryPlus.Domain.Enums;
 using QueryPlus.Web.Resources;
@@ -37,7 +36,7 @@ public abstract class ProcedureEditFormBase : PageModel
 
     protected async Task LoadLookupsAsync(CancellationToken cancellationToken)
     {
-        var cats = await Categories.SearchAsync(new CategoryFilterDto(), cancellationToken);
+        var cats = await Categories.ListAllAsync(cancellationToken);
         CategoryOptions = cats
             .Select(c => new SelectListItem(c.Description, c.Id.ToString(), Input.CategoryId == c.Id))
             .ToList();

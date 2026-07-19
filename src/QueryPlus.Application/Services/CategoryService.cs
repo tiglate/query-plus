@@ -1,6 +1,7 @@
 using AutoMapper;
 using FluentValidation;
 using QueryPlus.Application.DTOs.Categories;
+using QueryPlus.Application.DTOs.Common;
 using QueryPlus.Application.Interfaces;
 using QueryPlus.Application.Validation;
 using QueryPlus.Domain.Entities;
@@ -31,11 +32,42 @@ public sealed class CategoryService : ICategoryService
         _updateValidator = updateValidator;
     }
 
-    public async Task<IReadOnlyList<CategoryListItemDto>> SearchAsync(
+    public async Task<PagedResult<CategoryListItemDto>> SearchAsync(
         CategoryFilterDto filter,
         CancellationToken cancellationToken = default)
     {
-        var items = await _categories.SearchAsync(filter.Description, cancellationToken);
+        var (page, pageSize) = PagedResult<CategoryListItemDto>.Normalize(filter.Page, filter.PageSize);
+
+        var (items, totalCount) = await _categories.SearchAsync(
+            filter.Description,
+            page,
+            pageSize,
+            cancellationToken);
+
+        // If the requested page is past the end (e.g. after deletes), clamp and re-fetch once.
+        if (totalCount > 0 && (page - 1) * pageSize >= totalCount)
+        {
+            (page, pageSize) = PagedResult<CategoryListItemDto>.Normalize(page, pageSize, totalCount);
+            (items, totalCount) = await _categories.SearchAsync(
+                filter.Description,
+                page,
+                pageSize,
+                cancellationToken);
+        }
+
+        return new PagedResult<CategoryListItemDto>
+        {
+            Items = _mapper.Map<IReadOnlyList<CategoryListItemDto>>(items),
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
+    }
+
+    public async Task<IReadOnlyList<CategoryListItemDto>> ListAllAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var items = await _categories.GetAllAsync(cancellationToken);
         return _mapper.Map<IReadOnlyList<CategoryListItemDto>>(items);
     }
 

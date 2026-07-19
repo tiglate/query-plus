@@ -105,4 +105,9 @@
   <data name="Filter" xml:space="preserve"><value>Filters</value></data>
   <data name="Remove" xml:space="preserve"><value>Remove</value></data>
   <data name="Validation_FixErrors" xml:space="preserve"><value>Please correct the highlighted fields before saving.</value></data>
+  <data name="Pagination" xml:space="preserve"><value>Pagination</value></data>
+  <data name="Pagination_Previous" xml:space="preserve"><value>Previous</value></data>
+  <data name="Pagination_Next" xml:space="preserve"><value>Next</value></data>
+  <data name="Pagination_PageSize" xml:space="preserve"><value>Per page</value></data>
+  <data name="Pagination_Summary" xml:space="preserve"><value>Showing {0}–{1} of {2}</value></data>
 </root>

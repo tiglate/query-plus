@@ -53,4 +53,61 @@ public class CategoryServiceTests
 
         await act.Should().ThrowAsync<BusinessRuleException>();
     }
+
+    [Fact]
+    public async Task SearchAsync_ReturnsPagedResult()
+    {
+        var entities = new List<Category>
+        {
+            new() { IdCategory = 1, Description = "Alpha" },
+            new() { IdCategory = 2, Description = "Beta" }
+        };
+        _categories.SearchAsync("a", 1, 20, Arg.Any<CancellationToken>())
+            .Returns((entities, 2));
+
+        var result = await _sut.SearchAsync(new CategoryFilterDto
+        {
+            Description = "a",
+            Page = 1,
+            PageSize = 20
+        });
+
+        result.TotalCount.Should().Be(2);
+        result.Page.Should().Be(1);
+        result.PageSize.Should().Be(20);
+        result.Items.Should().HaveCount(2);
+        result.Items[0].Description.Should().Be("Alpha");
+    }
+
+    [Fact]
+    public async Task SearchAsync_ClampsPage_WhenPastEnd()
+    {
+        _categories.SearchAsync(null, 5, 10, Arg.Any<CancellationToken>())
+            .Returns((Array.Empty<Category>(), 12));
+        _categories.SearchAsync(null, 2, 10, Arg.Any<CancellationToken>())
+            .Returns((
+                new List<Category> { new() { IdCategory = 3, Description = "Last" } },
+                12));
+
+        var result = await _sut.SearchAsync(new CategoryFilterDto { Page = 5, PageSize = 10 });
+
+        result.Page.Should().Be(2);
+        result.TotalCount.Should().Be(12);
+        result.Items.Should().ContainSingle(i => i.Description == "Last");
+    }
+
+    [Fact]
+    public async Task ListAllAsync_MapsAllCategories()
+    {
+        _categories.GetAllAsync(Arg.Any<CancellationToken>()).Returns(
+        [
+            new Category { IdCategory = 1, Description = "A" },
+            new Category { IdCategory = 2, Description = "B" }
+        ]);
+
+        var result = await _sut.ListAllAsync();
+
+        result.Should().HaveCount(2);
+        result.Select(c => c.Description).Should().Equal("A", "B");
+    }
 }

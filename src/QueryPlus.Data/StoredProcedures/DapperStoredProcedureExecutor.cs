@@ -36,12 +36,16 @@ public sealed class DapperStoredProcedureExecutor : IStoredProcedureExecutor
         var dynamicParameters = new DynamicParameters();
         foreach (var (name, value) in parameters)
         {
+            // Reject anything that is not a simple parameter name (blocks name injection).
+            ParameterSecurity.EnsureSafeParameterName(name);
             var paramName = SqlIdentifier.NormalizeParameterName(name);
-            // Reject anything that is not a simple parameter name.
-            var bare = paramName.TrimStart('@');
-            if (!SqlIdentifier.IsValidSegment(bare))
+
+            // Never pass free-form SQL fragments as command text — values only.
+            if (value is string s && s.Contains('\0'))
             {
-                throw new ArgumentException($"Invalid parameter name '{name}'.", nameof(parameters));
+                throw new ArgumentException(
+                    $"Parameter '{paramName}' contains an invalid null character.",
+                    nameof(parameters));
             }
 
             dynamicParameters.Add(paramName, value ?? DBNull.Value);

@@ -290,7 +290,9 @@ public class IndexModel : PageModel
         foreach (var key in Request.Form.Keys.Where(k => k.StartsWith("param_", StringComparison.OrdinalIgnoreCase)))
         {
             var name = key["param_".Length..];
-            dict[name] = Request.Form[key].ToString();
+            // HTMX / form posts bypass model binding for these keys — trim explicitly.
+            var raw = Request.Form[key].ToString();
+            dict[name] = string.IsNullOrEmpty(raw) ? raw : raw.Trim();
         }
 
         foreach (var key in Request.Form.Keys.Where(k => k.StartsWith("paramcheck_", StringComparison.OrdinalIgnoreCase)))

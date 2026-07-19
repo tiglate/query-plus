@@ -73,6 +73,8 @@ public sealed class ProcedureFilterDto
     public bool? Enabled { get; init; }
     public string? DatabaseName { get; init; }
     public string? ProcedureName { get; init; }
+    public int Page { get; init; } = 1;
+    public int PageSize { get; init; } = 20;
 }
 
 public sealed class SaveProcedureDto

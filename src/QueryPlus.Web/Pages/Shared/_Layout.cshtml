@@ -55,7 +55,8 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
                     <label class="sr-only" for="culture">@L["Language"]</label>
-                    <select id="culture" name="culture" class="rounded border-0 bg-white/10 px-2 py-1 text-sm text-white"
+                    @* Options must use dark text: browsers inherit select color into the popup list. *@
+                    <select id="culture" name="culture" class="qp-lang-select"
                             onchange="this.form.submit()">
                         @if (culture.StartsWith("pt", StringComparison.OrdinalIgnoreCase))
                         {

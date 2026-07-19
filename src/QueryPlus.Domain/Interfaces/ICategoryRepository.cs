@@ -6,8 +6,13 @@ public interface ICategoryRepository
 {
     Task<Category?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Category>> GetAllAsync(CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Category>> SearchAsync(
+    /// <summary>
+    /// Filtered category search with server-side pagination.
+    /// </summary>
+    Task<(IReadOnlyList<Category> Items, int TotalCount)> SearchAsync(
         string? description,
+        int page,
+        int pageSize,
         CancellationToken cancellationToken = default);
     Task<bool> ExistsByDescriptionAsync(
         string description,

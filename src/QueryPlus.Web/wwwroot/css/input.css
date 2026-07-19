@@ -114,4 +114,16 @@
   .qp-badge-off {
     @apply qp-badge bg-slate-200 text-slate-700;
   }
+
+  /* Language switcher on the navy header.
+     Closed control stays light-on-dark; options must be dark-on-light because
+     native <option> lists often use a white popup and inherit the select color. */
+  .qp-lang-select {
+    @apply rounded border-0 bg-white/10 px-2 py-1 text-sm text-white;
+  }
+
+  .qp-lang-select option {
+    color: #0b1f3a; /* navy */
+    background-color: #ffffff;
+  }
 }

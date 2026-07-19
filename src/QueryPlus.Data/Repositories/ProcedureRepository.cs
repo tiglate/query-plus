@@ -31,8 +31,10 @@ public sealed class ProcedureRepository : IProcedureRepository
             .Include(p => p.Columns)
             .FirstOrDefaultAsync(p => p.IdProcedure == id && p.Enabled, cancellationToken);
 
-    public async Task<IReadOnlyList<Procedure>> SearchAsync(
+    public async Task<(IReadOnlyList<Procedure> Items, int TotalCount)> SearchAsync(
         ProcedureSearchCriteria criteria,
+        int page,
+        int pageSize,
         CancellationToken cancellationToken = default)
     {
         var query = _db.Procedures
@@ -74,9 +76,15 @@ public sealed class ProcedureRepository : IProcedureRepository
             query = query.Where(p => p.ProcedureName.Contains(name));
         }
 
-        return await query
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var items = await query
             .OrderBy(p => p.Caption)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(cancellationToken);
+
+        return (items, totalCount);
     }
 
     public async Task<IReadOnlyList<Procedure>> GetAccessibleForExecutionAsync(

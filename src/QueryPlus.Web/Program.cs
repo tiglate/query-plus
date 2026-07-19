@@ -28,14 +28,20 @@ builder.Services.AddSingleton<IExcelExportService>(sp => sp.GetRequiredService<E
 builder.Services.AddSingleton<ExportEligibilityService>();
 builder.Services.AddHostedService<ExcelExportBackgroundService>();
 
-builder.Services.AddRazorPages(options =>
-{
-    options.Conventions.AuthorizeFolder("/");
-    options.Conventions.AllowAnonymousToPage("/Error");
-    options.Conventions.AllowAnonymousToPage("/Account/AccessDenied");
-    options.Conventions.AllowAnonymousToPage("/Account/Login");
-    options.Conventions.AllowAnonymousToPage("/Culture");
-});
+builder.Services
+    .AddRazorPages(options =>
+    {
+        options.Conventions.AuthorizeFolder("/");
+        options.Conventions.AllowAnonymousToPage("/Error");
+        options.Conventions.AllowAnonymousToPage("/Account/AccessDenied");
+        options.Conventions.AllowAnonymousToPage("/Account/Login");
+        options.Conventions.AllowAnonymousToPage("/Culture");
+    })
+    .AddMvcOptions(options =>
+    {
+        // Trim all form/query/route-bound strings globally (leading + trailing whitespace).
+        options.ModelBinderProviders.Insert(0, new TrimStringModelBinderProvider());
+    });
 
 builder.Services.AddLocalization();
 builder.Services.Configure<RequestLocalizationOptions>(options =>

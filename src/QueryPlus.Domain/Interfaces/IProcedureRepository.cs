@@ -16,8 +16,13 @@ public interface IProcedureRepository
     /// </summary>
     Task<Procedure?> GetEnabledByIdWithDetailsAsync(int id, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<Procedure>> SearchAsync(
+    /// <summary>
+    /// Filtered procedure search with server-side pagination.
+    /// </summary>
+    Task<(IReadOnlyList<Procedure> Items, int TotalCount)> SearchAsync(
         ProcedureSearchCriteria criteria,
+        int page,
+        int pageSize,
         CancellationToken cancellationToken = default);
 
     /// <summary>

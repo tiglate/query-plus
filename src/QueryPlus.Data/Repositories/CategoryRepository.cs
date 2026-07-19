@@ -23,8 +23,10 @@ public sealed class CategoryRepository : ICategoryRepository
             .OrderBy(c => c.Description)
             .ToListAsync(cancellationToken);
 
-    public async Task<IReadOnlyList<Category>> SearchAsync(
+    public async Task<(IReadOnlyList<Category> Items, int TotalCount)> SearchAsync(
         string? description,
+        int page,
+        int pageSize,
         CancellationToken cancellationToken = default)
     {
         var query = _db.Categories.AsNoTracking().AsQueryable();
@@ -35,9 +37,15 @@ public sealed class CategoryRepository : ICategoryRepository
             query = query.Where(c => c.Description.Contains(term));
         }
 
-        return await query
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var items = await query
             .OrderBy(c => c.Description)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(cancellationToken);
+
+        return (items, totalCount);
     }
 
     public Task<bool> ExistsByDescriptionAsync(

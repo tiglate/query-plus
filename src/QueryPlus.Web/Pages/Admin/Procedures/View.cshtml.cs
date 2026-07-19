@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using QueryPlus.Application.DTOs.Categories;
 using QueryPlus.Application.Interfaces;
 using QueryPlus.Web.ViewModels;
 
@@ -30,7 +29,7 @@ public class ViewModel : PageModel
         }
 
         Input = ProcedureEditMapper.FromDetail(entity, readOnly: true);
-        var cats = await _categories.SearchAsync(new CategoryFilterDto(), cancellationToken);
+        var cats = await _categories.ListAllAsync(cancellationToken);
         CategoryOptions = cats
             .Select(c => new SelectListItem(c.Description, c.Id.ToString(), Input.CategoryId == c.Id))
             .ToList();

@@ -65,6 +65,15 @@ public static partial class SqlIdentifier
     public static string NormalizeParameterName(string name)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        return name.StartsWith('@') ? name : $"@{name}";
+        var normalized = name.StartsWith('@') ? name : $"@{name}";
+        var bare = normalized.TrimStart('@');
+        if (!IsValidSegment(bare))
+        {
+            throw new ArgumentException(
+                $"Invalid parameter name '{name}'. Only letters, digits, and underscore are allowed.",
+                nameof(name));
+        }
+
+        return normalized;
     }
 }

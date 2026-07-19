@@ -33,7 +33,16 @@
                         <option value="false">@L["No"]</option>
                     </select>
                 </div>
-                <div class="flex items-end gap-2">
+                <div>
+                    <label class="qp-label" asp-for="PageSize">@L["Pagination_PageSize"]</label>
+                    <select class="qp-input" asp-for="PageSize">
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+                <div class="flex items-end gap-2 md:col-span-6">
                     <button type="submit" class="qp-btn-primary">@L["Search"]</button>
                     <a asp-page="./Index" class="qp-btn-secondary">@L["Clear"]</a>
                 </div>
@@ -84,6 +93,12 @@
                                     <a class="qp-btn-ghost" asp-page="Edit" asp-route-id="@item.Id">@L["Edit"]</a>
                                     <form method="post" asp-page-handler="Delete" asp-route-id="@item.Id" class="inline"
                                           data-confirm="@L["ConfirmDelete"]">
+                                        <input type="hidden" name="CategoryId" value="@Model.CategoryId" />
+                                        <input type="hidden" name="Caption" value="@Model.Caption" />
+                                        <input type="hidden" name="RoleEntitlement" value="@Model.RoleEntitlement" />
+                                        <input type="hidden" name="Enabled" value="@Model.Enabled" />
+                                        <input type="hidden" name="PageNumber" value="@Model.PageNumber" />
+                                        <input type="hidden" name="PageSize" value="@Model.PageSize" />
                                         <button type="submit" class="qp-btn-ghost text-red-700">@L["Delete"]</button>
                                     </form>
                                 </td>
@@ -93,6 +108,8 @@
                     </tbody>
                 </table>
             </div>
+
+            <partial name="Partials/_Pager" model="Model.Pager" />
         </div>
     </div>
 </div>
