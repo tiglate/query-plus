@@ -1,14 +1,96 @@
 @model ExecutionResultDto
+@using System.Net
+@using System.Text.Json
 @inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> L
 @{
     var hasRows = Model.Success && Model.Data is { Rows.Count: > 0 };
     var rowCount = hasRows ? Model.Data!.Rows.Count : 0;
+
+    // Visible columns (metadata may hide technical columns).
+    var visibleColumns = new List<(int Index, string Caption, string Align, string? FormatMask)>();
+    if (hasRows)
+    {
+        for (var i = 0; i < Model.Data!.Columns.Count; i++)
+        {
+            var col = Model.Data.Columns[i];
+            var meta = Model.Columns.FirstOrDefault(c =>
+                string.Equals(c.TechnicalName, col.ColumnName, StringComparison.OrdinalIgnoreCase));
+            if (meta is { Visible: false })
+            {
+                continue;
+            }
+
+            var caption = meta?.Caption ?? col.ColumnName;
+            var align = meta?.Alignment switch
+            {
+                ColumnAlignment.Center => "center",
+                ColumnAlignment.Right => "right",
+                _ => "left"
+            };
+            visibleColumns.Add((i, caption, align, meta?.FormatMask));
+        }
+    }
+
+    string FormatCell(object? value, string? formatMask)
+    {
+        if (value is DBNull or null)
+        {
+            return "";
+        }
+
+        var text = value.ToString() ?? "";
+        if (formatMask is { Length: > 0 } && value is IFormattable formattable)
+        {
+            try
+            {
+                text = string.Format(System.Globalization.CultureInfo.CurrentCulture, formatMask, formattable);
+            }
+            catch
+            {
+                // keep raw text
+            }
+        }
+
+        return text;
+    }
+
+    var rowHtmlList = new List<string>(rowCount);
+    var cellValues = new List<string[]>(rowCount);
+    if (hasRows)
+    {
+        foreach (System.Data.DataRow row in Model.Data!.Rows)
+        {
+            var values = new string[visibleColumns.Count];
+            var sb = new System.Text.StringBuilder();
+            sb.Append("<tr>");
+            for (var c = 0; c < visibleColumns.Count; c++)
+            {
+                var (colIndex, _, align, formatMask) = visibleColumns[c];
+                var text = FormatCell(row[colIndex], formatMask);
+                values[c] = text;
+                sb.Append("<td class=\"whitespace-nowrap\" style=\"text-align:")
+                  .Append(align)
+                  .Append("\">")
+                  .Append(WebUtility.HtmlEncode(text))
+                  .Append("</td>");
+            }
+
+            sb.Append("</tr>");
+            rowHtmlList.Add(sb.ToString());
+            cellValues.Add(values);
+        }
+    }
+
+    // Prevent accidental </script> breakout in the HTML document.
+    var payloadJson = JsonSerializer.Serialize(new { rows = rowHtmlList, cells = cellValues })
+        .Replace("</", "<\\/", StringComparison.Ordinal);
 }
 
 <div class="js-results-root"
      data-export-ready="@(hasRows ? "true" : "false")"
      data-row-count="@rowCount"
-     data-procedure-id="@Model.ProcedureId">
+     data-procedure-id="@Model.ProcedureId"
+     data-col-count="@visibleColumns.Count">
 @if (!Model.Success)
 {
     <div class="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
@@ -22,74 +104,39 @@ else if (!hasRows)
 }
 else
 {
-    <div class="mb-1.5 text-xs text-slate-600">@Model.RowCount @L["Home_Rows"]</div>
-    @* Scroll is owned by #results-panel (.qp-home-column-scroll); no nested max-height. *@
-    <table class="qp-table" id="results-table">
-        <thead class="sticky top-0 z-10">
-            <tr>
-                @{
-                    var colIndex = 0;
-                }
-                @foreach (System.Data.DataColumn col in Model.Data!.Columns)
-                {
-                    var meta = Model.Columns.FirstOrDefault(c =>
-                        string.Equals(c.TechnicalName, col.ColumnName, StringComparison.OrdinalIgnoreCase));
-                    if (meta is { Visible: false })
-                    {
-                        colIndex++;
-                        continue;
-                    }
-                    var caption = meta?.Caption ?? col.ColumnName;
-                    var align = meta?.Alignment switch
-                    {
-                        ColumnAlignment.Center => "center",
-                        ColumnAlignment.Right => "right",
-                        _ => "left"
-                    };
-                    <th data-sort-col="@colIndex" class="cursor-pointer select-none" style="text-align:@align" title="Sort">
-                        @caption
-                    </th>
-                    colIndex++;
-                }
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (System.Data.DataRow row in Model.Data.Rows)
-        {
-            <tr>
-                @for (var i = 0; i < Model.Data.Columns.Count; i++)
-                {
-                    var col = Model.Data.Columns[i];
-                    var meta = Model.Columns.FirstOrDefault(c =>
-                        string.Equals(c.TechnicalName, col.ColumnName, StringComparison.OrdinalIgnoreCase));
-                    if (meta is { Visible: false })
-                    {
-                        continue;
-                    }
-                    var value = row[i];
-                    var text = value is DBNull or null ? "" : value.ToString();
-                    if (meta?.FormatMask is { Length: > 0 } mask && value is IFormattable)
-                    {
-                        try
+    <div class="mb-1.5 shrink-0 text-xs text-slate-600">@Model.RowCount @L["Home_Rows"]</div>
+
+    @* Clusterize.js: header table + virtualized scroll body for large result sets. *@
+    <div class="clusterize qp-results-clusterize">
+        <div class="clusterize-headers qp-results-headers">
+            <table class="qp-table js-results-headers-table">
+                <thead>
+                    <tr>
+                        @for (var c = 0; c < visibleColumns.Count; c++)
                         {
-                            text = string.Format(System.Globalization.CultureInfo.CurrentCulture, mask, value);
+                            var col = visibleColumns[c];
+                            <th data-sort-col="@c"
+                                class="cursor-pointer select-none"
+                                style="text-align:@col.Align"
+                                title="Sort">
+                                @col.Caption
+                            </th>
                         }
-                        catch
-                        {
-                            // keep raw text
-                        }
-                    }
-                    var align = meta?.Alignment switch
-                    {
-                        ColumnAlignment.Center => "center",
-                        ColumnAlignment.Right => "right",
-                        _ => "left"
-                    };
-                    <td class="whitespace-nowrap" style="text-align:@align">@text</td>
-                }
-            </tr>
-        }
-        </tbody>
-    </table>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+        <div class="clusterize-scroll qp-results-scroll js-results-scroll">
+            <table class="qp-table js-results-body-table">
+                <tbody class="clusterize-content js-results-content">
+                    <tr class="clusterize-no-data">
+                        <td colspan="@Math.Max(visibleColumns.Count, 1)">@L["NoRecords"]</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="application/json" class="js-results-data">@Html.Raw(payloadJson)</script>
 }
 </div>

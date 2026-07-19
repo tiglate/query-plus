@@ -270,4 +270,38 @@
     overflow: hidden;
     word-break: break-word;
   }
+
+  /*
+   * Results grid via Clusterize.js
+   * Scroll lives on .qp-results-scroll (not the outer panel) so virtualization works.
+   */
+  #results-panel:has(.qp-results-clusterize) {
+    @apply flex min-h-0 flex-col overflow-hidden;
+  }
+
+  .qp-results-clusterize {
+    @apply flex min-h-0 flex-1 flex-col overflow-hidden;
+  }
+
+  .qp-results-headers {
+    @apply shrink-0 overflow-hidden border-b border-slate-200;
+  }
+
+  .qp-results-headers .qp-table {
+    @apply mb-0;
+  }
+
+  .qp-results-scroll {
+    @apply min-h-0 flex-1 overflow-auto;
+  }
+
+  .qp-results-scroll .qp-table {
+    @apply mb-0;
+  }
+
+  /* Clusterize spacer / parity rows should not show hover chrome. */
+  .qp-results-scroll tr.clusterize-extra-row:hover,
+  .qp-results-scroll tr.clusterize-no-data:hover {
+    background-color: transparent;
+  }
 }

@@ -1,31 +1,188 @@
 // Lightweight helpers for HTMX-driven UI (no SPA framework).
+
+/** Active Clusterize instance + sort payload for the home results grid. */
+let resultsClusterize = null;
+let resultsGridState = null; // { rows: string[], cells: string[][], root: Element }
+
+function destroyResultsClusterize() {
+  if (resultsClusterize) {
+    try {
+      resultsClusterize.destroy(true);
+    } catch {
+      // instance may already be gone after HTMX swap
+    }
+    resultsClusterize = null;
+  }
+  resultsGridState = null;
+}
+
+function fitResultsHeaderColumns(root) {
+  if (!root) return;
+  const headerTable = root.querySelector(".js-results-headers-table");
+  const bodyTable = root.querySelector(".js-results-body-table");
+  if (!headerTable || !bodyTable) return;
+
+  const firstDataRow = bodyTable.querySelector(
+    "tbody tr:not(.clusterize-extra-row):not(.clusterize-no-data)"
+  );
+  if (!firstDataRow) return;
+
+  const headerCells = headerTable.querySelectorAll("thead th");
+  const bodyCells = firstDataRow.children;
+  if (!headerCells.length || bodyCells.length < headerCells.length) return;
+
+  // Keep header table width aligned with the body table (incl. scrollbar gap).
+  headerTable.style.width = bodyTable.offsetWidth + "px";
+
+  for (let i = 0; i < headerCells.length; i++) {
+    const w = bodyCells[i]?.getBoundingClientRect().width;
+    if (w) {
+      headerCells[i].style.width = w + "px";
+      headerCells[i].style.minWidth = w + "px";
+      headerCells[i].style.maxWidth = w + "px";
+    }
+  }
+}
+
+function syncResultsHeaderScroll(root) {
+  const scroll = root?.querySelector(".js-results-scroll");
+  const headers = root?.querySelector(".qp-results-headers");
+  if (!scroll || !headers) return;
+
+  const headerTable = headers.querySelector("table");
+  if (!headerTable) return;
+  headerTable.style.marginLeft = -scroll.scrollLeft + "px";
+}
+
+function initResultsClusterize(root) {
+  destroyResultsClusterize();
+  if (!root || typeof Clusterize === "undefined") return;
+
+  const scroll = root.querySelector(".js-results-scroll");
+  const content = root.querySelector(".js-results-content");
+  const dataEl = root.querySelector(".js-results-data");
+  if (!scroll || !content || !dataEl) return;
+
+  let payload = { rows: [], cells: [] };
+  try {
+    payload = JSON.parse(dataEl.textContent || "{}");
+  } catch {
+    payload = { rows: [], cells: [] };
+  }
+
+  const rows = Array.isArray(payload.rows) ? payload.rows : [];
+  const cells = Array.isArray(payload.cells) ? payload.cells : [];
+
+  resultsGridState = { rows, cells, root };
+
+  resultsClusterize = new Clusterize({
+    rows,
+    scrollElem: scroll,
+    contentElem: content,
+    tag: "tr",
+    rows_in_block: 50,
+    blocks_in_cluster: 4,
+    callbacks: {
+      clusterChanged: function () {
+        fitResultsHeaderColumns(root);
+        syncResultsHeaderScroll(root);
+      },
+    },
+  });
+
+  // Initial layout after first paint.
+  requestAnimationFrame(() => {
+    fitResultsHeaderColumns(root);
+    syncResultsHeaderScroll(root);
+    try {
+      resultsClusterize?.refresh(true);
+    } catch {
+      // ignore
+    }
+  });
+
+  // Horizontal header sync.
+  scroll.addEventListener(
+    "scroll",
+    () => {
+      syncResultsHeaderScroll(root);
+    },
+    { passive: true }
+  );
+}
+
+function compareSortValues(av, bv, asc) {
+  const a = (av || "").trim();
+  const b = (bv || "").trim();
+  const an = Number(a.replace(",", "."));
+  const bn = Number(b.replace(",", "."));
+  if (!Number.isNaN(an) && !Number.isNaN(bn) && a !== "" && b !== "") {
+    return asc ? an - bn : bn - an;
+  }
+  return asc ? a.localeCompare(b) : b.localeCompare(a);
+}
+
+function sortResultsClusterize(colIndex, asc) {
+  if (!resultsGridState || !resultsClusterize) return;
+
+  const { rows, cells } = resultsGridState;
+  const indices = rows.map((_, i) => i);
+  indices.sort((ia, ib) =>
+    compareSortValues(cells[ia]?.[colIndex], cells[ib]?.[colIndex], asc)
+  );
+
+  resultsGridState.rows = indices.map((i) => rows[i]);
+  resultsGridState.cells = indices.map((i) => cells[i]);
+  resultsClusterize.update(resultsGridState.rows);
+  fitResultsHeaderColumns(resultsGridState.root);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  // Client-side sort for result grids: click on th[data-sort-col]
+  // Client-side sort: works for Clusterize-backed home grid and plain tables.
   document.body.addEventListener("click", (e) => {
     const th = e.target.closest("th[data-sort-col]");
     if (!th) return;
-    const table = th.closest("table");
-    if (!table) return;
-    const colIndex = Number(th.dataset.sortCol);
-    const tbody = table.querySelector("tbody");
-    if (!tbody) return;
 
-    const rows = Array.from(tbody.querySelectorAll("tr"));
+    const colIndex = Number(th.dataset.sortCol);
     const asc = th.dataset.sortDir !== "asc";
     th.dataset.sortDir = asc ? "asc" : "desc";
 
-    rows.sort((a, b) => {
-      const av = (a.children[colIndex]?.textContent || "").trim();
-      const bv = (b.children[colIndex]?.textContent || "").trim();
-      const an = Number(av.replace(",", "."));
-      const bn = Number(bv.replace(",", "."));
-      if (!Number.isNaN(an) && !Number.isNaN(bn) && av !== "" && bv !== "") {
-        return asc ? an - bn : bn - an;
-      }
-      return asc ? av.localeCompare(bv) : bv.localeCompare(av);
+    // Clear other header sort markers in the same header row.
+    th.parentElement?.querySelectorAll("th[data-sort-col]").forEach((other) => {
+      if (other !== th) delete other.dataset.sortDir;
     });
 
-    rows.forEach((r) => tbody.appendChild(r));
+    const root = th.closest(".js-results-root");
+    if (root?.querySelector(".js-results-content") && resultsGridState) {
+      sortResultsClusterize(colIndex, asc);
+      return;
+    }
+
+    // Fallback: plain DOM table sort (admin or non-clusterized grids).
+    const table = th.closest("table");
+    if (!table) return;
+    const tbody = table.querySelector("tbody");
+    if (!tbody) return;
+
+    const bodyRows = Array.from(tbody.querySelectorAll("tr"));
+    bodyRows.sort((a, b) => {
+      const av = (a.children[colIndex]?.textContent || "").trim();
+      const bv = (b.children[colIndex]?.textContent || "").trim();
+      return compareSortValues(av, bv, asc);
+    });
+    bodyRows.forEach((r) => tbody.appendChild(r));
+  });
+
+  // Keep header column widths in sync on window resize.
+  window.addEventListener("resize", () => {
+    if (resultsGridState?.root) {
+      fitResultsHeaderColumns(resultsGridState.root);
+      try {
+        resultsClusterize?.refresh(true);
+      } catch {
+        // ignore
+      }
+    }
   });
 });
 
@@ -133,10 +290,11 @@ document.body.addEventListener("click", (e) => {
   window.location.href = url;
 });
 function clearExportableResults() {
+  destroyResultsClusterize();
   const panel = document.getElementById("results-panel");
   if (panel) {
     panel.innerHTML =
-      '<div class="js-results-root" data-export-ready="false" data-row-count="0"><p class="text-sm text-slate-500"></p></div>';
+      '<div class="js-results-root" data-export-ready="false" data-row-count="0"><p class="text-xs text-slate-500"></p></div>';
   }
   const status = document.getElementById("export-status");
   if (status) status.innerHTML = "";
@@ -194,10 +352,23 @@ function wireHomeProcedureGuards() {
   updateHomeActionButtons();
 }
 
-// After Execute swaps results, enable Export only when data-export-ready=true.
+// After Execute swaps results: re-init Clusterize + export eligibility.
 document.body.addEventListener("htmx:afterSwap", (event) => {
   if (event.detail.target?.id === "results-panel") {
+    const root = event.detail.target.querySelector(".js-results-root");
+    if (root) {
+      initResultsClusterize(root);
+    } else {
+      destroyResultsClusterize();
+    }
     updateHomeActionButtons();
+  }
+});
+
+// When the results panel is about to be replaced, tear down Clusterize first.
+document.body.addEventListener("htmx:beforeSwap", (event) => {
+  if (event.detail.target?.id === "results-panel") {
+    destroyResultsClusterize();
   }
 });
 
@@ -360,6 +531,17 @@ function wireResultsMaximize() {
   btn.addEventListener("click", (e) => {
     e.preventDefault();
     setResultsMaximized(!isResultsMaximized());
+    // Layout width changes — refresh Clusterize row metrics + header sync.
+    requestAnimationFrame(() => {
+      if (resultsGridState?.root) {
+        fitResultsHeaderColumns(resultsGridState.root);
+        try {
+          resultsClusterize?.refresh(true);
+        } catch {
+          // ignore
+        }
+      }
+    });
   });
 }
 
