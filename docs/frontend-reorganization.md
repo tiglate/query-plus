@@ -192,9 +192,10 @@ class HomePageController extends PageController {
 
 ### Phase 3 — Home page controller
 
-- [ ] Extract home logic from `site.js`
-- [ ] `data-page="home"` on Index
-- [ ] Tests for execute/export/required-param guards
+- [x] Extract home logic from `site.js` → `HomePageController` + helpers
+- [x] `data-page="home"` / `ViewData["PageKey"]` + layout `body[data-page]`
+- [x] Tests for execute/export/required-param guards + pure helpers
+- [x] `site.js` reduced to admin-only (combo visibility, sync metadata)
 
 ### Phase 4 — Admin pages
 
