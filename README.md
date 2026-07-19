@@ -90,7 +90,7 @@ Configure Keycloak client redirect URIs to match that URL if needed (`docker/key
 Frontend TypeScript and Tailwind 4 live under `src/QueryPlus.Web/ClientApp/`.  
 See **[docs/frontend-reorganization.md](docs/frontend-reorganization.md)** for the full migration plan.
 
-**Current (Phases 0–5):** `_Layout` loads `~/dist/js/app.js` and `~/dist/css/site.css` (Vite+ / Tailwind 4). Page controllers cover home + admin. Legacy `wwwroot/js/*` and `wwwroot/css/*` are not loaded. CDNs remain until Phase 7. Build ClientApp before first run if `wwwroot/dist` is missing (`pnpm run build` or `dotnet build` auto-builds when dist is absent).
+**Current (Phases 0–6):** Frontend source of truth is `ClientApp/` (Vite+ / Tailwind 4 / TypeScript). `_Layout` loads only `~/dist/js/app.js` and `~/dist/css/site.css`. Legacy `wwwroot/js` and `wwwroot/css` are removed. External libs (HTMX, Clusterize, Font Awesome, fonts) still use CDNs until Phase 7. Build ClientApp before first run if `wwwroot/dist` is missing (`pnpm run build` or `dotnet build` auto-builds when dist is absent).
 
 ```bash
 cd src/QueryPlus.Web
@@ -110,7 +110,7 @@ pnpm run dev
 
 `dotnet publish` runs `pnpm install --frozen-lockfile && pnpm run build` automatically (skip with `/p:SkipClientAppBuild=true`).
 
-Legacy Tailwind 3 CSS (until Phase 5 layout switch) is still in `wwwroot/css/site.css`. Prefer editing `ClientApp/src/styles/` going forward.
+Edit styles under `ClientApp/src/styles/` (not under `wwwroot`).
 
 ## Build & test
 

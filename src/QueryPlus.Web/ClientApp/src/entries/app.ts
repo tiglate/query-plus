@@ -8,7 +8,7 @@ import "reflect-metadata";
 import "../styles/main.css";
 import { bootstrap } from "../core/bootstrap";
 
-export const QUERYPLUS_CLIENT_VERSION = "0.5.0-phase5";
+export const QUERYPLUS_CLIENT_VERSION = "0.6.0-phase6";
 
 /** Side-effect marker so production bundles stay non-empty (CSS is co-emitted). */
 export function markClientAppLoaded(target: ParentNode = document): void {

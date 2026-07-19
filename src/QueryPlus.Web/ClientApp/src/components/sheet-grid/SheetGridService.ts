@@ -44,7 +44,7 @@ export class SheetGridService implements QueryPlusSheetGridApi {
     return this.instances.get(root)?.getState() ?? null;
   }
 
-  /** Install window.QueryPlusSheetGrid for site.js / inline admin scripts. */
+  /** Install window.QueryPlusSheetGrid for any non-DI callers. */
   installGlobalBridge(): void {
     this.win.QueryPlusSheetGrid = {
       mount: (root) => this.mount(root),

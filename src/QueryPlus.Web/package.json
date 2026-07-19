@@ -12,9 +12,7 @@
     "preview": "vp preview",
     "dev:vite": "vite",
     "build:vite": "vite build",
-    "test:vitest": "vitest run",
-    "build:css:legacy": "npx --yes tailwindcss@3.4.17 -i ./wwwroot/css/input.css -o ./wwwroot/css/site.css --minify",
-    "watch:css:legacy": "npx --yes tailwindcss@3.4.17 -i ./wwwroot/css/input.css -o ./wwwroot/css/site.css --watch"
+    "test:vitest": "vitest run"
   },
 
   "devDependencies": {

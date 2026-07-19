@@ -93,8 +93,6 @@ yarn-error.log*
 package-lock.json
 # Vite ClientApp output (built via pnpm/vp; produced on publish / Docker)
 src/QueryPlus.Web/wwwroot/dist/
-# Legacy Tailwind 3 output still committed until layout switches to dist (Phase 5)
-# src/QueryPlus.Web/wwwroot/css/site.css
 
 ## Docker
 *.log.json

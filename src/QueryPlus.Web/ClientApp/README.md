@@ -19,15 +19,13 @@ Plan: [`docs/frontend-reorganization.md`](../../../docs/frontend-reorganization.
 |------|---------|
 | `src/entries/app.ts` | Global shell entry (DI bootstrap) |
 | `src/core/` | DI, `PageController`, `HtmxBridge`, bootstrap |
-| `src/components/` | nav-dropdown, confirm-submit, … |
-| `src/pages/shared/` | `SharedShellController` (layout behaviors) |
-| `src/styles/main.css` | Tailwind 4 + theme |
-| `src/styles/legacy-components.css` | Temporary port of `wwwroot/css/input.css` |
+| `src/components/` | sheet-grid, nav-dropdown, confirm-submit, parameter-combo |
+| `src/pages/` | home, admin, shared controllers |
+| `src/styles/` | Tailwind 4 modular CSS (`main.css` + base/components/pages) |
 | `tests/` | Vitest + jsdom |
 
-### Runtime (Phases 1–5)
+## Runtime
 
-- `_Layout` loads `~/dist/js/app.js` + `~/dist/css/site.css`.
+- `_Layout` loads only `~/dist/js/app.js` + `~/dist/css/site.css` (plus CDNs until Phase 7).
 - **Page keys:** `home`, `admin-categories`, `admin-procedures`, `admin-procedure-edit`.
-- Styles: modular Tailwind 4 under `src/styles/` (`main.css` + base/components/pages).
-- `wwwroot/js/site.js`, `sheet-grid.js`, and `wwwroot/css/*` are deprecated stubs (not loaded).
+- No legacy `wwwroot/js` or `wwwroot/css` sources — ClientApp is the single frontend source of truth.

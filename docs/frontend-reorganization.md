@@ -1,7 +1,7 @@
 # Frontend reorganization plan
 
 **Branch:** `feature/reorganize-frontend`  
-**Status:** Approved — Phases 0–5 complete; next is Phase 6 (delete legacy JS)  
+**Status:** Approved — Phases 0–6 complete; next is Phase 7 (de-CDN)  
 **Last updated:** 2026-07-19
 
 This document is the source of truth for the TypeScript / Vite+ / DI frontend reorg. Resume from here if the session is interrupted.
@@ -81,8 +81,7 @@ src/QueryPlus.Web/
     dist/                   # Vite build output (gitignored)
       js/
       css/
-    js/                     # legacy site.js + sheet-grid.js until Phase 6
-    css/                    # legacy input.css + site.css until layout switches
+    lib/                    # optional libman/local assets (validation, etc.)
   vite.config.ts
   package.json
   pnpm-lock.yaml
@@ -211,10 +210,11 @@ class HomePageController extends PageController {
 - [x] Media queries + home sheet flex rules verified in dist output
 - [x] Legacy `wwwroot/css/*` deprecated (no longer linked)
 
-### Phase 6 — Delete legacy JS
+### Phase 6 — Delete legacy JS (+ CSS cleanup)
 
-- [ ] Remove `wwwroot/js/site.js`, `sheet-grid.js`
-- [ ] Only `dist/` + layout script tags
+- [x] Remove `wwwroot/js/site.js`, `sheet-grid.js` (and empty `wwwroot/js/`)
+- [x] Remove legacy `wwwroot/css/*` + Tailwind 3 `tailwind.config.js` + legacy npm scripts
+- [x] Only `wwwroot/dist/` + layout `app.js` / `site.css` (+ CDNs until Phase 7)
 
 ### Phase 7 — De-CDN
 
@@ -252,15 +252,14 @@ pnpm run check
 
 ---
 
-## Current baseline (pre-reorg)
+## Current baseline (post Phase 6)
 
 | Asset | Role |
 |-------|------|
-| `wwwroot/js/site.js` (~550 LOC) | Home + admin + layout god script |
-| `wwwroot/js/sheet-grid.js` (~466 LOC) | Clusterize sheet grid |
-| `wwwroot/css/input.css` (~716 LOC) | All custom components (Tailwind 3) |
-| CDNs | HTMX, Clusterize, FA, Google Fonts |
-| Tooling (before Phase 0) | Tailwind 3 CLI only |
+| `ClientApp/` | TypeScript page controllers + components + DI |
+| `wwwroot/dist/` | Built JS/CSS (gitignored) |
+| CDNs (until Phase 7) | HTMX, Clusterize, FA, Google Fonts |
+| Tooling | Vite+ / pnpm / Tailwind 4 / Vitest |
 
 ---
 

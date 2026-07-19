@@ -38,7 +38,7 @@ export function bootstrap(options: BootstrapOptions = {}): BootstrapResult {
   const c = getAppContainer();
   const doc = options.document ?? document;
 
-  // Legacy admin @section Scripts and home results still use the global API.
+  // Global API for any remaining callers / future partial scripts.
   c.resolve(SheetGridService).installGlobalBridge();
 
   const shell = c.resolve(SharedShellController);
