@@ -37,11 +37,12 @@
             </h2>
         </div>
         <div class="qp-card-body">
-            <form id="category-form" method="post">
+            @* Form must include antiforgery; Save uses form="category-form" from the toolbar. *@
+            <form id="category-form" method="post" asp-page="./Create">
                 <div class="qp-category-description">
-                    <label class="qp-label" asp-for="Input.Description">@L["Description"]</label>
+                    <label class="qp-label qp-label-required" asp-for="Input.Description">@L["Description"]</label>
                     <input class="qp-input" asp-for="Input.Description" />
-                    <span asp-validation-for="Input.Description" class="text-sm text-red-600"></span>
+                    <span asp-validation-for="Input.Description" class="qp-field-error"></span>
                 </div>
             </form>
         </div>
