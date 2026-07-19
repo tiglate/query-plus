@@ -90,8 +90,8 @@ function initResultsClusterize(root) {
     },
   });
 
-  // Initial layout after first paint.
-  requestAnimationFrame(() => {
+  // Wait until the flex layout has a real height, then refresh Clusterize metrics.
+  const settleLayout = () => {
     fitResultsHeaderColumns(root);
     syncResultsHeaderScroll(root);
     try {
@@ -99,7 +99,12 @@ function initResultsClusterize(root) {
     } catch {
       // ignore
     }
+  };
+  requestAnimationFrame(() => {
+    requestAnimationFrame(settleLayout);
   });
+  // Extra settle after fonts/maximize transitions.
+  setTimeout(settleLayout, 50);
 
   // Horizontal header sync.
   scroll.addEventListener(
@@ -147,10 +152,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const asc = th.dataset.sortDir !== "asc";
     th.dataset.sortDir = asc ? "asc" : "desc";
 
-    // Clear other header sort markers in the same header row.
+    // Clear other header sort markers / icons in the same header row.
     th.parentElement?.querySelectorAll("th[data-sort-col]").forEach((other) => {
-      if (other !== th) delete other.dataset.sortDir;
+      if (other !== th) {
+        delete other.dataset.sortDir;
+        const icon = other.querySelector(".qp-sheet-th-sort");
+        if (icon) {
+          icon.classList.remove("fa-sort-up", "fa-sort-down");
+          icon.classList.add("fa-sort");
+        }
+      }
     });
+    const sortIcon = th.querySelector(".qp-sheet-th-sort");
+    if (sortIcon) {
+      sortIcon.classList.remove("fa-sort", "fa-sort-up", "fa-sort-down");
+      sortIcon.classList.add(asc ? "fa-sort-up" : "fa-sort-down");
+    }
 
     const root = th.closest(".js-results-root");
     if (root?.querySelector(".js-results-content") && resultsGridState) {

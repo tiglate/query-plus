@@ -68,7 +68,8 @@
                 var (colIndex, _, align, formatMask) = visibleColumns[c];
                 var text = FormatCell(row[colIndex], formatMask);
                 values[c] = text;
-                sb.Append("<td class=\"whitespace-nowrap\" style=\"text-align:")
+                // Excel-like sheet cells; alignment from column metadata.
+                sb.Append("<td class=\"qp-sheet-cell\" style=\"text-align:")
                   .Append(align)
                   .Append("\">")
                   .Append(WebUtility.HtmlEncode(text))
@@ -104,22 +105,25 @@ else if (!hasRows)
 }
 else
 {
-    <div class="mb-1.5 shrink-0 text-xs text-slate-600">@Model.RowCount @L["Home_Rows"]</div>
+    <div class="qp-results-meta shrink-0">
+        <span class="qp-results-meta-count">@Model.RowCount @L["Home_Rows"]</span>
+    </div>
 
     @* Clusterize.js: header table + virtualized scroll body for large result sets. *@
     <div class="clusterize qp-results-clusterize">
         <div class="clusterize-headers qp-results-headers">
-            <table class="qp-table js-results-headers-table">
+            <table class="qp-sheet js-results-headers-table">
                 <thead>
                     <tr>
                         @for (var c = 0; c < visibleColumns.Count; c++)
                         {
                             var col = visibleColumns[c];
                             <th data-sort-col="@c"
-                                class="cursor-pointer select-none"
+                                class="qp-sheet-th"
                                 style="text-align:@col.Align"
                                 title="Sort">
-                                @col.Caption
+                                <span class="qp-sheet-th-label">@col.Caption</span>
+                                <i class="fa-solid fa-sort qp-sheet-th-sort" aria-hidden="true"></i>
                             </th>
                         }
                     </tr>
@@ -127,10 +131,10 @@ else
             </table>
         </div>
         <div class="clusterize-scroll qp-results-scroll js-results-scroll">
-            <table class="qp-table js-results-body-table">
+            <table class="qp-sheet js-results-body-table">
                 <tbody class="clusterize-content js-results-content">
                     <tr class="clusterize-no-data">
-                        <td colspan="@Math.Max(visibleColumns.Count, 1)">@L["NoRecords"]</td>
+                        <td class="qp-sheet-cell" colspan="@Math.Max(visibleColumns.Count, 1)">@L["NoRecords"]</td>
                     </tr>
                 </tbody>
             </table>
