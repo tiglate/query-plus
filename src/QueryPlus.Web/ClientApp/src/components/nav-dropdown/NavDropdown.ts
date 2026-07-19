@@ -1,22 +1,37 @@
+export type TimeoutId = ReturnType<typeof setTimeout>;
+
 export interface NavDropdownOptions {
   /** Delay before closing after pointer/focus leave (ms). Default 250. */
   closeDelayMs?: number;
-  /** Timer helpers (injectable for tests). */
-  setTimeoutFn?: typeof setTimeout;
-  clearTimeoutFn?: typeof clearTimeout;
+  /**
+   * Timer helpers (injectable for tests).
+   * Must keep correct `this` binding — never pass bare `setTimeout` without `.bind(window)`.
+   */
+  setTimeoutFn?: (handler: () => void, timeout: number) => TimeoutId;
+  clearTimeoutFn?: (id: TimeoutId) => void;
 }
+
+/** Safe wrappers: calling unbound `setTimeout` throws "Illegal invocation" in browsers. */
+const defaultSetTimeout = (handler: () => void, timeout: number): TimeoutId =>
+  globalThis.setTimeout(handler, timeout);
+const defaultClearTimeout = (id: TimeoutId): void => {
+  globalThis.clearTimeout(id);
+};
 
 /**
  * Single Admin-style nav dropdown: open on hover/focus/click, delayed close
  * so the pointer can cross the gap between trigger and panel.
  */
 export class NavDropdown {
-  private closeTimer: ReturnType<typeof setTimeout> | null = null;
+  private closeTimer: TimeoutId | null = null;
   /** Blocks open() while Escape focuses the trigger (focusin would re-open). */
   private suppressOpen = false;
   private readonly closeDelayMs: number;
-  private readonly setTimeoutFn: typeof setTimeout;
-  private readonly clearTimeoutFn: typeof clearTimeout;
+  private readonly setTimeoutFn: (
+    handler: () => void,
+    timeout: number,
+  ) => TimeoutId;
+  private readonly clearTimeoutFn: (id: TimeoutId) => void;
   private readonly disposers: Array<() => void> = [];
 
   private readonly onOpen: () => void;
@@ -34,8 +49,8 @@ export class NavDropdown {
     options: NavDropdownOptions = {},
   ) {
     this.closeDelayMs = options.closeDelayMs ?? 250;
-    this.setTimeoutFn = options.setTimeoutFn ?? setTimeout;
-    this.clearTimeoutFn = options.clearTimeoutFn ?? clearTimeout;
+    this.setTimeoutFn = options.setTimeoutFn ?? defaultSetTimeout;
+    this.clearTimeoutFn = options.clearTimeoutFn ?? defaultClearTimeout;
 
     this.onOpen = () => this.open();
     this.onClose = () => this.close();
