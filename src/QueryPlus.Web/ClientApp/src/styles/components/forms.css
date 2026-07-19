@@ -33,4 +33,17 @@ select.input-validation-error,
 textarea.input-validation-error {
   @apply border-red-500 focus:border-red-500 focus:ring-red-500;
 }
+
+/* Align aspnet-client-validation defaults with QueryPlus field errors */
+.field-validation-error {
+  @apply mt-0.5 block text-xs text-red-600 not-italic;
+}
+
+.validation-summary-errors {
+  @apply rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 not-italic;
+}
+
+.validation-summary-errors ul {
+  @apply list-disc space-y-1 pl-5;
+}
 }

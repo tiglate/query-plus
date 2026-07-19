@@ -1,5 +1,4 @@
 import { container, type DependencyContainer } from "tsyringe";
-import { HtmxBridge } from "../HtmxBridge";
 import { ConfirmSubmitService } from "../../components/confirm-submit/ConfirmSubmitService";
 import { NavDropdownService } from "../../components/nav-dropdown/NavDropdownService";
 import { ParameterComboService } from "../../components/parameter-combo/ParameterComboService";
@@ -11,6 +10,8 @@ import { HomePageController } from "../../pages/home/HomePageController";
 import { HomeResultsService } from "../../pages/home/HomeResultsService";
 import { ResultsMaximize } from "../../pages/home/ResultsMaximize";
 import { SharedShellController } from "../../pages/shared/SharedShellController";
+import { ClientValidationService } from "../ClientValidationService";
+import { HtmxBridge } from "../HtmxBridge";
 import { TOKENS, type ConfirmFn } from "./tokens";
 
 let configured = false;
@@ -53,6 +54,7 @@ function registerAppServices(c: DependencyContainer): void {
   c.registerSingleton(HtmxBridge);
   c.registerSingleton(NavDropdownService);
   c.registerSingleton(ConfirmSubmitService);
+  c.registerSingleton(ClientValidationService);
   c.registerSingleton(SheetGridService);
   c.registerSingleton(ParameterComboService);
   c.registerSingleton(SyncMetadataService);

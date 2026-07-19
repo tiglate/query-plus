@@ -25,6 +25,7 @@
   "dependencies": {
     "@fontsource/inter": "^5.3.0",
     "@fortawesome/fontawesome-free": "^7.3.1",
+    "aspnet-client-validation": "^0.11.1",
     "clusterize.js": "^1.0.0",
     "htmx.org": "^2.0.10",
     "reflect-metadata": "^0.2.2",

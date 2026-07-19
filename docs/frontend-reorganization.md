@@ -156,7 +156,7 @@ class HomePageController extends PageController {
 | Clusterize | cdnjs | keep CDN + global | npm or vendored |
 | Font Awesome | cdnjs | keep CDN | `@fortawesome/fontawesome-free` local |
 | Inter font | Google Fonts | keep or system | self-host `woff2` |
-| jQuery validation | local `wwwroot/lib` | leave | optional later |
+| jQuery validation | local `wwwroot/lib` | removed | `aspnet-client-validation` (no jQuery) |
 
 **When:** after core TS migration is stable (dedicated Phase 7 PR preferred).
 

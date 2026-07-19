@@ -18,7 +18,7 @@ Plan: [`docs/frontend-reorganization.md`](../../../docs/frontend-reorganization.
 | Path | Purpose |
 |------|---------|
 | `src/entries/app.ts` | Global shell entry (DI bootstrap) |
-| `src/core/` | DI, `PageController`, `HtmxBridge`, bootstrap |
+| `src/core/` | DI, `PageController`, `HtmxBridge`, client validation, bootstrap |
 | `src/components/` | sheet-grid, nav-dropdown, confirm-submit, parameter-combo |
 | `src/pages/` | home, admin, shared controllers |
 | `src/styles/` | Tailwind 4 modular CSS (`main.css` + base/components/pages) |
