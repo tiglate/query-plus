@@ -142,7 +142,8 @@
                         <i class="fa-solid fa-user" aria-hidden="true"></i>
                         @User.Identity.Name
                     </span>
-                    <form method="post" action="/Account/Logout">
+                    @* FormTagHelper injects the antiforgery token automatically. *@
+                    <form method="post" asp-controller="Account" asp-action="Logout">
                         <button type="submit" class="qp-header-btn inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-sm font-medium">
                             <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
                             @L["Logout"]

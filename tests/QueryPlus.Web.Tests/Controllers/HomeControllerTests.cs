@@ -146,4 +146,16 @@ public sealed class HomeControllerTests
         var model = partial.Model.Should().BeOfType<ExecutionResultDto>().Subject;
         model.Success.Should().BeFalse();
     }
+
+    [Fact]
+    public void Execute_and_Export_require_antiforgery()
+    {
+        foreach (var name in new[] { nameof(HomeController.Execute), nameof(HomeController.Export) })
+        {
+            var method = typeof(HomeController).GetMethod(name);
+            method.Should().NotBeNull(name);
+            method!.GetCustomAttributes(typeof(Microsoft.AspNetCore.Mvc.ValidateAntiForgeryTokenAttribute), true)
+                .Should().NotBeEmpty(because: $"{name} must validate antiforgery");
+        }
+    }
 }

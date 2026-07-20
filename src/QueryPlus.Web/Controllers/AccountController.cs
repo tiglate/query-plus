@@ -24,11 +24,11 @@ public sealed class AccountController : Controller
 
     /// <summary>
     /// Signs out of the app cookie and the OIDC session.
-    /// Antiforgery is ignored to match the header form (no token); tighten later if desired.
+    /// Requires the antiforgery token from the layout logout form.
     /// </summary>
     [HttpPost("/Account/Logout")]
     [Authorize]
-    [IgnoreAntiforgeryToken]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);

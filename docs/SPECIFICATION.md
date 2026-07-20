@@ -151,7 +151,7 @@ The system replaces manual query execution by the Production team, reducing risk
   - Application (Services, DTOs, Interfaces)
   - Infrastructure
   - Data (EF Core)
-  - Web (Razor Pages)
+  - Web (ASP.NET Core MVC — Controllers + Views)
 
 ### 3.3 Database
 
