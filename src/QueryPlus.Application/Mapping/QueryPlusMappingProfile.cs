@@ -23,7 +23,9 @@ public sealed class QueryPlusMappingProfile : Profile
             .ForMember(d => d.CategoryDescription, o => o.MapFrom(s => s.Category != null ? s.Category.Description : null));
 
         CreateMap<Procedure, ProcedureLookupDto>()
-            .ForMember(d => d.Id, o => o.MapFrom(s => s.IdProcedure));
+            .ForMember(d => d.Id, o => o.MapFrom(s => s.IdProcedure))
+            .ForMember(d => d.CategoryId, o => o.MapFrom(s => s.IdCategory))
+            .ForMember(d => d.CategoryDescription, o => o.MapFrom(s => s.Category != null ? s.Category.Description : null));
 
         CreateMap<Procedure, ProcedureDetailDto>()
             .ForMember(d => d.Id, o => o.MapFrom(s => s.IdProcedure))

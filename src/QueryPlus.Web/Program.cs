@@ -26,6 +26,7 @@ builder.Services.AddScoped<IAuditContext, HttpAuditContext>();
 builder.Services.AddSingleton<ExcelExportService>();
 builder.Services.AddSingleton<IExcelExportService>(sp => sp.GetRequiredService<ExcelExportService>());
 builder.Services.AddSingleton<ExportEligibilityService>();
+builder.Services.AddSingleton<DatabaseConnectionDisplay>();
 builder.Services.AddHostedService<ExcelExportBackgroundService>();
 
 builder.Services
@@ -185,6 +186,9 @@ await using (var scope = app.Services.CreateAsyncScope())
     }
 }
 
+// Friendly status pages (404, 500, 505, …). Re-execute keeps the real status code.
+app.UseStatusCodePagesWithReExecute("/Error", "?statusCode={0}");
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
@@ -192,6 +196,7 @@ if (!app.Environment.IsDevelopment())
 }
 else
 {
+    // Stack traces in Development; status codes still use the custom Error page.
     app.UseDeveloperExceptionPage();
 }
 

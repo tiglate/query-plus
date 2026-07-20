@@ -18,6 +18,17 @@
   <data name="Theme_Dark" xml:space="preserve"><value>Escuro</value></data>
   <data name="Theme_System" xml:space="preserve"><value>Sistema</value></data>
   <data name="Footer_Tagline" xml:space="preserve"><value>Consultas governadas com segurança</value></data>
+  <data name="Footer_DatabaseServer" xml:space="preserve"><value>Servidor de banco</value></data>
+  <data name="Footer_Database" xml:space="preserve"><value>Banco de dados</value></data>
+  <data name="Error_NotFound_Title" xml:space="preserve"><value>Ops! Página sumiu</value></data>
+  <data name="Error_NotFound_Lead" xml:space="preserve"><value>Até a lupa desistiu de procurar.</value></data>
+  <data name="Error_NotFound_Body" xml:space="preserve"><value>Não encontramos o que você pediu. Pode ser um link antigo, um digitinho errado, ou a página saiu para um café. Que tal voltar ao início e tentar de novo?</value></data>
+  <data name="Error_Server_Title" xml:space="preserve"><value>Erro {0}: o servidor travou o pé</value></data>
+  <data name="Error_Server_Lead" xml:space="preserve"><value>Nossos bits estão em reunião de emergência.</value></data>
+  <data name="Error_Server_Body" xml:space="preserve"><value>Algo inesperado aconteceu do nosso lado. Já anotamos o ocorrido (mentalmente, com carinho). Tente de novo em instantes ou fale com o suporte se o drama continuar.</value></data>
+  <data name="Error_GoHome" xml:space="preserve"><value>Ir para o início</value></data>
+  <data name="Error_ContactSupport" xml:space="preserve"><value>Falar com o suporte</value></data>
+  <data name="Error_RequestId" xml:space="preserve"><value>ID da solicitação</value></data>
   <data name="Actions" xml:space="preserve"><value>Ações</value></data>
   <data name="Search" xml:space="preserve"><value>Pesquisar</value></data>
   <data name="Clear" xml:space="preserve"><value>Limpar</value></data>
@@ -79,6 +90,7 @@
   <data name="Col_Visible" xml:space="preserve"><value>Visível</value></data>
   <data name="Home_Title" xml:space="preserve"><value>Execução de consultas</value></data>
   <data name="Home_SelectProcedure" xml:space="preserve"><value>Procedure</value></data>
+  <data name="Home_Uncategorized" xml:space="preserve"><value>Sem categoria</value></data>
   <data name="Home_Execute" xml:space="preserve"><value>Executar</value></data>
   <data name="Home_Export" xml:space="preserve"><value>Exportar Excel</value></data>
   <data name="Home_Parameters" xml:space="preserve"><value>Parâmetros</value></data>
@@ -99,6 +111,7 @@
   <data name="Home_ExportExpired" xml:space="preserve"><value>A sessão de exportação expirou. Execute novamente antes de exportar.</value></data>
   <data name="Home_Download" xml:space="preserve"><value>Baixar</value></data>
   <data name="Support_Title" xml:space="preserve"><value>Suporte</value></data>
+  <data name="Support_Mantis" xml:space="preserve"><value>Mantis</value></data>
   <data name="Support_Body" xml:space="preserve"><value>Entre em contato com a equipe de suporte para ajuda com QueryPlus.</value></data>
   <data name="Support_Helpdesk" xml:space="preserve"><value>Helpdesk</value></data>
   <data name="Support_Phone" xml:space="preserve"><value>Telefone</value></data>

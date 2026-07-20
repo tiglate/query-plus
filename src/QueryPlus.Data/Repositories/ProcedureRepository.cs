@@ -93,25 +93,27 @@ public sealed class ProcedureRepository : IProcedureRepository
     {
         var query = _db.Procedures
             .AsNoTracking()
+            .Include(p => p.Category)
             .Where(p => p.Enabled);
 
-        var items = await query
-            .OrderBy(p => p.Caption)
-            .ToListAsync(cancellationToken);
+        var items = await query.ToListAsync(cancellationToken);
 
-        if (userRoles.Count == 0)
+        IEnumerable<Procedure> accessible = items;
+        if (userRoles.Count > 0)
         {
-            return items;
-        }
-
-        var roleSet = new HashSet<string>(userRoles, StringComparer.OrdinalIgnoreCase);
-        return items
-            .Where(p =>
+            var roleSet = new HashSet<string>(userRoles, StringComparer.OrdinalIgnoreCase);
+            accessible = items.Where(p =>
             {
                 var required = p.RoleEntitlement
                     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                 return required.Length == 0 || required.Any(r => roleSet.Contains(r));
-            })
+            });
+        }
+
+        // Home list groups by category (A–Z), procedures by caption within each group.
+        return accessible
+            .OrderBy(p => p.Category?.Description ?? string.Empty, StringComparer.CurrentCultureIgnoreCase)
+            .ThenBy(p => p.Caption, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
     }
 
