@@ -112,6 +112,9 @@ Desktop.ini
 *~
 .cache/
 .tmp/
+
+## Local secrets (never commit real credentials)
+# Copy .env.example → .env for Docker Compose and local `dotnet run`.
 .env
 .env.*
 !.env.example

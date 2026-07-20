@@ -1,16 +1,23 @@
+# Variable substitution uses a repo-root .env file (copy from .env.example).
+# Docker Compose loads .env automatically for ${VAR} placeholders.
+
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: queryplus-sqlserver
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "Your_strong_Password123"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
     ports:
       - "1433:1433"
     volumes:
       - sqlserver_data:/var/opt/mssql
     healthcheck:
-      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Your_strong_Password123" -C -Q "SELECT 1" || exit 1
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" || exit 1"
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -21,8 +28,8 @@ services:
     container_name: queryplus-keycloak
     command: start-dev --import-realm
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_ADMIN: "${KEYCLOAK_ADMIN}"
+      KEYCLOAK_ADMIN_PASSWORD: "${KEYCLOAK_ADMIN_PASSWORD}"
       KC_HTTP_PORT: 8080
       # Browser URLs must use localhost (published port), not the Docker service name.
       KC_HOSTNAME: localhost
@@ -43,13 +50,13 @@ services:
     container_name: queryplus-web
     environment:
       ASPNETCORE_ENVIRONMENT: Docker
-      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=QueryPlus;User Id=sa;Password=Your_strong_Password123;TrustServerCertificate=True;Encrypt=False"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=QueryPlus;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;Encrypt=False"
       Keycloak__Authority: "http://localhost:8080/realms/queryplus"
       Keycloak__MetadataAddress: "http://keycloak:8080/realms/queryplus/.well-known/openid-configuration"
       Keycloak__BackchannelHost: "keycloak"
       Keycloak__BackchannelPort: "8080"
-      Keycloak__ClientId: "queryplus-web"
-      Keycloak__ClientSecret: "change-me-in-production"
+      Keycloak__ClientId: "${Keycloak__ClientId:-queryplus-web}"
+      Keycloak__ClientSecret: "${Keycloak__ClientSecret}"
       Keycloak__RequireHttpsMetadata: "false"
     ports:
       - "5000:8080"
