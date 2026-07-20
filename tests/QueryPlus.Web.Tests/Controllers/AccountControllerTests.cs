@@ -47,4 +47,15 @@ public sealed class AccountControllerTests
         var result = controller.AccessDenied();
         result.Should().BeOfType<ViewResult>();
     }
+
+    [Fact]
+    public void Logout_action_requires_antiforgery_attribute()
+    {
+        var method = typeof(AccountController).GetMethod(nameof(AccountController.Logout));
+        method.Should().NotBeNull();
+        method!.GetCustomAttributes(typeof(Microsoft.AspNetCore.Mvc.ValidateAntiForgeryTokenAttribute), inherit: true)
+            .Should().NotBeEmpty();
+        method.GetCustomAttributes(typeof(Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryTokenAttribute), inherit: true)
+            .Should().BeEmpty();
+    }
 }
