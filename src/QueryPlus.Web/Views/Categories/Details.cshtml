@@ -1,0 +1,62 @@
+@model CategoryDetailDto
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> L
+@{
+    ViewData["Title"] = L["Categories_View"].Value;
+}
+
+<div class="qp-page space-y-4">
+    <div class="qp-card">
+        <div class="qp-card-header">
+            <h1 class="qp-page-title">
+                <i class="fa-solid fa-eye text-cyan" aria-hidden="true"></i>
+                @L["Categories_View"]
+            </h1>
+            <div class="flex flex-wrap items-center justify-end gap-1.5">
+                <a asp-controller="Categories" asp-action="Edit" asp-route-id="@Model.Id" class="qp-btn-primary">
+                    <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                    @L["Edit"]
+                </a>
+                <a asp-controller="Categories" asp-action="Index" class="qp-btn-secondary">
+                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                    @L["Back"]
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="qp-card">
+        <div class="qp-card-header">
+            <h2 class="qp-section-title">
+                <i class="fa-solid fa-folder" aria-hidden="true"></i>
+                @L["Categories_Title"]
+            </h2>
+        </div>
+        <div class="qp-card-body">
+            <div class="flex flex-wrap items-start gap-4">
+                <div class="w-28 shrink-0">
+                    <label class="qp-label">@L["Id"]</label>
+                    <input class="qp-input" value="@Model.Id" readonly />
+                </div>
+                <div class="qp-category-description min-w-0">
+                    <label class="qp-label">@L["Description"]</label>
+                    <input class="qp-input" value="@Model.Description" readonly />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="qp-card">
+        <div class="qp-card-header">
+            <h2 class="qp-section-title">
+                <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
+                @L["Audit"]
+            </h2>
+        </div>
+        <div class="qp-card-body">
+            <div class="grid max-w-3xl grid-cols-2 gap-4 text-sm">
+                <div><span class="text-slate-500">@L["CreatedAt"]</span><div>@Model.CreatedAt.ToLocalTime().ToString("g")</div></div>
+                <div><span class="text-slate-500">@L["UpdatedAt"]</span><div>@(Model.UpdatedAt?.ToLocalTime().ToString("g") ?? "—")</div></div>
+            </div>
+        </div>
+    </div>
+</div>

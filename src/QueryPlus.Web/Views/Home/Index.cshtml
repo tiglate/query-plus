@@ -1,0 +1,189 @@
+@model HomeIndexViewModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> L
+@{
+    ViewData["Title"] = L["Home_Title"].Value;
+    ViewData["PageKey"] = "home";
+    var hasProcedure = Model.ProcedureId is > 0;
+}
+
+<div class="qp-page qp-home-page"
+     data-page="home"
+     data-msg-select-procedure="@L["Home_SelectProcedureRequired"]"
+     data-msg-export-requires-data="@L["Home_ExportRequiresData"]"
+     data-msg-required-params="@L["Home_RequiredParametersClient"]"
+     data-msg-required-params-multi="@L["Home_RequiredParametersMissing"]">
+    <div class="qp-card qp-home-toolbar shrink-0">
+        <div class="qp-card-header">
+            <h1 class="qp-page-title">
+                <i class="fa-solid fa-play text-cyan" aria-hidden="true"></i>
+                @L["Home_Title"]
+            </h1>
+            <div class="flex flex-wrap gap-1.5">
+                <button type="button"
+                        id="btn-execute"
+                        class="qp-btn-primary"
+                        hx-post="@Url.Action("Execute", "Home")"
+                        hx-include="#exec-form"
+                        hx-target="#results-panel"
+                        hx-swap="innerHTML"
+                        hx-indicator="#exec-indicator"
+                        disabled="@(!hasProcedure)"
+                        title="@L["Home_SelectProcedureRequired"]">
+                    <i class="fa-solid fa-play" aria-hidden="true"></i>
+                    @L["Home_Execute"]
+                </button>
+                <button type="button"
+                        id="btn-clear"
+                        class="qp-btn-secondary"
+                        data-clear-url="@Url.Action("Index", "Home")"
+                        disabled="@(!hasProcedure)"
+                        title="@L["Home_SelectProcedureRequired"]">
+                    <i class="fa-solid fa-eraser" aria-hidden="true"></i>
+                    @L["Clear"]
+                </button>
+                <button type="button"
+                        id="btn-export"
+                        class="qp-btn-accent"
+                        hx-post="@Url.Action("Export", "Home")"
+                        hx-include="#exec-form"
+                        hx-target="#export-status"
+                        hx-swap="innerHTML"
+                        disabled="disabled"
+                        title="@L["Home_ExportRequiresData"]">
+                    <i class="fa-solid fa-file-excel" aria-hidden="true"></i>
+                    @L["Home_Export"]
+                </button>
+                <span id="exec-indicator" class="htmx-indicator text-xs text-slate-500">
+                    <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    @* Enter is intercepted in ClientApp HomePageController (prevent full post that wipes procedure list). *@
+    <form id="exec-form" method="post" class="js-exec-form qp-home-workspace">
+        @Html.AntiForgeryToken()
+        <input type="hidden"
+               id="procedureId"
+               name="procedureId"
+               class="js-procedure-select"
+               value="@(Model.ProcedureId is > 0 ? Model.ProcedureId.Value.ToString() : "")" />
+        @* Server-side pagination (injected only for SupportsPagination procedures; never user params). *@
+        <input type="hidden" id="pageNumber" name="pageNumber" value="1" class="js-page-number" />
+        <input type="hidden" id="pageSize" name="pageSize" value="50" class="js-page-size" />
+
+        <div class="qp-home-columns">
+            @* Column 1 (~20%): procedure list (Outlook-style inbox) *@
+            <section class="qp-card qp-home-column qp-home-column-side" aria-label="@L["Home_SelectProcedure"]">
+                <div class="qp-card-header qp-home-column-header">
+                    <h2 class="qp-section-title">
+                        <i class="fa-solid fa-list" aria-hidden="true"></i>
+                        @L["Home_SelectProcedure"]
+                    </h2>
+                    <span class="text-[11px] font-normal text-slate-500">@Model.AccessibleProcedures.Count</span>
+                </div>
+                <div id="procedure-list"
+                     class="qp-home-column-scroll qp-procedure-list"
+                     role="listbox"
+                     aria-label="@L["Home_SelectProcedure"]">
+                    @if (Model.AccessibleProcedures.Count == 0)
+                    {
+                        <p class="px-3 py-3 text-xs text-slate-500">@L["NoRecords"]</p>
+                    }
+                    else
+                    {
+                        @* Grouped by category description (A–Z); procedures already ordered by caption in service/repo. *@
+                        var groups = Model.AccessibleProcedures
+                            .GroupBy(p => string.IsNullOrWhiteSpace(p.CategoryDescription)
+                                ? L["Home_Uncategorized"].Value
+                                : p.CategoryDescription!)
+                            .OrderBy(g => g.Key, StringComparer.CurrentCultureIgnoreCase);
+                        var groupIndex = 0;
+                        foreach (var group in groups)
+                        {
+                            var headingId = $"procedure-category-{groupIndex++}";
+                            <div class="qp-procedure-group" role="group" aria-labelledby="@headingId">
+                                <div id="@headingId" class="qp-procedure-category">
+                                    <span class="qp-procedure-category-label">@group.Key</span>
+                                    <span class="qp-procedure-category-count">@group.Count()</span>
+                                </div>
+                                @foreach (var proc in group)
+                                {
+                                    var selected = Model.ProcedureId == proc.Id;
+                                    var description = string.IsNullOrWhiteSpace(proc.Description)
+                                        ? "—"
+                                        : proc.Description;
+                                    <button type="button"
+                                            role="option"
+                                            class="qp-procedure-item js-procedure-item @(selected ? "is-selected" : "")"
+                                            data-procedure-id="@proc.Id"
+                                            aria-selected="@(selected ? "true" : "false")"
+                                            title="@proc.Caption"
+                                            hx-get="@Url.Action("Parameters", "Home", new { procedureId = proc.Id })"
+                                            hx-target="#parameters-panel"
+                                            hx-swap="innerHTML">
+                                        <span class="qp-procedure-item-caption">@proc.Caption</span>
+                                        <span class="qp-procedure-item-description">@description</span>
+                                    </button>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+                <p id="procedure-selection-hint"
+                   class="qp-home-column-footer @(hasProcedure ? "hidden" : "")">
+                    @L["Home_SelectProcedureRequired"]
+                </p>
+            </section>
+
+            @* Column 2 (~15%): parameters *@
+            <section class="qp-card qp-home-column qp-home-column-side" aria-label="@L["Home_Parameters"]">
+                <div class="qp-card-header qp-home-column-header">
+                    <h2 class="qp-section-title">
+                        <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+                        @L["Home_Parameters"]
+                    </h2>
+                </div>
+                <div class="qp-card-body qp-home-column-scroll" id="parameters-panel">
+                    @if (Model.SelectedProcedure is not null)
+                    {
+                        <partial name="Partials/_ParameterForm" model="Model.SelectedProcedure" />
+                    }
+                    else
+                    {
+                        <p class="text-xs text-slate-500">@L["Home_NoProcedure"]</p>
+                    }
+                </div>
+            </section>
+
+            @* Column 3 (~60%): results grid *@
+            <section class="qp-card qp-home-column qp-home-column-results" aria-label="@L["Home_Results"]">
+                <div class="qp-card-header qp-home-column-header">
+                    <h2 class="qp-section-title">
+                        <i class="fa-solid fa-table" aria-hidden="true"></i>
+                        @L["Home_Results"]
+                    </h2>
+                    <div class="flex items-center gap-1.5">
+                        <div id="export-status"></div>
+                        <button type="button"
+                                id="btn-toggle-results-max"
+                                class="qp-btn-ghost"
+                                aria-pressed="false"
+                                data-label-maximize="@L["Home_MaximizeGrid"]"
+                                data-label-restore="@L["Home_RestoreGrid"]"
+                                title="@L["Home_MaximizeGrid"]">
+                            <i class="fa-solid fa-expand js-results-max-icon" aria-hidden="true"></i>
+                            <span class="js-results-max-label">@L["Home_MaximizeGrid"]</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="qp-card-body qp-results-panel" id="results-panel"
+                     data-export-ready="false">
+                    <div class="js-results-root" data-export-ready="false" data-row-count="0">
+                        <p class="qp-results-empty text-xs text-slate-500">@L["NoRecords"]</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </form>
+</div>

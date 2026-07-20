@@ -24,7 +24,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Scan Razor + TS so utilities used only in cshtml are generated. */
-@source "../../../Pages/**/*.{cshtml,cs}";
+@source "../../../Views/**/*.{cshtml,cs}";
 @source "../**/*.{ts,css}";
 
 @theme {
