@@ -50,6 +50,7 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync(CancellationToken cancellationToken)
     {
+        ViewData["PageKey"] = "home";
         await LoadProceduresAsync(cancellationToken);
         if (ProcedureId is > 0)
         {
@@ -69,6 +70,7 @@ public class IndexModel : PageModel
     /// </summary>
     public IActionResult OnPost()
     {
+        ViewData["PageKey"] = "home";
         var procedureId = ResolveProcedureId(null);
         if (procedureId > 0)
         {

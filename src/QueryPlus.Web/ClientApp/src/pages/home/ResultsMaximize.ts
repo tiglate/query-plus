@@ -55,9 +55,11 @@ export class ResultsMaximize {
 
   mount(): void {
     this.dispose();
-    const btn = this.doc.getElementById("btn-toggle-results-max");
+
     const columns = this.doc.querySelector(".qp-home-columns");
-    if (!btn || !columns) return;
+    const btn = this.doc.getElementById("btn-toggle-results-max");
+    // Nothing to do if home results chrome is not on the page.
+    if (!columns || !btn) return;
 
     let initial = false;
     try {
@@ -68,15 +70,23 @@ export class ResultsMaximize {
     }
     this.setMaximized(initial);
 
+    // Delegate from body so we still handle clicks on icon/label children.
     const onClick = (e: Event) => {
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+      const clicked = target.closest("#btn-toggle-results-max");
+      if (!clicked || !this.doc.contains(clicked)) return;
+
       e.preventDefault();
+      e.stopPropagation();
       this.setMaximized(!this.isMaximized());
       this.win.requestAnimationFrame(() => {
         this.results.refreshLayout();
       });
     };
-    btn.addEventListener("click", onClick);
-    this.unsub = () => btn.removeEventListener("click", onClick);
+
+    this.doc.body.addEventListener("click", onClick);
+    this.unsub = () => this.doc.body.removeEventListener("click", onClick);
   }
 
   dispose(): void {

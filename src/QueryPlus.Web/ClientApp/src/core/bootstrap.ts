@@ -5,6 +5,9 @@ import { HomePageController } from "../pages/home/HomePageController";
 import { SharedShellController } from "../pages/shared/SharedShellController";
 import { configureContainer, getAppContainer } from "./di/container";
 import type { PageController } from "./PageController";
+import { resolvePageKey } from "./pageKey";
+
+export { resolvePageKey } from "./pageKey";
 
 export interface BootstrapOptions {
   /** Document root; defaults to global document. */
@@ -17,15 +20,6 @@ export interface BootstrapResult {
   shell: SharedShellController;
   page: PageController | null;
   pageKey: string;
-}
-
-/**
- * Resolve page key from body[data-page] or first [data-page] in the document.
- */
-export function resolvePageKey(doc: Document = document): string {
-  const fromBody = doc.body?.getAttribute("data-page");
-  if (fromBody) return fromBody;
-  return doc.querySelector("[data-page]")?.getAttribute("data-page") || "";
 }
 
 /**
