@@ -136,7 +136,7 @@ The system replaces manual query execution by the Production team, reducing risk
 
 ### 3.1 Stack
 
-- Backend: .NET 10, ASP.NET Core Razor Pages + HTMX
+- Backend: .NET 10, ASP.NET Core MVC (Controllers + Views) + HTMX
 - Data: EF Core (CRUD + Migrations), ADO.NET for dynamic result sets from stored procedures
 - Styling: Tailwind CSS
 - Auth: Keycloak

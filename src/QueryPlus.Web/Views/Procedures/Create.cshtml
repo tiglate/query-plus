@@ -1,0 +1,36 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> L
+@model ProcedureEditViewModel
+@{
+    ViewData["Title"] = L["Procedures_New"].Value;
+    ViewData["PageKey"] = "admin-procedure-edit";
+}
+
+<div class="qp-page space-y-4">
+    <div class="qp-card">
+        <div class="qp-card-header">
+            <h1 class="qp-page-title">
+                <i class="fa-solid fa-file-circle-plus text-cyan" aria-hidden="true"></i>
+                @L["Procedures_New"]
+            </h1>
+            <div class="flex flex-wrap items-center justify-end gap-1.5">
+                <button type="submit" form="procedure-form" class="qp-btn-primary">
+                    <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                    @L["Save"]
+                </button>
+                <a asp-controller="Procedures" asp-action="Index" class="qp-btn-secondary">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                    @L["Cancel"]
+                </a>
+                <a asp-controller="Procedures" asp-action="Index" class="qp-btn-secondary">
+                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                    @L["Back"]
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <form id="procedure-form" method="post" asp-controller="Procedures" asp-action="Create" novalidate class="space-y-4">
+        @Html.AntiForgeryToken()
+        <partial name="Partials/_ProcedureEditForm" model="Model" />
+    </form>
+</div>

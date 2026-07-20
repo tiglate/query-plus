@@ -1,0 +1,167 @@
+@model ProcedureIndexViewModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> L
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using System.Net
+@{
+    ViewData["Title"] = L["Procedures_Title"].Value;
+    ViewData["PageKey"] = "admin-procedures";
+
+    const int idToken = 987654321;
+    var viewUrlTemplate = (Url.Action("Details", "Procedures", new { id = idToken }) ?? "").Replace(idToken.ToString(), "__ID__");
+    var editUrlTemplate = (Url.Action("Edit", "Procedures", new { id = idToken }) ?? "").Replace(idToken.ToString(), "__ID__");
+    var deleteBase = Url.Action("Delete", "Procedures") ?? "/Admin/Procedures/Delete";
+    var antiforgery = Antiforgery.GetAndStoreTokens(Context).RequestToken ?? "";
+
+    string ActionsHtml(int id)
+    {
+        var viewUrl = viewUrlTemplate.Replace("__ID__", id.ToString());
+        var editUrl = editUrlTemplate.Replace("__ID__", id.ToString());
+        var deleteUrl = deleteBase + (deleteBase.Contains('?', StringComparison.Ordinal) ? "&" : "?")
+                        + "id=" + id;
+        return
+            $"""
+             <div class="qp-grid-actions">
+               <a class="qp-btn-ghost" href="{WebUtility.HtmlEncode(viewUrl)}"><i class="fa-solid fa-eye" aria-hidden="true"></i> {WebUtility.HtmlEncode(L["View"].Value)}</a>
+               <a class="qp-btn-ghost" href="{WebUtility.HtmlEncode(editUrl)}"><i class="fa-solid fa-pen" aria-hidden="true"></i> {WebUtility.HtmlEncode(L["Edit"].Value)}</a>
+               <form method="post" action="{WebUtility.HtmlEncode(deleteUrl)}" class="inline" data-confirm="{WebUtility.HtmlEncode(L["ConfirmDelete"].Value)}">
+                 <input type="hidden" name="__RequestVerificationToken" value="{WebUtility.HtmlEncode(antiforgery)}" />
+                 <input type="hidden" name="CategoryId" value="{WebUtility.HtmlEncode(Model.CategoryId?.ToString() ?? "")}" />
+                 <input type="hidden" name="Caption" value="{WebUtility.HtmlEncode(Model.Caption ?? "")}" />
+                 <input type="hidden" name="RoleEntitlement" value="{WebUtility.HtmlEncode(Model.RoleEntitlement ?? "")}" />
+                 <input type="hidden" name="Enabled" value="{WebUtility.HtmlEncode(Model.Enabled?.ToString() ?? "")}" />
+                 <input type="hidden" name="PageNumber" value="{Model.PageNumber}" />
+                 <input type="hidden" name="PageSize" value="{Model.PageSize}" />
+                 <button type="submit" class="qp-btn-ghost text-red-700"><i class="fa-solid fa-trash" aria-hidden="true"></i> {WebUtility.HtmlEncode(L["Delete"].Value)}</button>
+               </form>
+             </div>
+             """;
+    }
+
+    string EnabledHtml(bool enabled) =>
+        enabled
+            ? $"""<span class="qp-badge-ok">{WebUtility.HtmlEncode(L["Enabled"].Value)}</span>"""
+            : $"""<span class="qp-badge-off">{WebUtility.HtmlEncode(L["Disabled"].Value)}</span>""";
+
+    var cells = Model.Items.Select(item => (IReadOnlyList<string>)new[]
+    {
+        item.Id.ToString(),
+        item.Caption,
+        item.CategoryDescription ?? "—",
+        item.DatabaseName,
+        item.ProcedureName,
+        item.RoleEntitlement,
+        EnabledHtml(item.Enabled),
+        ActionsHtml(item.Id)
+    }).ToList();
+
+    var sheet = new SheetGridModel
+    {
+        Columns =
+        [
+            new SheetGridColumn { Caption = L["Id"].Value, Align = "right", Width = 70 },
+            new SheetGridColumn { Caption = L["Procedures_Caption"].Value },
+            new SheetGridColumn { Caption = L["Procedures_Category"].Value },
+            new SheetGridColumn { Caption = L["Procedures_Database"].Value },
+            new SheetGridColumn { Caption = L["Procedures_Name"].Value },
+            new SheetGridColumn { Caption = L["Procedures_Role"].Value },
+            new SheetGridColumn { Caption = L["Enabled"].Value, IsHtml = true, Width = 90 },
+            // PT labels (Visualizar/Editar/Excluir) + icons need ~300px; keep single-line actions.
+            new SheetGridColumn { Caption = L["Actions"].Value, Align = "center", IsHtml = true, Sortable = false, Width = 300 }
+        ],
+        Cells = cells,
+        EmptyMessage = L["NoRecords"].Value,
+        MetaText = string.Format(L["Pagination_Summary"].Value,
+            Model.Pager.FromItem, Model.Pager.ToItem, Model.Pager.TotalCount),
+        ShowInteractionHint = true,
+        CssClass = "qp-sheet-grid--admin"
+    };
+}
+
+<div class="qp-page qp-admin-search-page">
+    @* Toolbar: title left, actions right *@
+    <div class="qp-card shrink-0">
+        <div class="qp-card-header">
+            <h1 class="qp-page-title">
+                <i class="fa-solid fa-database text-cyan" aria-hidden="true"></i>
+                @L["Procedures_Title"]
+            </h1>
+            <div class="flex flex-wrap items-center justify-end gap-1.5">
+                <button type="submit" form="procedures-filter-form" class="qp-btn-primary">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    @L["Search"]
+                </button>
+                <a asp-controller="Procedures" asp-action="Index" class="qp-btn-secondary">
+                    <i class="fa-solid fa-eraser" aria-hidden="true"></i>
+                    @L["Clear"]
+                </a>
+                <a asp-controller="Procedures" asp-action="Create" class="qp-btn-accent">
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                    @L["Create"]
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @* Filters *@
+    <div class="qp-card shrink-0">
+        <div class="qp-card-header">
+            <h2 class="qp-section-title">
+                <i class="fa-solid fa-filter" aria-hidden="true"></i>
+                @L["Filter"]
+            </h2>
+        </div>
+        <div class="qp-card-body">
+            <form id="procedures-filter-form" method="get" asp-controller="Procedures" asp-action="Index" class="grid grid-cols-1 gap-2 md:grid-cols-6">
+                <div>
+                    <label class="qp-label">@L["Procedures_Category"]</label>
+                    <select class="qp-input" name="categoryId" asp-items="Model.CategoryOptions" asp-items="Model.CategoryOptions"></select>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="qp-label">@L["Procedures_Caption"]</label>
+                    <input class="qp-input" name="caption" id="caption" />
+                </div>
+                <div>
+                    <label class="qp-label">@L["Procedures_Role"]</label>
+                    <input class="qp-input" name="roleEntitlement" id="roleEntitlement" />
+                </div>
+                <div>
+                    <label class="qp-label">@L["Enabled"]</label>
+                    <select class="qp-input" name="enabled" id="enabled">
+                        <option value="">—</option>
+                        <option value="true">@L["Yes"]</option>
+                        <option value="false">@L["No"]</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="qp-label" name="pageSize" id="pageSize">@L["Pagination_PageSize"]</label>
+                    <select class="qp-input" name="pageSize" id="pageSize">
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* Results — body (grid, no padding) + footer (pager) *@
+    <div class="qp-card qp-admin-results-card">
+        <div class="qp-card-header shrink-0">
+            <h2 class="qp-section-title">
+                <i class="fa-solid fa-table" aria-hidden="true"></i>
+                @L["Home_Results"]
+            </h2>
+        </div>
+        <div class="qp-card-body qp-admin-results-body">
+            <partial name="Partials/_SheetGrid" model="sheet" />
+        </div>
+        @if (Model.Pager.TotalCount > 0)
+        {
+            <footer class="qp-results-card-footer">
+                <partial name="Partials/_Pager" model="Model.Pager" />
+            </footer>
+        }
+    </div>
+</div>

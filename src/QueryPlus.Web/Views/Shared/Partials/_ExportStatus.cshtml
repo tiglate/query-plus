@@ -1,0 +1,33 @@
+@model Guid
+@using QueryPlus.Application.Interfaces
+@inject IExcelExportService Exports
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> L
+@{
+    var job = Exports.GetJob(Model);
+}
+
+@if (job is null)
+{
+    <span class="text-xs text-slate-500">—</span>
+}
+else if (job.Status == ExportJobStatus.Completed)
+{
+    <div class="flex items-center gap-2 text-xs">
+        <span class="text-navy">@L["Home_ExportReady"]</span>
+        <a class="qp-btn-primary py-1" href="/exports/download/@Model"><i class="fa-solid fa-download" aria-hidden="true"></i> @L["Home_Download"]</a>
+    </div>
+}
+else if (job.Status == ExportJobStatus.Failed)
+{
+    <span class="text-xs text-red-700">@L["Home_ExportFailed"]: @job.ErrorMessage</span>
+}
+else
+{
+    <div class="flex items-center gap-2 text-xs text-slate-600"
+         hx-get="@Url.Action("ExportStatus", "Home", new { jobId = Model })"
+         hx-trigger="every 2s"
+         hx-swap="outerHTML">
+        <span class="inline-block h-2 w-2 animate-pulse rounded-full bg-cyan"></span>
+        @L["Home_ExportRunning"] (@job.Status)
+    </div>
+}

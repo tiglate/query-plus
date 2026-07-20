@@ -12,8 +12,11 @@ public sealed class PagerModel
     public bool HasPrevious => Page > 1;
     public bool HasNext => Page < TotalPages;
 
-    /// <summary>Razor page path relative to the current folder, e.g. "./Index".</summary>
-    public required string PagePath { get; init; }
+    /// <summary>MVC controller name for page links (e.g. "Categories").</summary>
+    public required string Controller { get; init; }
+
+    /// <summary>MVC action name for page links (default Index).</summary>
+    public string Action { get; init; } = "Index";
 
     /// <summary>
     /// Extra query values preserved on page links (filters). Do not include Page.

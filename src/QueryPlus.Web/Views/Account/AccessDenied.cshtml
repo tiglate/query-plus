@@ -1,0 +1,14 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> L
+@{
+    ViewData["Title"] = L["AccessDenied_Title"].Value;
+}
+
+<div class="qp-page">
+    <div class="qp-card max-w-xl border-red-200 bg-red-50">
+        <div class="qp-card-body">
+            <h1 class="qp-page-title text-red-800">@L["AccessDenied_Title"]</h1>
+            <p class="mt-2 text-red-700">@L["AccessDenied_Body"]</p>
+            <a asp-controller="Home" asp-action="Index" class="qp-btn-primary mt-4"><i class="fa-solid fa-house" aria-hidden="true"></i> @L["Nav_Home"]</a>
+        </div>
+    </div>
+</div>
