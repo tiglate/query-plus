@@ -47,13 +47,13 @@ docs/
 - **EF Core** — catalog CRUD and migrations  
 - **Dapper / ADO.NET** — dynamic stored procedure results as `DataTable`
 
-## Prerequisites
+## ✅ Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [Docker](https://www.docker.com/) (SQL Server + Keycloak)
 - [Node.js 22+](https://nodejs.org/) + [pnpm](https://pnpm.io/) 10+ for ClientApp (or [Vite+](https://viteplus.dev/) `vp`) — first build and any frontend work
 
-## Quick start (local)
+## 🚀 Quick start (local)
 
 ### 1. Start infrastructure
 
@@ -99,7 +99,7 @@ pnpm run build        # → wwwroot/dist/{js,css,fonts}
 | Only .NET / Razor / C# changes | No — `dotnet run` is enough |
 | `dotnet publish` or Docker image build | Automatic |
 
-**Tip:** after TS/CSS edits, run `pnpm run build` again (or use watch mode below).
+💡 **Tip:** after TS/CSS edits, run `pnpm run build` again (or use watch mode below).
 
 #### Day-to-day frontend development
 
@@ -139,7 +139,7 @@ Open the URL printed by Kestrel (typically `https://localhost:7xxx` or `http://l
 
 Configure Keycloak client redirect URIs to match that URL if needed (`docker/keycloak/realm-export.json`).
 
-## Build & test
+## 🧪 Build & test
 
 ```bash
 dotnet restore
@@ -150,7 +150,7 @@ dotnet test QueryPlus.sln
 cd src/QueryPlus.Web && pnpm test
 ```
 
-## Docker (full stack)
+## 🐳 Docker (full stack)
 
 ```bash
 docker compose --profile full up --build
@@ -159,7 +159,7 @@ docker compose --profile full up --build
 - App: http://localhost:5000  
 - Uses `appsettings.Docker.json` / environment variables for SQL Server and Keycloak.
 
-## Dev Containers
+## 🧰 Dev Containers
 
 1. Open the repo in VS Code / Cursor.  
 2. **Dev Containers: Reopen in Container**.  
@@ -169,7 +169,7 @@ docker compose --profile full up --build
 dotnet run --project src/QueryPlus.Web --urls http://0.0.0.0:5000
 ```
 
-## Configuration
+## ⚙️ Configuration
 
 | Setting | Description |
 |---------|-------------|
@@ -181,7 +181,7 @@ dotnet run --project src/QueryPlus.Web --urls http://0.0.0.0:5000
 
 Localization: `?culture=pt-BR` or `?culture=en` (also cookie / `Accept-Language`).
 
-## Authentication notes
+## 🔑 Authentication notes
 
 - OpenID Connect authorization code flow against Keycloak.
 - Cookie session after login (`QueryPlus.Auth`).
@@ -207,11 +207,11 @@ docker compose up -d sqlserver keycloak
 
 Change the client secret before any non-dev environment.
 
-## Primary keys
+## 🔢 Primary keys
 
 All domain entities use **`int`** identity primary keys.
 
-## Demo data (automatic on startup)
+## 🌱 Demo data (automatic on startup)
 
 On application start, `DemoDataSeeder`:
 
@@ -232,11 +232,11 @@ Role entitlement for demo procedures is **`user`** (also works for `admin`).
 
 SQL scripts are also mirrored under `docs/database/`.
 
-## Documentation
+## 📚 Documentation
 
 - [Software specification](docs/SPECIFICATION.md)  
 - [Database schema](docs/database/schema.sql)
 
-## License
+## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).
