@@ -146,7 +146,7 @@
         </div>
     </div>
 
-    @* Results — fills remaining viewport height *@
+    @* Results — body (grid, no padding) + footer (pager) *@
     <div class="qp-card qp-admin-results-card">
         <div class="qp-card-header shrink-0">
             <h2 class="qp-section-title">
@@ -156,9 +156,12 @@
         </div>
         <div class="qp-card-body qp-admin-results-body">
             <partial name="Shared/Partials/_SheetGrid" model="sheet" />
-            <div class="qp-admin-results-pager shrink-0">
-                <partial name="Partials/_Pager" model="Model.Pager" />
-            </div>
         </div>
+        @if (Model.Pager.TotalCount > 0)
+        {
+            <footer class="qp-results-card-footer">
+                <partial name="Shared/Partials/_Pager" model="Model.Pager" />
+            </footer>
+        }
     </div>
 </div>

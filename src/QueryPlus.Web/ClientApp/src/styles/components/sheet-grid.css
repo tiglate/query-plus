@@ -294,9 +294,11 @@ body.qp-col-resizing iframe {
   @apply flex min-h-0 flex-1 flex-col overflow-hidden;
 }
 
+/* Flush to admin results card body (no nested border/padding). */
 .qp-sheet-grid--admin {
-  @apply flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-slate-200 bg-white
-    dark:border-navy-600 dark:bg-navy-800;
+  @apply flex min-h-0 w-full flex-1 flex-col overflow-hidden;
+  height: 100%;
+  max-height: 100%;
 }
 
 .qp-sheet-grid--admin .qp-results-clusterize {

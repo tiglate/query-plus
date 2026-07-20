@@ -9,16 +9,9 @@
   @apply flex min-h-0 flex-1 flex-col overflow-hidden;
 }
 
+/* Grid only — no padding (pager lives in qp-results-card-footer). */
 .qp-admin-results-body {
-  @apply flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-3;
-}
-
-.qp-admin-results-pager {
-  @apply shrink-0 border-t border-slate-100 pt-2 dark:border-navy-600;
-}
-
-.qp-admin-results-pager nav {
-  @apply mt-0;
+  @apply flex min-h-0 flex-1 flex-col overflow-hidden p-0;
 }
 
 /* Shared width for Category Description on Create / Edit / View. */
