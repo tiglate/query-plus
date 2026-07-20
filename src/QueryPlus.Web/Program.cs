@@ -3,6 +3,11 @@ using QueryPlus.Infrastructure.DependencyInjection;
 using QueryPlus.Web.DependencyInjection;
 using QueryPlus.Web.Hosting;
 
+// Load repo-root .env (if present) before configuration is built.
+// Existing process env vars win (Compose / CI / shell exports are not overwritten).
+EnvFileLoader.LoadFromAncestors(Directory.GetCurrentDirectory());
+EnvFileLoader.LoadFromAncestors(AppContext.BaseDirectory);
+
 // Composition root only — registration and pipeline live in focused extension classes.
 // Controllers: Controllers/ (+ Controllers/Admin/)
 // Views: Views/ (Razor views for MVC)

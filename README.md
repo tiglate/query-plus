@@ -55,18 +55,36 @@ docs/
 
 ## 🚀 Quick start (local)
 
+### 0. Configure local secrets (required)
+
+Credentials are **not** stored in `appsettings*.json`. Copy the template and edit only if needed:
+
+```bash
+cp .env.example .env
+```
+
+| File | In git? | Purpose |
+|------|---------|---------|
+| `.env.example` | ✅ yes | Dummy local defaults (template) |
+| `.env` | ❌ **never** (gitignored) | Your machine-only values |
+
+⚠️ **These values are dummy development credentials.** They exist only so Docker and a laptop can start quickly. **Do not use them in production, staging, or any shared environment.** Rotate secrets, use a secret manager, and enforce HTTPS/strong passwords before any real deployment.
+
+Docker Compose reads `.env` for variable substitution. `dotnet run` also loads a repo-root `.env` into the process environment (without overriding variables already set by the shell or CI).
+
 ### 1. Start infrastructure
 
 ```bash
 docker compose up -d sqlserver keycloak
 ```
 
-| Service | URL / connection |
+| Service | URL / connection (from `.env.example` dummies) |
 |---------|------------------|
-| SQL Server | `localhost:1433` (sa / `Your_strong_Password123`) |
-| Keycloak | http://localhost:8080 (admin / admin) |
+| SQL Server | `localhost:1433` (sa / value of `MSSQL_SA_PASSWORD`) |
+| Keycloak | http://localhost:8080 (`KEYCLOAK_ADMIN` / `KEYCLOAK_ADMIN_PASSWORD`) |
 | Realm | `queryplus` (imported automatically) |
-| Demo users | `demo` / `demo`, `admin` / `admin` |
+| Demo users | `demo` / `demo`, `admin` / `admin` (realm export — local only) |
+| OIDC client secret | Must match `Keycloak__ClientSecret` and `docker/keycloak/realm-export.json` |
 
 ### 2. Apply database schema
 
@@ -171,13 +189,19 @@ dotnet run --project src/QueryPlus.Web --urls http://0.0.0.0:5000
 
 ## ⚙️ Configuration
 
-| Setting | Description |
-|---------|-------------|
-| `ConnectionStrings:DefaultConnection` | SQL Server connection |
-| `Keycloak:Authority` | e.g. `http://localhost:8080/realms/queryplus` |
-| `Keycloak:ClientId` | `queryplus-web` |
-| `Keycloak:ClientSecret` | Must match Keycloak client secret |
-| `Keycloak:RequireHttpsMetadata` | `false` for local HTTP Keycloak |
+Prefer **environment variables** (including those from `.env`) over committing secrets.
+
+| Setting / env var | Description |
+|-------------------|-------------|
+| `ConnectionStrings__DefaultConnection` | SQL Server connection string |
+| `Keycloak__Authority` | e.g. `http://localhost:8080/realms/queryplus` |
+| `Keycloak__ClientId` | `queryplus-web` |
+| `Keycloak__ClientSecret` | OIDC client secret (**dummy in `.env.example` only**) |
+| `Keycloak__RequireHttpsMetadata` | `false` for local HTTP Keycloak |
+| `MSSQL_SA_PASSWORD` | SQL Server `sa` password for Compose |
+| `KEYCLOAK_ADMIN` / `KEYCLOAK_ADMIN_PASSWORD` | Keycloak admin user for Compose |
+
+`appsettings.json` holds non-secret defaults (logging, public Authority/ClientId). Secrets should come from `.env`, the host environment, or a production secret store—not from source control.
 
 Localization: `?culture=pt-BR` or `?culture=en` (also cookie / `Accept-Language`).
 
@@ -205,7 +229,7 @@ docker compose up -d sqlserver keycloak
 # or: Dev Containers → Rebuild Container
 ```
 
-Change the client secret before any non-dev environment.
+Before any non-dev environment: use unique strong passwords, a private Keycloak client secret, disable or replace demo users, and never ship a real `.env` or commit production connection strings.
 
 ## 🔢 Primary keys
 
