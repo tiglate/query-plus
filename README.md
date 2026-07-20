@@ -6,14 +6,14 @@ Built with **.NET 10**, **ASP.NET Core MVC**, **HTMX**, **Tailwind CSS**, **EF C
 
 **Default language:** Brazilian Portuguese (`pt-BR`), with English (`en`).
 
-## Features
+## ✨ Features
 
-- **Home** — pick a catalogued procedure, set parameters, execute, page large results server-side, export to Excel
-- **Admin** — manage categories and procedures (parameters, columns, sync metadata from SQL Server)
-- **Security** — OIDC via Keycloak; procedure-level role entitlements; reserved pagination args never exposed to end users
-- **Ops** — execution log, configuration audit tables, demo data seeded on startup
+- 🏠 **Home** — pick a catalogued procedure, set parameters, execute, page large results server-side, export to Excel
+- 🗂️ **Admin** — manage categories and procedures (parameters, columns, sync metadata from SQL Server)
+- 🔐 **Security** — OIDC via Keycloak; procedure-level role entitlements; reserved pagination args never exposed to end users
+- 📋 **Ops** — execution log, configuration audit tables, demo data seeded on startup
 
-## Solution structure
+## 📦 Solution structure
 
 ```
 QueryPlus.sln
