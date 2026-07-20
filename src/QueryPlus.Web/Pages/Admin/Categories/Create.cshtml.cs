@@ -9,17 +9,9 @@ using AppValidationException = QueryPlus.Application.Common.ValidationException;
 
 namespace QueryPlus.Web.Pages.Admin.Categories;
 
-public class CreateModel : PageModel
+public class CreateModel(ICategoryService categories, IStringLocalizer<SharedResource> localizer)
+    : PageModel
 {
-    private readonly ICategoryService _categories;
-    private readonly IStringLocalizer<SharedResource> _L;
-
-    public CreateModel(ICategoryService categories, IStringLocalizer<SharedResource> localizer)
-    {
-        _categories = categories;
-        _L = localizer;
-    }
-
     [BindProperty]
     public InputModel Input { get; set; } = new();
 
@@ -42,10 +34,10 @@ public class CreateModel : PageModel
 
         try
         {
-            var created = await _categories.CreateAsync(
+            var created = await categories.CreateAsync(
                 new CreateCategoryDto { Description = Input.Description },
                 cancellationToken);
-            TempData["Success"] = _L["Categories_Saved"].Value;
+            TempData["Success"] = localizer["Categories_Saved"].Value;
             return RedirectToPage("View", new { id = created.Id });
         }
         catch (AppValidationException ex)

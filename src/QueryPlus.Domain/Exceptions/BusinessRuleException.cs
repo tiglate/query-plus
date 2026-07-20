@@ -1,8 +1,3 @@
 namespace QueryPlus.Domain.Exceptions;
 
-public sealed class BusinessRuleException : DomainException
-{
-    public BusinessRuleException(string message) : base(message)
-    {
-    }
-}
+public sealed class BusinessRuleException(string message) : DomainException(message);

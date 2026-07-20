@@ -32,6 +32,12 @@ public static class ParameterValueBinder
 
         foreach (var definition in definitions)
         {
+            // Pagination args are system-injected and must never be bound from user input.
+            if (ProcedurePagination.IsReservedParameterName(definition.Name))
+            {
+                continue;
+            }
+
             var name = SqlIdentifier.NormalizeParameterName(definition.Name);
             rawLookup.TryGetValue(name, out var raw);
 
@@ -90,6 +96,11 @@ public static class ParameterValueBinder
         var missing = new List<string>();
         foreach (var definition in definitions)
         {
+            if (ProcedurePagination.IsReservedParameterName(definition.Name))
+            {
+                continue;
+            }
+
             var name = SqlIdentifier.NormalizeParameterName(definition.Name);
             rawLookup.TryGetValue(name, out var raw);
             if (string.IsNullOrWhiteSpace(raw))

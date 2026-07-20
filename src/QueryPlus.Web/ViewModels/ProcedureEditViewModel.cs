@@ -28,6 +28,12 @@ public sealed class ProcedureEditViewModel
 
     public bool Enabled { get; set; } = true;
 
+    /// <summary>
+    /// When true, the home grid uses server-side pagination (@PageNumber/@PageSize/@TotalRecords).
+    /// </summary>
+    [Display(Name = "Supports pagination")]
+    public bool SupportsPagination { get; set; }
+
     [Display(Name = "Role / Entitlement")]
     [Required(ErrorMessage = "Role / Entitlement is required.")]
     [StringLength(100, ErrorMessage = "Role / Entitlement must be at most 100 characters.")]

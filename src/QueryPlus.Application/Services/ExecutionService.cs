@@ -12,83 +12,87 @@ using QueryPlus.Domain.Interfaces;
 
 namespace QueryPlus.Application.Services;
 
-public sealed class ExecutionService : IExecutionService
+public sealed class ExecutionService(
+    IProcedureRepository procedures,
+    IExecutionRepository executions,
+    IUnitOfWork unitOfWork,
+    IStoredProcedureExecutor executor,
+    ICurrentUserContext currentUser,
+    IMapper mapper,
+    IValidator<ExecuteProcedureRequest> requestValidator,
+    ILogger<ExecutionService> logger)
+    : IExecutionService
 {
-    private readonly IProcedureRepository _procedures;
-    private readonly IExecutionRepository _executions;
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IStoredProcedureExecutor _executor;
-    private readonly ICurrentUserContext _currentUser;
-    private readonly IMapper _mapper;
-    private readonly IValidator<ExecuteProcedureRequest> _requestValidator;
-    private readonly ILogger<ExecutionService> _logger;
-
-    public ExecutionService(
-        IProcedureRepository procedures,
-        IExecutionRepository executions,
-        IUnitOfWork unitOfWork,
-        IStoredProcedureExecutor executor,
-        ICurrentUserContext currentUser,
-        IMapper mapper,
-        IValidator<ExecuteProcedureRequest> requestValidator,
-        ILogger<ExecutionService> logger)
-    {
-        _procedures = procedures;
-        _executions = executions;
-        _unitOfWork = unitOfWork;
-        _executor = executor;
-        _currentUser = currentUser;
-        _mapper = mapper;
-        _requestValidator = requestValidator;
-        _logger = logger;
-    }
-
     public async Task<ExecutionResultDto> ExecuteAsync(
         ExecuteProcedureRequest request,
         CancellationToken cancellationToken = default)
     {
-        await ValidationHelper.ValidateAndThrowAsync(_requestValidator, request, cancellationToken);
+        await ValidationHelper.ValidateAndThrowAsync(requestValidator, request, cancellationToken);
 
-        if (!_currentUser.IsAuthenticated)
+        if (!currentUser.IsAuthenticated)
         {
             throw new ForbiddenOperationException("Authentication is required to execute procedures.");
         }
 
-        var procedure = await _procedures.GetEnabledByIdWithDetailsAsync(request.ProcedureId, cancellationToken)
+        var procedure = await procedures.GetEnabledByIdWithDetailsAsync(request.ProcedureId, cancellationToken)
             ?? throw new EntityNotFoundException(nameof(Procedure), request.ProcedureId);
 
         EnsureUserMayExecute(procedure);
 
-        // Bind & type-coerce form values using metadata (never pass raw strings blindly).
-        var boundParameters = ParameterValueBinder.Bind(procedure.Parameters, request.ParameterValues);
+        // Bind only non-reserved catalog parameters (pagination args are injected by the app).
+        var userParameterDefs = procedure.Parameters
+            .Where(p => !ProcedurePagination.IsReservedParameterName(p.Name))
+            .ToList();
+        var boundParameters = ParameterValueBinder.Bind(userParameterDefs, request.ParameterValues);
 
         var log = new ExecutionLog
         {
             IdProcedure = procedure.IdProcedure,
-            Username = _currentUser.Username,
-            IpAddress = _currentUser.IpAddress,
+            Username = currentUser.Username,
+            IpAddress = currentUser.IpAddress,
             ExecutionStart = DateTime.UtcNow,
             ParameterValues = JsonHelpers.Serialize(
                 boundParameters.ToDictionary(kv => kv.Key, kv => kv.Value?.ToString())),
             Success = false
         };
 
-        await _executions.AddAsync(log, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await executions.AddAsync(log, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var pageNumber = ProcedurePagination.DefaultPageNumber;
+        var pageSize = ProcedurePagination.DefaultPageSize;
 
         try
         {
-            // Secure path: only identifiers from the catalog + bound parameters (no free SQL).
-            var data = await _executor.ExecuteAsync(
+            IReadOnlyDictionary<string, object?> execParameters = boundParameters;
+            IReadOnlyCollection<string>? outputs = null;
+
+            if (procedure.SupportsPagination)
+            {
+                pageNumber = ProcedurePagination.ClampPageNumber(request.PageNumber);
+                pageSize = ProcedurePagination.ClampUiPageSize(request.PageSize);
+                execParameters = ProcedurePagination.WithPagingInputs(
+                    boundParameters,
+                    pageNumber,
+                    pageSize);
+                outputs = [ProcedurePagination.TotalRecordsName];
+            }
+
+            var executed = await executor.ExecuteAsync(
                 procedure.DatabaseName,
                 procedure.ProcedureName,
-                boundParameters,
+                execParameters,
+                outputs,
                 cancellationToken);
 
+            var data = executed.Data;
             log.Success = true;
-            log.RowCount = data.Rows.Count;
+            // Audit: prefer total for paginated SPs; otherwise page/full row count.
+            log.RowCount = procedure.SupportsPagination
+                ? (int)Math.Min(executed.TotalRecords ?? data.Rows.Count, int.MaxValue)
+                : data.Rows.Count;
             log.ExecutionEnd = DateTime.UtcNow;
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
 
             var columns = BuildGridColumns(procedure, data);
 
@@ -99,22 +103,26 @@ public sealed class ExecutionService : IExecutionService
                 ProcedureId = procedure.IdProcedure,
                 ProcedureCaption = procedure.Caption,
                 RowCount = data.Rows.Count,
+                SupportsPagination = procedure.SupportsPagination,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalRecords = executed.TotalRecords,
                 Data = data,
                 Columns = columns
             };
         }
         catch (Exception ex)
         {
-            _logger.LogError(
+            logger.LogError(
                 ex,
                 "Stored procedure execution failed. ProcedureId={ProcedureId}, User={User}",
                 procedure.IdProcedure,
-                _currentUser.Username);
+                currentUser.Username);
 
             log.Success = false;
             log.ErrorMessage = Truncate(ex.Message, 4000);
             log.ExecutionEnd = DateTime.UtcNow;
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
 
             return new ExecutionResultDto
             {
@@ -124,8 +132,11 @@ public sealed class ExecutionService : IExecutionService
                 ProcedureId = procedure.IdProcedure,
                 ProcedureCaption = procedure.Caption,
                 RowCount = 0,
+                SupportsPagination = procedure.SupportsPagination,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
                 Data = null,
-                Columns = _mapper.Map<IReadOnlyList<GridColumnDto>>(
+                Columns = mapper.Map<IReadOnlyList<GridColumnDto>>(
                     procedure.Columns.Where(c => c.Visible).OrderBy(c => c.Caption).ToList())
             };
         }
@@ -136,8 +147,8 @@ public sealed class ExecutionService : IExecutionService
         int take = 50,
         CancellationToken cancellationToken = default)
     {
-        var logs = await _executions.GetByProcedureAsync(procedureId, take, cancellationToken);
-        return _mapper.Map<IReadOnlyList<ExecutionLogDto>>(logs);
+        var logs = await executions.GetByProcedureAsync(procedureId, take, cancellationToken);
+        return mapper.Map<IReadOnlyList<ExecutionLogDto>>(logs);
     }
 
     private void EnsureUserMayExecute(Procedure procedure)
@@ -162,7 +173,7 @@ public sealed class ExecutionService : IExecutionService
             return;
         }
 
-        if (!required.Any(r => _currentUser.IsInRole(r)))
+        if (!required.Any(r => currentUser.IsInRole(r)))
         {
             throw new ForbiddenOperationException(
                 $"You do not have the required entitlement '{entitlement}' to execute this procedure.");

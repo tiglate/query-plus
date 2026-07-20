@@ -44,6 +44,11 @@ public class ProcedureConfiguration : IEntityTypeConfiguration<Procedure>
             .IsRequired()
             .HasDefaultValue(true);
 
+        builder.Property(e => e.SupportsPagination)
+            .HasColumnName("supports_pagination")
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.Property(e => e.RoleEntitlement)
             .HasColumnName("role_entitlement")
             .HasMaxLength(100)

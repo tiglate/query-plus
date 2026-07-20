@@ -883,3 +883,144 @@ BEGIN
     ORDER BY n
     OPTION (MAXRECURSION 0);
 END
+GO
+-- ============================================================
+-- Server-side pagination demos (QueryPlus contract):
+--   @PageNumber BIGINT = 1
+--   @PageSize BIGINT = 50
+--   @TotalRecords BIGINT OUTPUT
+-- ============================================================
+
+IF OBJECT_ID('dbo.Sp_Demo_Numbers_Paged', 'P') IS NOT NULL DROP PROCEDURE dbo.Sp_Demo_Numbers_Paged;
+GO
+CREATE PROCEDURE dbo.Sp_Demo_Numbers_Paged
+    @MaxNumber INT = 5000,
+    @PageNumber BIGINT = 1,
+    @PageSize BIGINT = 50,
+    @TotalRecords BIGINT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @MaxNumber IS NULL OR @MaxNumber < 1 SET @MaxNumber = 5000;
+    IF @MaxNumber > 100000 SET @MaxNumber = 100000;
+    IF @PageNumber IS NULL OR @PageNumber < 1 SET @PageNumber = 1;
+    IF @PageSize IS NULL OR @PageSize < 1 SET @PageSize = 50;
+    IF @PageSize > 999999999 SET @PageSize = 999999999;
+
+    SET @TotalRecords = @MaxNumber;
+
+    DECLARE @Offset BIGINT = (@PageNumber - 1) * @PageSize;
+
+    ;WITH n AS (
+        SELECT 1 AS n
+        UNION ALL
+        SELECT n + 1 FROM n WHERE n < @MaxNumber
+    )
+    SELECT
+        n AS Number,
+        'NUM-' + RIGHT('000000' + CAST(n AS VARCHAR(10)), 6) AS Code,
+        'Generated row ' + CAST(n AS VARCHAR(10)) AS Label
+    FROM n
+    ORDER BY n
+    OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY
+    OPTION (MAXRECURSION 0);
+END
+GO
+
+IF OBJECT_ID('dbo.Sp_Demo_Large_Result_Paged', 'P') IS NOT NULL DROP PROCEDURE dbo.Sp_Demo_Large_Result_Paged;
+GO
+CREATE PROCEDURE dbo.Sp_Demo_Large_Result_Paged
+    @RowCount INT = 5000,
+    @PageNumber BIGINT = 1,
+    @PageSize BIGINT = 50,
+    @TotalRecords BIGINT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @RowCount IS NULL OR @RowCount < 1 SET @RowCount = 5000;
+    IF @RowCount > 50000 SET @RowCount = 50000;
+    IF @PageNumber IS NULL OR @PageNumber < 1 SET @PageNumber = 1;
+    IF @PageSize IS NULL OR @PageSize < 1 SET @PageSize = 50;
+    IF @PageSize > 999999999 SET @PageSize = 999999999;
+
+    SET @TotalRecords = @RowCount;
+
+    DECLARE @Offset BIGINT = (@PageNumber - 1) * @PageSize;
+
+    ;WITH n AS (
+        SELECT 1 AS n
+        UNION ALL
+        SELECT n + 1 FROM n WHERE n < @RowCount
+    )
+    SELECT
+        n AS RowId,
+        'ITEM-' + RIGHT('0000' + CAST(n AS VARCHAR(10)), 4) AS ItemCode,
+        'Sample product description for row ' + CAST(n AS VARCHAR(10))
+            + ' — server-side paginated large result.' AS Description,
+        CAST((n % 12) + 1 AS INT) AS CategoryId,
+        CAST(10.00 + (n % 250) * 1.37 AS DECIMAL(18, 2)) AS Amount,
+        DATEADD(DAY, -(n % 730), CAST(SYSUTCDATETIME() AS DATE)) AS OrderDate,
+        CASE WHEN n % 3 = 0 THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END AS IsActive
+    FROM n
+    ORDER BY n
+    OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY
+    OPTION (MAXRECURSION 0);
+END
+GO
+
+IF OBJECT_ID('dbo.Sp_USA_President_List_Paged', 'P') IS NOT NULL DROP PROCEDURE dbo.Sp_USA_President_List_Paged;
+GO
+CREATE PROCEDURE dbo.Sp_USA_President_List_Paged
+    @State VARCHAR(50) = NULL,
+    @Start DATE = NULL,
+    @End DATE = NULL,
+    @PageNumber BIGINT = 1,
+    @PageSize BIGINT = 50,
+    @TotalRecords BIGINT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @PageNumber IS NULL OR @PageNumber < 1 SET @PageNumber = 1;
+    IF @PageSize IS NULL OR @PageSize < 1 SET @PageSize = 50;
+    IF @PageSize > 999999999 SET @PageSize = 999999999;
+
+    ;WITH filtered AS (
+        SELECT
+            term_number AS TermNumber,
+            full_name AS FullName,
+            party AS Party,
+            birth_state AS BirthState,
+            birth_date AS BirthDate,
+            term_start AS TermStart,
+            term_end AS TermEnd
+        FROM dbo.tb_usa_president
+        WHERE (@State IS NULL OR @State = '' OR birth_state = @State)
+          AND (@Start IS NULL OR term_start >= @Start)
+          AND (@End IS NULL OR term_start <= @End)
+    )
+    SELECT @TotalRecords = COUNT_BIG(*) FROM filtered;
+
+    DECLARE @Offset BIGINT = (@PageNumber - 1) * @PageSize;
+
+    ;WITH filtered AS (
+        SELECT
+            term_number AS TermNumber,
+            full_name AS FullName,
+            party AS Party,
+            birth_state AS BirthState,
+            birth_date AS BirthDate,
+            term_start AS TermStart,
+            term_end AS TermEnd
+        FROM dbo.tb_usa_president
+        WHERE (@State IS NULL OR @State = '' OR birth_state = @State)
+          AND (@Start IS NULL OR term_start >= @Start)
+          AND (@End IS NULL OR term_start <= @End)
+    )
+    SELECT TermNumber, FullName, Party, BirthState, BirthDate, TermStart, TermEnd
+    FROM filtered
+    ORDER BY TermNumber
+    OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
+END

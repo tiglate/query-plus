@@ -74,10 +74,14 @@
                 <input class="qp-input" asp-for="RoleEntitlement" readonly="@isReadOnly" />
                 <span asp-validation-for="RoleEntitlement" class="qp-field-error"></span>
             </div>
-            <div class="flex items-end gap-2">
+            <div class="flex flex-wrap items-end gap-4">
                 <label class="inline-flex items-center gap-2 text-xs font-medium">
                     <input type="checkbox" asp-for="Enabled" disabled="@isReadOnly" class="h-4 w-4 rounded border-slate-300 text-cyan" />
                     @L["Enabled"]
+                </label>
+                <label class="inline-flex items-center gap-2 text-xs font-medium" title="@L["Procedures_SupportsPagination_Hint"]">
+                    <input type="checkbox" asp-for="SupportsPagination" disabled="@isReadOnly" class="h-4 w-4 rounded border-slate-300 text-cyan" />
+                    @L["Procedures_SupportsPagination"]
                 </label>
             </div>
             <div class="lg:col-span-3">

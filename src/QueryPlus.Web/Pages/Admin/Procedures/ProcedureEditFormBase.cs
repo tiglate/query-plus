@@ -10,24 +10,17 @@ using AppValidationException = QueryPlus.Application.Common.ValidationException;
 
 namespace QueryPlus.Web.Pages.Admin.Procedures;
 
-public abstract class ProcedureEditFormBase : PageModel
+public abstract class ProcedureEditFormBase(
+    IProcedureService procedures,
+    ICategoryService categories,
+    IProcedureMetadataSyncService metadataSync,
+    IStringLocalizer<SharedResource> localizer)
+    : PageModel
 {
-    protected readonly IProcedureService Procedures;
-    protected readonly ICategoryService Categories;
-    protected readonly IProcedureMetadataSyncService MetadataSync;
-    protected readonly IStringLocalizer<SharedResource> L;
-
-    protected ProcedureEditFormBase(
-        IProcedureService procedures,
-        ICategoryService categories,
-        IProcedureMetadataSyncService metadataSync,
-        IStringLocalizer<SharedResource> localizer)
-    {
-        Procedures = procedures;
-        Categories = categories;
-        MetadataSync = metadataSync;
-        L = localizer;
-    }
+    protected readonly IProcedureService Procedures = procedures;
+    protected readonly ICategoryService Categories = categories;
+    protected readonly IProcedureMetadataSyncService MetadataSync = metadataSync;
+    protected readonly IStringLocalizer<SharedResource> L = localizer;
 
     [BindProperty]
     public ProcedureEditViewModel Input { get; set; } = new();

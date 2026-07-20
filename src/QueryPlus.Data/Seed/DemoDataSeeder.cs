@@ -3,6 +3,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using QueryPlus.Application.Common;
 using QueryPlus.Data.Context;
 using QueryPlus.Domain.Entities;
 using QueryPlus.Domain.Enums;
@@ -13,28 +14,17 @@ namespace QueryPlus.Data.Seed;
 /// Applies EF migrations, installs demo SQL objects, and registers catalog metadata
 /// so the app starts with end-to-end test procedures.
 /// </summary>
-public sealed class DemoDataSeeder
+public sealed class DemoDataSeeder(
+    ApplicationDbContext db,
+    IConfiguration configuration,
+    ILogger<DemoDataSeeder> logger)
 {
-    private readonly ApplicationDbContext _db;
-    private readonly IConfiguration _configuration;
-    private readonly ILogger<DemoDataSeeder> _logger;
-
-    public DemoDataSeeder(
-        ApplicationDbContext db,
-        IConfiguration configuration,
-        ILogger<DemoDataSeeder> logger)
-    {
-        _db = db;
-        _configuration = configuration;
-        _logger = logger;
-    }
-
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Applying database migrations…");
-        await _db.Database.MigrateAsync(cancellationToken);
+        logger.LogInformation("Applying database migrations…");
+        await db.Database.MigrateAsync(cancellationToken);
 
-        var connectionString = _configuration.GetConnectionString("DefaultConnection")
+        var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
 
         var databaseName = new SqlConnectionStringBuilder(connectionString).InitialCatalog;
@@ -46,7 +36,7 @@ public sealed class DemoDataSeeder
         await InstallSqlObjectsAsync(connectionString, cancellationToken);
         await SeedCatalogAsync(databaseName, cancellationToken);
 
-        _logger.LogInformation("Demo data seed completed for database {Database}.", databaseName);
+        logger.LogInformation("Demo data seed completed for database {Database}.", databaseName);
     }
 
     private async Task InstallSqlObjectsAsync(string connectionString, CancellationToken cancellationToken)
@@ -54,7 +44,7 @@ public sealed class DemoDataSeeder
         var sqlPath = ResolveSeedFile("demo-objects.sql");
         if (!File.Exists(sqlPath))
         {
-            _logger.LogWarning("Demo SQL file not found at {Path}; skipping SQL object install.", sqlPath);
+            logger.LogWarning("Demo SQL file not found at {Path}; skipping SQL object install.", sqlPath);
             return;
         }
 
@@ -64,7 +54,7 @@ public sealed class DemoDataSeeder
         await using var connection = new SqlConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
 
-        _logger.LogInformation("Installing {Count} demo SQL batches…", batches.Count);
+        logger.LogInformation("Installing {Count} demo SQL batches…", batches.Count);
         foreach (var batch in batches)
         {
             await using var cmd = new SqlCommand(batch, connection)
@@ -80,7 +70,7 @@ public sealed class DemoDataSeeder
         var catalogPath = ResolveSeedFile("demo-catalog.json");
         if (!File.Exists(catalogPath))
         {
-            _logger.LogWarning("Demo catalog file not found at {Path}; skipping catalog seed.", catalogPath);
+            logger.LogWarning("Demo catalog file not found at {Path}; skipping catalog seed.", catalogPath);
             return;
         }
 
@@ -99,20 +89,20 @@ public sealed class DemoDataSeeder
         var categories = new Dictionary<string, Category>(StringComparer.OrdinalIgnoreCase);
         foreach (var categoryName in entries.Select(e => e.Category).Distinct(StringComparer.OrdinalIgnoreCase))
         {
-            var existing = await _db.Categories
+            var existing = await db.Categories
                 .FirstOrDefaultAsync(c => c.Description == categoryName, cancellationToken);
             if (existing is null)
             {
                 existing = new Category { Description = categoryName, CreatedAt = DateTime.UtcNow };
-                _db.Categories.Add(existing);
-                await _db.SaveChangesAsync(cancellationToken);
+                db.Categories.Add(existing);
+                await db.SaveChangesAsync(cancellationToken);
             }
 
             categories[categoryName] = existing;
         }
 
         // Idempotent: only insert procedures that are not already registered (by technical name).
-        var existingNames = await _db.Procedures
+        var existingNames = await db.Procedures
             .AsNoTracking()
             .Select(p => p.ProcedureName)
             .ToListAsync(cancellationToken);
@@ -142,19 +132,19 @@ public sealed class DemoDataSeeder
             }
 
             var procedure = BuildProcedureFromCatalog(entry, category.IdCategory, databaseName);
-            _db.Procedures.Add(procedure);
+            db.Procedures.Add(procedure);
             existingSet.Add(entry.ProcedureName);
             added++;
         }
 
         if (added > 0)
         {
-            await _db.SaveChangesAsync(cancellationToken);
-            _logger.LogInformation("Seeded {Count} new demo procedure(s) into catalog.", added);
+            await db.SaveChangesAsync(cancellationToken);
+            logger.LogInformation("Seeded {Count} new demo procedure(s) into catalog.", added);
         }
         else
         {
-            _logger.LogInformation("Demo catalog up to date; no new procedures to seed.");
+            logger.LogInformation("Demo catalog up to date; no new procedures to seed.");
         }
 
         await BackfillRequiredFlagsAsync(cancellationToken);
@@ -172,6 +162,7 @@ public sealed class DemoDataSeeder
             DatabaseName = databaseName,
             ProcedureName = entry.ProcedureName,
             Enabled = true,
+            SupportsPagination = entry.SupportsPagination,
             RoleEntitlement = string.IsNullOrWhiteSpace(entry.Role) ? "user" : entry.Role,
             Description = entry.Description,
             CreatedAt = DateTime.UtcNow
@@ -179,6 +170,12 @@ public sealed class DemoDataSeeder
 
         foreach (var p in entry.Parameters)
         {
+            // Reserved pagination args are system-injected; never catalog them as user parameters.
+            if (ProcedurePagination.IsReservedParameterName(p.Name))
+            {
+                continue;
+            }
+
             var paramType = ParseParameterType(p.Type);
             // Prefer explicit flag; otherwise treat missing default as required (except boolean).
             var isRequired = p.Required
@@ -276,7 +273,7 @@ public sealed class DemoDataSeeder
     /// </summary>
     private async Task BackfillRequiredFlagsAsync(CancellationToken cancellationToken)
     {
-        var paramsToUpdate = await _db.ProcedureParameters
+        var paramsToUpdate = await db.ProcedureParameters
             .Where(p => !p.IsRequired
                         && p.ParameterType != ParameterType.Boolean
                         && (p.DefaultValue == null || p.DefaultValue == ""))
@@ -292,8 +289,8 @@ public sealed class DemoDataSeeder
             p.IsRequired = true;
         }
 
-        await _db.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("Backfilled IsRequired on {Count} parameters.", paramsToUpdate.Count);
+        await db.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("Backfilled IsRequired on {Count} parameters.", paramsToUpdate.Count);
     }
 
     private static ParameterType ParseParameterType(string? type)
@@ -313,6 +310,7 @@ public sealed class DemoDataSeeder
         public string Description { get; set; } = string.Empty;
         public string ProcedureName { get; set; } = string.Empty;
         public string Role { get; set; } = "user";
+        public bool SupportsPagination { get; set; }
         public List<CatalogParameter> Parameters { get; set; } = [];
         public List<CatalogColumn> Columns { get; set; } = [];
     }

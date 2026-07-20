@@ -7,17 +7,13 @@ using AppValidationException = QueryPlus.Application.Common.ValidationException;
 
 namespace QueryPlus.Web.Pages.Admin.Procedures;
 
-public class EditModel : ProcedureEditFormBase
+public class EditModel(
+    IProcedureService procedures,
+    ICategoryService categories,
+    IProcedureMetadataSyncService metadataSync,
+    IStringLocalizer<SharedResource> localizer)
+    : ProcedureEditFormBase(procedures, categories, metadataSync, localizer)
 {
-    public EditModel(
-        IProcedureService procedures,
-        ICategoryService categories,
-        IProcedureMetadataSyncService metadataSync,
-        IStringLocalizer<SharedResource> localizer)
-        : base(procedures, categories, metadataSync, localizer)
-    {
-    }
-
     public async Task<IActionResult> OnGetAsync(int id, CancellationToken cancellationToken)
     {
         var entity = await Procedures.GetByIdAsync(id, cancellationToken);

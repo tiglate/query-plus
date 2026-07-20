@@ -4,13 +4,8 @@ using QueryPlus.Domain.Entities;
 
 namespace QueryPlus.Data.Context;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : base(options)
-    {
-    }
-
     public DbSet<Revision> Revisions => Set<Revision>();
     public DbSet<RevisionType> RevisionTypes => Set<RevisionType>();
     public DbSet<Category> Categories => Set<Category>();

@@ -31,7 +31,11 @@ public sealed class QueryPlusMappingProfile : Profile
             .ForMember(d => d.Id, o => o.MapFrom(s => s.IdProcedure))
             .ForMember(d => d.CategoryId, o => o.MapFrom(s => s.IdCategory))
             .ForMember(d => d.CategoryDescription, o => o.MapFrom(s => s.Category != null ? s.Category.Description : null))
-            .ForMember(d => d.Parameters, o => o.MapFrom(s => s.Parameters.OrderBy(p => p.Caption)))
+            // Never expose reserved pagination parameters on the detail/parameter form.
+            .ForMember(d => d.Parameters, o => o.MapFrom(s =>
+                s.Parameters
+                    .Where(p => !ProcedurePagination.IsReservedParameterName(p.Name))
+                    .OrderBy(p => p.Caption)))
             .ForMember(d => d.Columns, o => o.MapFrom(s => s.Columns.OrderBy(c => c.Caption)));
 
         CreateMap<ProcedureParameter, ProcedureParameterDto>()

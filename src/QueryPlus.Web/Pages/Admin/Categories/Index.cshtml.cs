@@ -10,17 +10,9 @@ using QueryPlus.Web.Resources;
 
 namespace QueryPlus.Web.Pages.Admin.Categories;
 
-public class IndexModel : PageModel
+public class IndexModel(ICategoryService categories, IStringLocalizer<SharedResource> localizer)
+    : PageModel
 {
-    private readonly ICategoryService _categories;
-    private readonly IStringLocalizer<SharedResource> _L;
-
-    public IndexModel(ICategoryService categories, IStringLocalizer<SharedResource> localizer)
-    {
-        _categories = categories;
-        _L = localizer;
-    }
-
     [BindProperty(SupportsGet = true)]
     public string? Description { get; set; }
 
@@ -44,7 +36,7 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync(CancellationToken cancellationToken)
     {
-        Result = await _categories.SearchAsync(new CategoryFilterDto
+        Result = await categories.SearchAsync(new CategoryFilterDto
         {
             Description = Description,
             Page = PageNumber,
@@ -70,8 +62,8 @@ public class IndexModel : PageModel
     {
         try
         {
-            await _categories.DeleteAsync(id, cancellationToken);
-            TempData["Success"] = _L["Categories_Deleted"].Value;
+            await categories.DeleteAsync(id, cancellationToken);
+            TempData["Success"] = localizer["Categories_Deleted"].Value;
         }
         catch (Exception ex) when (ex is DomainException or Application.Common.ValidationException)
         {

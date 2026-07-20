@@ -16,6 +16,18 @@
   min-height: 0;
 }
 
+/* When a pager footer is present, the grid body (not the whole root) owns height. */
+.qp-results-panel > .js-results-root.has-results-footer > .qp-results-body {
+  @apply flex min-h-0 flex-1 flex-col overflow-hidden;
+  min-height: 0;
+}
+
+.qp-results-panel > .js-results-root.has-results-footer > .qp-results-body > .qp-sheet-grid--home {
+  /* Fill the body only — do not expand under the card footer. */
+  height: 100%;
+  max-height: 100%;
+}
+
 /* Empty-state copy inside the results panel (avoids hugging the card edges). */
 .qp-results-empty {
   @apply px-3 py-3;

@@ -9,9 +9,16 @@ public sealed class ExecuteProcedureRequest
 
     /// <summary>
     /// Parameter values keyed by SQL parameter name (with or without leading @).
+    /// Must not include reserved pagination names.
     /// </summary>
     public IDictionary<string, string?> ParameterValues { get; init; } =
         new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>1-based page when the procedure supports pagination.</summary>
+    public long? PageNumber { get; init; }
+
+    /// <summary>Page size when the procedure supports pagination (UI-capped).</summary>
+    public long? PageSize { get; init; }
 }
 
 public sealed class ExecutionResultDto
@@ -21,7 +28,20 @@ public sealed class ExecutionResultDto
     public int? ExecutionLogId { get; init; }
     public int ProcedureId { get; init; }
     public string? ProcedureCaption { get; init; }
+    /// <summary>Rows in the current result page (or full set if not paginated).</summary>
     public int RowCount { get; init; }
+
+    /// <summary>True when the procedure uses server-side pagination.</summary>
+    public bool SupportsPagination { get; init; }
+
+    /// <summary>Current page number (paginated only).</summary>
+    public long PageNumber { get; init; } = 1;
+
+    /// <summary>Page size used for this execute (paginated only).</summary>
+    public long PageSize { get; init; }
+
+    /// <summary>Total rows across all pages (@TotalRecords OUTPUT).</summary>
+    public long? TotalRecords { get; init; }
 
     /// <summary>Raw tabular result for the grid (ADO.NET).</summary>
     public DataTable? Data { get; init; }

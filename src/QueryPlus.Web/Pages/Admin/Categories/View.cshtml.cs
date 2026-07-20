@@ -5,20 +5,13 @@ using QueryPlus.Application.Interfaces;
 
 namespace QueryPlus.Web.Pages.Admin.Categories;
 
-public class ViewModel : PageModel
+public class ViewModel(ICategoryService categories) : PageModel
 {
-    private readonly ICategoryService _categories;
-
-    public ViewModel(ICategoryService categories)
-    {
-        _categories = categories;
-    }
-
     public CategoryDetailDto Item { get; private set; } = null!;
 
     public async Task<IActionResult> OnGetAsync(int id, CancellationToken cancellationToken)
     {
-        var entity = await _categories.GetByIdAsync(id, cancellationToken);
+        var entity = await categories.GetByIdAsync(id, cancellationToken);
         if (entity is null)
         {
             return NotFound();

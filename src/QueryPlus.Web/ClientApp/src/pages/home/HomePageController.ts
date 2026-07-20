@@ -196,9 +196,19 @@ export class HomePageController extends PageController {
       el.setAttribute("aria-selected", selected ? "true" : "false");
     });
 
+    this.setPageNumber(1);
     this.results.clearExportableResults();
     this.setExportEnabled(false);
     this.updateHomeActionButtons();
+  }
+
+  private setPageNumber(page: number): void {
+    const input =
+      (this.doc.getElementById("pageNumber") as HTMLInputElement | null) ||
+      this.doc.querySelector<HTMLInputElement>("#exec-form .js-page-number");
+    if (input) {
+      input.value = String(page > 0 ? page : 1);
+    }
   }
 
   private showResultsMessage(msg: string): void {
@@ -300,6 +310,20 @@ export class HomePageController extends PageController {
       const root = detail.target.querySelector(".js-results-root");
       if (root) {
         this.results.initFromResultsRoot(root);
+        // Keep form paging fields in sync with the rendered page (for export/re-execute).
+        const pageAttr = root.getAttribute("data-page-number");
+        const sizeAttr = root.getAttribute("data-page-size");
+        if (pageAttr) {
+          this.setPageNumber(Number.parseInt(pageAttr, 10) || 1);
+        }
+        if (sizeAttr) {
+          const sizeInput =
+            (this.doc.getElementById("pageSize") as HTMLInputElement | null) ||
+            this.doc.querySelector<HTMLInputElement>("#exec-form .js-page-size");
+          if (sizeInput) {
+            sizeInput.value = sizeAttr;
+          }
+        }
       } else {
         this.results.destroyInResultsPanel();
       }
@@ -324,9 +348,24 @@ export class HomePageController extends PageController {
       const custom = event as CustomEvent<{
         elt?: Element;
         headers: Record<string, string>;
+        // HTMX 2 formData proxy — assignment mutates the outbound request body.
+        parameters?: Record<string, unknown> & {
+          delete?: (name: string) => void;
+        };
       }>;
-      const elt = custom.detail?.elt as HTMLElement | undefined;
-      if (!elt) return;
+      const rawElt = custom.detail?.elt as HTMLElement | undefined;
+      if (!rawElt) return;
+
+      // Click target may be a child (icon/span); resolve to the HTMX host when needed.
+      const pagerBtn = rawElt.classList?.contains("js-results-page")
+        ? rawElt
+        : (rawElt.closest?.(".js-results-page") as HTMLElement | null);
+      const elt =
+        pagerBtn ??
+        (rawElt.id
+          ? rawElt
+          : ((rawElt.closest?.("#btn-execute, #btn-export") as HTMLElement | null) ??
+            rawElt));
 
       if (elt.id === "btn-execute") {
         if (!this.hasSelectedProcedure()) {
@@ -355,7 +394,20 @@ export class HomePageController extends PageController {
           this.showResultsMessage(
             formatRequiredParamsMessage(missing, single, multi),
           );
+          return;
         }
+
+        // Fresh Execute always starts at page 1 (pager buttons set their own page).
+        this.applyPageNumberToRequest(1, custom.detail?.parameters);
+        return;
+      }
+
+      // Server-side results pager: form values were already read; override request params.
+      if (pagerBtn) {
+        const pageAttr = pagerBtn.getAttribute("data-page");
+        const page = pageAttr ? Number.parseInt(pageAttr, 10) : 1;
+        const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+        this.applyPageNumberToRequest(safePage, custom.detail?.parameters);
         return;
       }
 
@@ -382,5 +434,20 @@ export class HomePageController extends PageController {
     this.disposers.push(() =>
       this.doc.body.removeEventListener("htmx:configRequest", onConfig),
     );
+  }
+
+  /**
+   * Keep the hidden form field and the in-flight HTMX parameters in sync.
+   * Updating only the DOM is too late: HTMX already collected form values.
+   */
+  private applyPageNumberToRequest(
+    page: number,
+    parameters?: Record<string, unknown> | null,
+  ): void {
+    const safe = page > 0 ? page : 1;
+    this.setPageNumber(safe);
+    if (parameters && typeof parameters === "object") {
+      parameters.pageNumber = String(safe);
+    }
   }
 }

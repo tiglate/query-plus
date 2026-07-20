@@ -1,13 +1,8 @@
 namespace QueryPlus.Application.Common;
 
-public sealed class ValidationException : Exception
+public sealed class ValidationException(IReadOnlyDictionary<string, string[]> errors)
+    : Exception("One or more validation errors occurred.")
 {
-    public ValidationException(IReadOnlyDictionary<string, string[]> errors)
-        : base("One or more validation errors occurred.")
-    {
-        Errors = errors;
-    }
-
     public ValidationException(string propertyName, string errorMessage)
         : this(new Dictionary<string, string[]>
         {
@@ -16,5 +11,5 @@ public sealed class ValidationException : Exception
     {
     }
 
-    public IReadOnlyDictionary<string, string[]> Errors { get; }
+    public IReadOnlyDictionary<string, string[]> Errors { get; } = errors;
 }
