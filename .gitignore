@@ -119,6 +119,9 @@ Desktop.ini
 .env.*
 !.env.example
 
+## Local-only planning notes (not for GitHub)
+docs/local/
+
 ## App runtime data
 **/App_Data/
 src/QueryPlus.Web/wwwroot/exports/
