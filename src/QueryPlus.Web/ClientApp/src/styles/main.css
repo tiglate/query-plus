@@ -4,7 +4,13 @@
  */
 
 @import "clusterize.js/clusterize.css";
-@import "@fortawesome/fontawesome-free/css/all.min.css";
+/*
+ * Font Awesome: icon definitions + solid webfont only.
+ * Avoid all.min.css (brands + v4-compat @font-face unicode ranges can fight
+ * "Font Awesome 7 Free" matching and produce garbled pseudo-element glyphs).
+ */
+@import "@fortawesome/fontawesome-free/css/fontawesome.min.css";
+@import "@fortawesome/fontawesome-free/css/solid.min.css";
 @import "@fontsource/inter/400.css";
 @import "@fontsource/inter/500.css";
 @import "@fontsource/inter/600.css";
@@ -65,3 +71,6 @@
 @import "./components/sheet-grid.css";
 @import "./pages/home.css";
 @import "./pages/admin.css";
+
+/* Unlayered, last: force FA webfonts over Inter / utility inheritance. */
+@import "./base/icons.css";

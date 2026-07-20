@@ -90,24 +90,41 @@
                     }
                     else
                     {
-                        foreach (var proc in Model.AccessibleProcedures)
+                        @* Grouped by category description (A–Z); procedures already ordered by caption in service/repo. *@
+                        var groups = Model.AccessibleProcedures
+                            .GroupBy(p => string.IsNullOrWhiteSpace(p.CategoryDescription)
+                                ? L["Home_Uncategorized"].Value
+                                : p.CategoryDescription!)
+                            .OrderBy(g => g.Key, StringComparer.CurrentCultureIgnoreCase);
+                        var groupIndex = 0;
+                        foreach (var group in groups)
                         {
-                            var selected = Model.ProcedureId == proc.Id;
-                            var description = string.IsNullOrWhiteSpace(proc.Description)
-                                ? "—"
-                                : proc.Description;
-                            <button type="button"
-                                    role="option"
-                                    class="qp-procedure-item js-procedure-item @(selected ? "is-selected" : "")"
-                                    data-procedure-id="@proc.Id"
-                                    aria-selected="@(selected ? "true" : "false")"
-                                    title="@proc.Caption"
-                                    hx-get="?handler=Parameters&procedureId=@proc.Id"
-                                    hx-target="#parameters-panel"
-                                    hx-swap="innerHTML">
-                                <span class="qp-procedure-item-caption">@proc.Caption</span>
-                                <span class="qp-procedure-item-description">@description</span>
-                            </button>
+                            var headingId = $"procedure-category-{groupIndex++}";
+                            <div class="qp-procedure-group" role="group" aria-labelledby="@headingId">
+                                <div id="@headingId" class="qp-procedure-category">
+                                    <span class="qp-procedure-category-label">@group.Key</span>
+                                    <span class="qp-procedure-category-count">@group.Count()</span>
+                                </div>
+                                @foreach (var proc in group)
+                                {
+                                    var selected = Model.ProcedureId == proc.Id;
+                                    var description = string.IsNullOrWhiteSpace(proc.Description)
+                                        ? "—"
+                                        : proc.Description;
+                                    <button type="button"
+                                            role="option"
+                                            class="qp-procedure-item js-procedure-item @(selected ? "is-selected" : "")"
+                                            data-procedure-id="@proc.Id"
+                                            aria-selected="@(selected ? "true" : "false")"
+                                            title="@proc.Caption"
+                                            hx-get="?handler=Parameters&procedureId=@proc.Id"
+                                            hx-target="#parameters-panel"
+                                            hx-swap="innerHTML">
+                                        <span class="qp-procedure-item-caption">@proc.Caption</span>
+                                        <span class="qp-procedure-item-description">@description</span>
+                                    </button>
+                                }
+                            </div>
                         }
                     }
                 </div>

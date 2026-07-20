@@ -1,0 +1,52 @@
+/*
+ * Pin Font Awesome webfonts so they never inherit Inter/body font-family.
+ * Symptom when broken: icons show as random PUA/fallback glyphs (e.g. "r·", "Y").
+ * Keep this file UNLAYERED and imported AFTER Tailwind so it wins the cascade.
+ */
+.fa,
+.fas,
+.far,
+.fab,
+.fa-solid,
+.fa-regular,
+.fa-brands,
+.fa-classic {
+  font-family: var(--fa-family, var(--fa-style-family, "Font Awesome 7 Free")) !important;
+  font-style: normal !important;
+  font-variant: normal !important;
+  font-synthesis: none !important;
+  text-rendering: auto !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1;
+}
+
+.fa-solid,
+.fas {
+  font-weight: 900 !important;
+}
+
+.fa-regular,
+.far {
+  font-weight: 400 !important;
+}
+
+.fa-brands,
+.fab {
+  font-family: "Font Awesome 7 Brands" !important;
+  font-weight: 400 !important;
+}
+
+/* Pseudo-element must keep the icon font (do not inherit Inter from parents). */
+.fa::before,
+.fas::before,
+.far::before,
+.fab::before,
+.fa-solid::before,
+.fa-regular::before,
+.fa-brands::before,
+.fa-classic::before {
+  font-family: inherit !important;
+  font-weight: inherit !important;
+  font-style: inherit !important;
+}

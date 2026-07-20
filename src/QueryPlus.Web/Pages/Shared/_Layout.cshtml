@@ -1,6 +1,8 @@
 @using Microsoft.Extensions.Localization
 @using QueryPlus.Web.Resources
+@using QueryPlus.Web.Services
 @inject IStringLocalizer<SharedResource> L
+@inject DatabaseConnectionDisplay DbConnection
 @{
     var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
     var path = Context.Request.Path.Value ?? "/";
@@ -175,8 +177,14 @@
     </main>
 
     <footer class="shrink-0 border-t border-slate-200 bg-white dark:border-navy-600 dark:bg-navy-800">
-        <div class="flex w-full items-center justify-between px-3 py-2 text-[11px] text-slate-500 dark:text-slate-400 lg:px-4">
+        <div class="flex w-full flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 py-2 text-[11px] text-slate-500 dark:text-slate-400 lg:px-4">
             <span>&copy; @DateTime.UtcNow.Year QueryPlus</span>
+            <span class="inline-flex items-center gap-1 font-mono tabular-nums"
+                  title="@L["Footer_DatabaseServer"]: @DbConnection.Server · @L["Footer_Database"]: @DbConnection.Database">
+                <i class="fa-solid fa-database text-[10px] opacity-70" aria-hidden="true"></i>
+                <span class="sr-only">@L["Footer_DatabaseServer"]</span>
+                @DbConnection.FooterLabel
+            </span>
             <span>@L["Footer_Tagline"]</span>
         </div>
     </footer>
