@@ -13,7 +13,23 @@ import { bootstrap } from "../core/bootstrap";
 
 export { markClientAppLoaded, QUERYPLUS_CLIENT_VERSION };
 
+/**
+ * Guard against double evaluation of the entry module.
+ *
+ * ASP.NET MapStaticAssets may serve the entry as a fingerprinted URL
+ * (e.g. app.xxxxx.js) while an async vendor chunk still imports "./app.js".
+ * Those are two module instances; without a global guard each would mount
+ * click handlers twice and Maximize would toggle on→off in one click.
+ */
+const BOOT_FLAG = "__qpClientBootstrapped";
+
+type BootGlobal = typeof globalThis & { [BOOT_FLAG]?: boolean };
+
 async function start(): Promise<void> {
+  const g = globalThis as BootGlobal;
+  if (g[BOOT_FLAG]) return;
+  g[BOOT_FLAG] = true;
+
   // Dynamic import keeps Vitest free of htmx's jsdom XPath init.
   await import("../vendor");
   markClientAppLoaded(document);

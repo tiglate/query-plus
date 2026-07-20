@@ -18,9 +18,11 @@
         var af = Antiforgery.GetAndStoreTokens(Context);
     }
     <meta name="csrf-token" content="@af.RequestToken" />
+    @* Preferred page key for ClientApp (set in page models / views via ViewData["PageKey"]). *@
+    <meta name="qp-page" content="@(ViewData["PageKey"] as string ?? "")" />
 </head>
 @* h-dvh + overflow-hidden: chrome stays fixed; main scrolls for admin pages; home fills main and scrolls per-column. *@
-@* data-page: ClientApp page controllers (home, admin-*, …). Empty is ignored by resolvePageKey(). *@
+@* data-page on body is secondary; meta[name=qp-page] is primary for ClientApp routing. *@
 <body class="flex h-dvh flex-col overflow-hidden font-sans"
       data-page="@(ViewData["PageKey"] as string ?? "")">
     <header class="shrink-0 bg-navy text-white shadow">
@@ -144,7 +146,11 @@
         </div>
     </footer>
 
-    @* ClientApp shell (Vite → wwwroot/dist): nav, confirm, CSRF, SheetGrid, page controllers. *@
+    @*
+      ClientApp shell (Vite → wwwroot/dist): nav, confirm, CSRF, SheetGrid, page controllers.
+      Built as a single ESM entry (inlineDynamicImports) so MapStaticAssets fingerprinting
+      of this URL is safe — no async chunk re-imports "./app.js" as a second module instance.
+    *@
     <script type="module" src="~/dist/js/app.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

@@ -37,6 +37,12 @@ export default defineConfig({
         app: path.resolve(clientApp, "src/entries/app.ts"),
       },
       output: {
+        // Single entry bundle: avoids async vendor chunk doing
+        // `import … from "./app.js"`. MapStaticAssets fingerprints the HTML
+        // entry URL (app.xxxxx.js) while that relative import still targets
+        // plain app.js — a second module instance double-mounted handlers
+        // (Maximize toggled on then off in one click).
+        inlineDynamicImports: true,
         entryFileNames: "js/[name].js",
         chunkFileNames: "js/[name]-[hash].js",
         assetFileNames: (assetInfo) => {

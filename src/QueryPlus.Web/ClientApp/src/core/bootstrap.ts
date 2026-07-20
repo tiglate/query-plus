@@ -2,6 +2,7 @@ import { SheetGridService } from "../components/sheet-grid/SheetGridService";
 import { AdminListPageController } from "../pages/admin/AdminListPageController";
 import { AdminProcedureFormController } from "../pages/admin/AdminProcedureFormController";
 import { HomePageController } from "../pages/home/HomePageController";
+import { ResultsMaximize } from "../pages/home/ResultsMaximize";
 import { SharedShellController } from "../pages/shared/SharedShellController";
 import { configureContainer, getAppContainer } from "./di/container";
 import type { PageController } from "./PageController";
@@ -45,6 +46,12 @@ export function bootstrap(options: BootstrapOptions = {}): BootstrapResult {
   if (enablePages) {
     page = resolvePageController(pageKey, c);
     page?.mount(doc);
+  }
+
+  // Belt-and-suspenders: wire Maximize whenever the control exists, even if
+  // page-key resolution failed (home still needs this control).
+  if (doc.getElementById("btn-toggle-results-max")) {
+    c.resolve(ResultsMaximize).mount();
   }
 
   return { shell, page, pageKey };

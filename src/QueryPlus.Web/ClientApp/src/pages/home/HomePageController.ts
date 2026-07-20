@@ -18,6 +18,7 @@ import { ResultsMaximize } from "./ResultsMaximize";
 @injectable()
 export class HomePageController extends PageController {
   private readonly disposers: Array<() => void> = [];
+  private mounted = false;
 
   constructor(
     @inject(TOKENS.Document) private readonly doc: Document,
@@ -31,6 +32,14 @@ export class HomePageController extends PageController {
 
   mount(_root: ParentNode = this.doc): void {
     if (!this.isHomeMounted()) return;
+    // Idempotent: a second mount (e.g. bootstrap belt-and-suspenders after page
+    // mount, or accidental double start) must not stack body click listeners.
+    if (this.mounted) {
+      this.maximize.mount();
+      this.updateHomeActionButtons();
+      return;
+    }
+    this.mounted = true;
 
     this.maximize.mount();
     this.wireResize();
@@ -46,6 +55,7 @@ export class HomePageController extends PageController {
     while (this.disposers.length) {
       this.disposers.pop()?.();
     }
+    this.mounted = false;
   }
 
   // --- public for tests ---

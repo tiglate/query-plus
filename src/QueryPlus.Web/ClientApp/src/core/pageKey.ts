@@ -1,12 +1,16 @@
 /**
- * Resolve page key from body[data-page] or any [data-page] with a non-empty value.
+ * Resolve ClientApp page key.
  *
- * Important: `querySelector("[data-page]")` matches `data-page=""` (empty).
- * Layout may render body[data-page] empty; the real key lives on content
- * (e.g. data-page="home"). Skip empty values.
+ * Priority:
+ * 1. meta[name="qp-page"] (set in _Layout from ViewData — reliable for Razor)
+ * 2. body[data-page] when non-empty
+ * 3. first non-empty [data-page] in the document (e.g. content root)
+ *
+ * Empty strings are ignored so data-page="" never masks a real key.
  */
 export function resolvePageKey(doc: Document = document): string {
   const keys: Array<string | null> = [
+    doc.querySelector('meta[name="qp-page"]')?.getAttribute("content") ?? null,
     doc.body?.getAttribute("data-page") ?? null,
   ];
   doc.querySelectorAll("[data-page]").forEach((el) => {
