@@ -22,15 +22,16 @@
 }
 
 .qp-results-meta {
-  @apply flex shrink-0 flex-wrap items-center gap-x-3 gap-y-0.5 border-b border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600;
+  @apply flex shrink-0 flex-wrap items-center gap-x-3 gap-y-0.5 border-b border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600
+    dark:border-navy-600 dark:bg-navy-900 dark:text-slate-400;
 }
 
 .qp-results-meta-count {
-  @apply font-medium tabular-nums text-navy;
+  @apply font-medium tabular-nums text-navy dark:text-slate-100;
 }
 
 .qp-results-meta-hint {
-  @apply inline-flex items-center gap-1 text-slate-500;
+  @apply inline-flex items-center gap-1 text-slate-500 dark:text-slate-400;
 }
 
 .qp-results-meta-hint i {
@@ -54,6 +55,11 @@
   z-index: 1;
 }
 
+.dark .qp-results-headers {
+  border-bottom-color: #3d4f66;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+}
+
 /* Kill Clusterize's default 200px max-height and fill leftover space. */
 .qp-results-scroll,
 .qp-results-scroll.clusterize-scroll,
@@ -64,6 +70,12 @@
   max-height: none !important; /* overrides clusterize.min.css */
   overflow: auto !important;
   background: #fff;
+}
+
+.dark .qp-results-scroll,
+.dark .qp-results-scroll.clusterize-scroll,
+.dark .clusterize-scroll.qp-results-scroll {
+  background: #0c1626;
 }
 
 /*
@@ -82,8 +94,13 @@
   background: #fff;
 }
 
+.dark .qp-sheet {
+  color: #e2e8f0;
+  background: #0c1626;
+}
+
 .qp-sheet-th {
-  @apply select-none font-semibold text-navy;
+  @apply select-none font-semibold text-navy dark:text-slate-100;
   position: relative;
   padding: 0.3rem 0.7rem 0.3rem 0.45rem;
   background: linear-gradient(180deg, #f4f7fb 0%, #e6edf5 100%);
@@ -96,12 +113,21 @@
   user-select: none;
 }
 
+.dark .qp-sheet-th {
+  background: linear-gradient(180deg, #1a2d44 0%, #122033 100%);
+  border-color: #3d4f66;
+}
+
 .qp-sheet-th:first-child {
   border-left: none;
 }
 
 .qp-sheet-th:hover {
   background: linear-gradient(180deg, #eaf4fb 0%, #d7eaf6 100%);
+}
+
+.dark .qp-sheet-th:hover {
+  background: linear-gradient(180deg, #234058 0%, #1a2d44 100%);
 }
 
 .qp-sheet-th.is-dragging {
@@ -114,10 +140,20 @@
   background: linear-gradient(180deg, #e0f7fc 0%, #c5eef8 100%);
 }
 
+.dark .qp-sheet-th.is-drop-target {
+  background: linear-gradient(180deg, #0b4a5c 0%, #0a3a48 100%);
+}
+
 .qp-sheet-th[data-sort-dir="asc"],
 .qp-sheet-th[data-sort-dir="desc"] {
   background: linear-gradient(180deg, #d9f3f7 0%, #bfeaf1 100%);
   box-shadow: inset 0 -2px 0 #0e9aa7; /* cyan accent like Excel underline */
+}
+
+.dark .qp-sheet-th[data-sort-dir="asc"],
+.dark .qp-sheet-th[data-sort-dir="desc"] {
+  background: linear-gradient(180deg, #0b4a5c 0%, #0a3a48 100%);
+  box-shadow: inset 0 -2px 0 #21bbee;
 }
 
 .qp-sheet-th-label {
@@ -134,6 +170,11 @@
 .qp-sheet-th[data-sort-dir="desc"] .qp-sheet-th-sort {
   opacity: 0.9;
   color: #0b1f3a;
+}
+
+.dark .qp-sheet-th[data-sort-dir="asc"] .qp-sheet-th-sort,
+.dark .qp-sheet-th[data-sort-dir="desc"] .qp-sheet-th-sort {
+  color: #e2e8f0;
 }
 
 /* Excel-like column resize handle on the right edge of each header. */
@@ -172,14 +213,28 @@ body.qp-col-resizing iframe {
   font-variant-numeric: tabular-nums;
 }
 
+.dark .qp-sheet-cell {
+  border-color: #2a3d54;
+  background: #0c1626;
+}
+
 /* Subtle Excel-like banded rows (navy-tinted, not pure gray). */
 .qp-results-scroll .js-results-content > tr:nth-child(even of :not(.clusterize-extra-row):not(.clusterize-no-data)) .qp-sheet-cell,
 .qp-results-scroll .js-results-content > tr:nth-child(even):not(.clusterize-extra-row):not(.clusterize-no-data) .qp-sheet-cell {
   background: #f7fafc;
 }
 
+.dark .qp-results-scroll .js-results-content > tr:nth-child(even of :not(.clusterize-extra-row):not(.clusterize-no-data)) .qp-sheet-cell,
+.dark .qp-results-scroll .js-results-content > tr:nth-child(even):not(.clusterize-extra-row):not(.clusterize-no-data) .qp-sheet-cell {
+  background: #122033;
+}
+
 .qp-results-scroll .js-results-content > tr:not(.clusterize-extra-row):not(.clusterize-no-data):hover .qp-sheet-cell {
   background: #e6f7fa; /* soft cyan hover — QueryPlus + spreadsheet feel */
+}
+
+.dark .qp-results-scroll .js-results-content > tr:not(.clusterize-extra-row):not(.clusterize-no-data):hover .qp-sheet-cell {
+  background: #1a3a4a;
 }
 
 /* Clusterize spacer / parity rows should not show grid chrome. */
@@ -200,6 +255,10 @@ body.qp-col-resizing iframe {
   color: #64748b;
   text-align: center;
   padding: 0.75rem;
+}
+
+.dark .qp-results-scroll tr.clusterize-no-data .qp-sheet-cell {
+  color: #94a3b8;
 }
 
 /*
@@ -224,7 +283,8 @@ body.qp-col-resizing iframe {
 }
 
 .qp-sheet-grid--admin {
-  @apply flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-slate-200 bg-white;
+  @apply flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-slate-200 bg-white
+    dark:border-navy-600 dark:bg-navy-800;
 }
 
 .qp-sheet-grid--admin .qp-results-clusterize {

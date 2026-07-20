@@ -3,6 +3,7 @@ import { ConfirmSubmitService } from "../../components/confirm-submit/ConfirmSub
 import { NavDropdownService } from "../../components/nav-dropdown/NavDropdownService";
 import { ParameterComboService } from "../../components/parameter-combo/ParameterComboService";
 import { SheetGridService } from "../../components/sheet-grid/SheetGridService";
+import { ThemeService } from "../../components/theme/ThemeService";
 import { AdminListPageController } from "../../pages/admin/AdminListPageController";
 import { AdminProcedureFormController } from "../../pages/admin/AdminProcedureFormController";
 import { SyncMetadataService } from "../../pages/admin/SyncMetadataService";
@@ -52,6 +53,7 @@ export function configureContainer(
 
 function registerAppServices(c: DependencyContainer): void {
   c.registerSingleton(HtmxBridge);
+  c.registerSingleton(ThemeService);
   c.registerSingleton(NavDropdownService);
   c.registerSingleton(ConfirmSubmitService);
   c.registerSingleton(ClientValidationService);

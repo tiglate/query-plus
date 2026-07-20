@@ -4,10 +4,12 @@
 }
 
 .qp-badge-ok {
-  @apply inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-leaf/30 text-navy;
+  @apply inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-leaf/30 text-navy
+    dark:bg-leaf/25 dark:text-leaf;
 }
 
 .qp-badge-off {
-  @apply inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-slate-200 text-slate-700;
+  @apply inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-slate-200 text-slate-700
+    dark:bg-navy-600 dark:text-slate-300;
 }
 }

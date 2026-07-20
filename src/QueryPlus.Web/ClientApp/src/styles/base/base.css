@@ -5,6 +5,12 @@ html {
 }
 
 body {
-  @apply bg-slate-100 text-navy antialiased leading-snug;
+  @apply bg-slate-100 text-navy antialiased leading-snug
+    dark:bg-navy-900 dark:text-slate-100;
+}
+
+/* Native form controls follow resolved theme (color-scheme set in JS). */
+.dark {
+  color-scheme: dark;
 }
 }

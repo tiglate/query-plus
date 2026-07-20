@@ -14,6 +14,9 @@
 
 @import "tailwindcss";
 
+/* Class-based dark mode (ThemeService toggles .dark on <html>). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Scan Razor + TS so utilities used only in cshtml are generated. */
 @source "../../../Pages/**/*.{cshtml,cs}";
 @source "../**/*.{ts,css}";
@@ -32,6 +35,7 @@
   --color-navy-700: #122033;
   --color-navy-800: #0c1626;
   --color-navy-900: #070d19;
+  --color-navy-950: #04080f;
 
   --color-cyan: #21bbee;
   --color-cyan-50: #e9f8fd;
