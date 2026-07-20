@@ -42,6 +42,8 @@
   <data name="Yes" xml:space="preserve"><value>Sim</value></data>
   <data name="No" xml:space="preserve"><value>Não</value></data>
   <data name="Enabled" xml:space="preserve"><value>Ativo</value></data>
+  <data name="Procedures_SupportsPagination" xml:space="preserve"><value>Suporta paginação</value></data>
+  <data name="Procedures_SupportsPagination_Hint" xml:space="preserve"><value>Quando ativo, a grade da home usa paginação no servidor. A procedure deve aceitar @PageNumber, @PageSize e @TotalRecords OUTPUT. Esses parâmetros nunca são exibidos ao usuário final.</value></data>
   <data name="Disabled" xml:space="preserve"><value>Inativo</value></data>
   <data name="ConfirmDelete" xml:space="preserve"><value>Tem certeza que deseja excluir este registro?</value></data>
   <data name="Id" xml:space="preserve"><value>ID</value></data>

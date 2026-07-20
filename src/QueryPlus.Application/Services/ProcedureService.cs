@@ -12,31 +12,15 @@ using QueryPlus.Domain.Interfaces;
 
 namespace QueryPlus.Application.Services;
 
-public sealed class ProcedureService : IProcedureService
+public sealed class ProcedureService(
+    IProcedureRepository procedures,
+    ICategoryRepository categories,
+    IUnitOfWork unitOfWork,
+    IMapper mapper,
+    ICurrentUserContext currentUser,
+    IValidator<SaveProcedureDto> saveValidator)
+    : IProcedureService
 {
-    private readonly IProcedureRepository _procedures;
-    private readonly ICategoryRepository _categories;
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
-    private readonly ICurrentUserContext _currentUser;
-    private readonly IValidator<SaveProcedureDto> _saveValidator;
-
-    public ProcedureService(
-        IProcedureRepository procedures,
-        ICategoryRepository categories,
-        IUnitOfWork unitOfWork,
-        IMapper mapper,
-        ICurrentUserContext currentUser,
-        IValidator<SaveProcedureDto> saveValidator)
-    {
-        _procedures = procedures;
-        _categories = categories;
-        _unitOfWork = unitOfWork;
-        _mapper = mapper;
-        _currentUser = currentUser;
-        _saveValidator = saveValidator;
-    }
-
     public async Task<PagedResult<ProcedureListItemDto>> SearchAsync(
         ProcedureFilterDto filter,
         CancellationToken cancellationToken = default)
@@ -53,17 +37,17 @@ public sealed class ProcedureService : IProcedureService
 
         var (page, pageSize) = PagedResult<ProcedureListItemDto>.Normalize(filter.Page, filter.PageSize);
 
-        var (items, totalCount) = await _procedures.SearchAsync(criteria, page, pageSize, cancellationToken);
+        var (items, totalCount) = await procedures.SearchAsync(criteria, page, pageSize, cancellationToken);
 
         if (totalCount > 0 && (page - 1) * pageSize >= totalCount)
         {
             (page, pageSize) = PagedResult<ProcedureListItemDto>.Normalize(page, pageSize, totalCount);
-            (items, totalCount) = await _procedures.SearchAsync(criteria, page, pageSize, cancellationToken);
+            (items, totalCount) = await procedures.SearchAsync(criteria, page, pageSize, cancellationToken);
         }
 
         return new PagedResult<ProcedureListItemDto>
         {
-            Items = _mapper.Map<IReadOnlyList<ProcedureListItemDto>>(items),
+            Items = mapper.Map<IReadOnlyList<ProcedureListItemDto>>(items),
             TotalCount = totalCount,
             Page = page,
             PageSize = pageSize
@@ -72,33 +56,33 @@ public sealed class ProcedureService : IProcedureService
 
     public async Task<ProcedureDetailDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        var entity = await _procedures.GetByIdWithDetailsAsync(id, cancellationToken);
-        return entity is null ? null : _mapper.Map<ProcedureDetailDto>(entity);
+        var entity = await procedures.GetByIdWithDetailsAsync(id, cancellationToken);
+        return entity is null ? null : mapper.Map<ProcedureDetailDto>(entity);
     }
 
     public async Task<IReadOnlyList<ProcedureLookupDto>> GetAccessibleForCurrentUserAsync(
         CancellationToken cancellationToken = default)
     {
-        var roles = _currentUser.Roles;
-        var items = await _procedures.GetAccessibleForExecutionAsync(roles, cancellationToken);
-        return _mapper.Map<IReadOnlyList<ProcedureLookupDto>>(items);
+        var roles = currentUser.Roles;
+        var items = await procedures.GetAccessibleForExecutionAsync(roles, cancellationToken);
+        return mapper.Map<IReadOnlyList<ProcedureLookupDto>>(items);
     }
 
     public async Task<ProcedureDetailDto> CreateAsync(
         SaveProcedureDto dto,
         CancellationToken cancellationToken = default)
     {
-        await ValidationHelper.ValidateAndThrowAsync(_saveValidator, dto, cancellationToken);
+        await ValidationHelper.ValidateAndThrowAsync(saveValidator, dto, cancellationToken);
         await EnsureCategoryExistsAsync(dto.CategoryId, cancellationToken);
         await EnsureUniqueConstraintsAsync(dto, excludeId: null, cancellationToken);
 
         var entity = ProcedureGraphMapper.ToNewEntity(dto);
-        await _procedures.AddAsync(entity, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await procedures.AddAsync(entity, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var created = await _procedures.GetByIdWithDetailsAsync(entity.IdProcedure, cancellationToken)
+        var created = await procedures.GetByIdWithDetailsAsync(entity.IdProcedure, cancellationToken)
             ?? entity;
-        return _mapper.Map<ProcedureDetailDto>(created);
+        return mapper.Map<ProcedureDetailDto>(created);
     }
 
     public async Task<ProcedureDetailDto> UpdateAsync(
@@ -110,11 +94,11 @@ public sealed class ProcedureService : IProcedureService
             throw new Common.ValidationException(nameof(dto.Id), "Procedure id is required for update.");
         }
 
-        await ValidationHelper.ValidateAndThrowAsync(_saveValidator, dto, cancellationToken);
+        await ValidationHelper.ValidateAndThrowAsync(saveValidator, dto, cancellationToken);
         await EnsureCategoryExistsAsync(dto.CategoryId, cancellationToken);
         await EnsureUniqueConstraintsAsync(dto, dto.Id, cancellationToken);
 
-        var entity = await _procedures.GetByIdWithDetailsAsync(dto.Id.Value, cancellationToken)
+        var entity = await procedures.GetByIdWithDetailsAsync(dto.Id.Value, cancellationToken)
             ?? throw new EntityNotFoundException(nameof(Procedure), dto.Id.Value);
 
         // Track removals for EF (collection remove alone may not mark deleted dependents
@@ -130,34 +114,34 @@ public sealed class ProcedureService : IProcedureService
 
         foreach (var p in removedParameters)
         {
-            _procedures.RemoveParameter(p);
+            procedures.RemoveParameter(p);
         }
 
         foreach (var c in removedColumns)
         {
-            _procedures.RemoveColumn(c);
+            procedures.RemoveColumn(c);
         }
 
-        _procedures.Update(entity);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        procedures.Update(entity);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var updated = await _procedures.GetByIdWithDetailsAsync(entity.IdProcedure, cancellationToken)
+        var updated = await procedures.GetByIdWithDetailsAsync(entity.IdProcedure, cancellationToken)
             ?? entity;
-        return _mapper.Map<ProcedureDetailDto>(updated);
+        return mapper.Map<ProcedureDetailDto>(updated);
     }
 
     public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
-        var entity = await _procedures.GetByIdWithDetailsAsync(id, cancellationToken)
+        var entity = await procedures.GetByIdWithDetailsAsync(id, cancellationToken)
             ?? throw new EntityNotFoundException(nameof(Procedure), id);
 
-        _procedures.Remove(entity);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        procedures.Remove(entity);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
     private async Task EnsureCategoryExistsAsync(int categoryId, CancellationToken cancellationToken)
     {
-        var category = await _categories.GetByIdAsync(categoryId, cancellationToken);
+        var category = await categories.GetByIdAsync(categoryId, cancellationToken);
         if (category is null)
         {
             throw new EntityNotFoundException(nameof(Category), categoryId);
@@ -169,12 +153,12 @@ public sealed class ProcedureService : IProcedureService
         int? excludeId,
         CancellationToken cancellationToken)
     {
-        if (await _procedures.ExistsByCaptionAsync(dto.Caption.Trim(), excludeId, cancellationToken))
+        if (await procedures.ExistsByCaptionAsync(dto.Caption.Trim(), excludeId, cancellationToken))
         {
             throw new Common.ValidationException(nameof(dto.Caption), "A procedure with this caption already exists.");
         }
 
-        if (await _procedures.ExistsByDatabaseAndNameAsync(
+        if (await procedures.ExistsByDatabaseAndNameAsync(
                 dto.DatabaseName.Trim(),
                 dto.ProcedureName.Trim(),
                 excludeId,

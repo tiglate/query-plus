@@ -15,15 +15,8 @@ namespace QueryPlus.Data.Interceptors;
 /// For INSERT, temporary identity keys are shared between the principal row and its audit row
 /// so EF Core generates the same INT value for both after the round-trip.
 /// </remarks>
-public class AuditSaveChangesInterceptor : SaveChangesInterceptor
+public class AuditSaveChangesInterceptor(IAuditContext auditContext) : SaveChangesInterceptor
 {
-    private readonly IAuditContext _auditContext;
-
-    public AuditSaveChangesInterceptor(IAuditContext auditContext)
-    {
-        _auditContext = auditContext;
-    }
-
     public override InterceptionResult<int> SavingChanges(
         DbContextEventData eventData,
         InterceptionResult<int> result)
@@ -77,10 +70,10 @@ public class AuditSaveChangesInterceptor : SaveChangesInterceptor
 
         var revision = new Revision
         {
-            Username = string.IsNullOrWhiteSpace(_auditContext.Username)
+            Username = string.IsNullOrWhiteSpace(auditContext.Username)
                 ? "system"
-                : _auditContext.Username,
-            IpAddress = _auditContext.IpAddress,
+                : auditContext.Username,
+            IpAddress = auditContext.IpAddress,
             RevisionTimestamp = utcNow
         };
 
@@ -152,6 +145,7 @@ public class AuditSaveChangesInterceptor : SaveChangesInterceptor
             DatabaseName = Read<string?>(entry, nameof(Procedure.DatabaseName)),
             ProcedureName = Read<string?>(entry, nameof(Procedure.ProcedureName)),
             Enabled = Read<bool?>(entry, nameof(Procedure.Enabled)),
+            SupportsPagination = Read<bool?>(entry, nameof(Procedure.SupportsPagination)),
             RoleEntitlement = Read<string?>(entry, nameof(Procedure.RoleEntitlement)),
             Description = Read<string?>(entry, nameof(Procedure.Description)),
             CreatedAt = Read<DateTime?>(entry, nameof(Procedure.CreatedAt)),

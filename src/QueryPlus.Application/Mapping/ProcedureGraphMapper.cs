@@ -18,6 +18,7 @@ public static class ProcedureGraphMapper
             DatabaseName = dto.DatabaseName.Trim(),
             ProcedureName = dto.ProcedureName.Trim(),
             Enabled = dto.Enabled,
+            SupportsPagination = dto.SupportsPagination,
             RoleEntitlement = dto.RoleEntitlement.Trim(),
             Description = NormalizeOptional(dto.Description)
         };
@@ -42,6 +43,7 @@ public static class ProcedureGraphMapper
         entity.DatabaseName = dto.DatabaseName.Trim();
         entity.ProcedureName = dto.ProcedureName.Trim();
         entity.Enabled = dto.Enabled;
+        entity.SupportsPagination = dto.SupportsPagination;
         entity.RoleEntitlement = dto.RoleEntitlement.Trim();
         entity.Description = NormalizeOptional(dto.Description);
 

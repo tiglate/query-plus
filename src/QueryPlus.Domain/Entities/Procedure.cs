@@ -13,6 +13,10 @@ public class Procedure : IHasTimestamps, IAuditedEntity
     public required string DatabaseName { get; set; }
     public required string ProcedureName { get; set; }
     public bool Enabled { get; set; } = true;
+    /// <summary>
+    /// When true, app injects @PageNumber/@PageSize and reads @TotalRecords OUTPUT.
+    /// </summary>
+    public bool SupportsPagination { get; set; }
     public required string RoleEntitlement { get; set; }
     public string? Description { get; set; }
     public DateTime CreatedAt { get; set; }

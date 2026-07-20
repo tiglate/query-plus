@@ -5,20 +5,13 @@ using QueryPlus.Domain.Interfaces;
 
 namespace QueryPlus.Data.Repositories;
 
-public sealed class CategoryRepository : ICategoryRepository
+public sealed class CategoryRepository(ApplicationDbContext db) : ICategoryRepository
 {
-    private readonly ApplicationDbContext _db;
-
-    public CategoryRepository(ApplicationDbContext db)
-    {
-        _db = db;
-    }
-
     public Task<Category?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
-        => _db.Categories.FirstOrDefaultAsync(c => c.IdCategory == id, cancellationToken);
+        => db.Categories.FirstOrDefaultAsync(c => c.IdCategory == id, cancellationToken);
 
     public async Task<IReadOnlyList<Category>> GetAllAsync(CancellationToken cancellationToken = default)
-        => await _db.Categories
+        => await db.Categories
             .AsNoTracking()
             .OrderBy(c => c.Description)
             .ToListAsync(cancellationToken);
@@ -29,7 +22,7 @@ public sealed class CategoryRepository : ICategoryRepository
         int pageSize,
         CancellationToken cancellationToken = default)
     {
-        var query = _db.Categories.AsNoTracking().AsQueryable();
+        var query = db.Categories.AsNoTracking().AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(description))
         {
@@ -53,7 +46,7 @@ public sealed class CategoryRepository : ICategoryRepository
         int? excludeId = null,
         CancellationToken cancellationToken = default)
     {
-        var query = _db.Categories.AsNoTracking()
+        var query = db.Categories.AsNoTracking()
             .Where(c => c.Description == description);
 
         if (excludeId is not null)
@@ -65,12 +58,12 @@ public sealed class CategoryRepository : ICategoryRepository
     }
 
     public Task<bool> HasProceduresAsync(int categoryId, CancellationToken cancellationToken = default)
-        => _db.Procedures.AsNoTracking().AnyAsync(p => p.IdCategory == categoryId, cancellationToken);
+        => db.Procedures.AsNoTracking().AnyAsync(p => p.IdCategory == categoryId, cancellationToken);
 
     public async Task AddAsync(Category category, CancellationToken cancellationToken = default)
-        => await _db.Categories.AddAsync(category, cancellationToken);
+        => await db.Categories.AddAsync(category, cancellationToken);
 
-    public void Update(Category category) => _db.Categories.Update(category);
+    public void Update(Category category) => db.Categories.Update(category);
 
-    public void Remove(Category category) => _db.Categories.Remove(category);
+    public void Remove(Category category) => db.Categories.Remove(category);
 }

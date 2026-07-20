@@ -9,17 +9,9 @@ using AppValidationException = QueryPlus.Application.Common.ValidationException;
 
 namespace QueryPlus.Web.Pages.Admin.Categories;
 
-public class EditModel : PageModel
+public class EditModel(ICategoryService categories, IStringLocalizer<SharedResource> localizer)
+    : PageModel
 {
-    private readonly ICategoryService _categories;
-    private readonly IStringLocalizer<SharedResource> _L;
-
-    public EditModel(ICategoryService categories, IStringLocalizer<SharedResource> localizer)
-    {
-        _categories = categories;
-        _L = localizer;
-    }
-
     [BindProperty]
     public InputModel Input { get; set; } = new();
 
@@ -36,7 +28,7 @@ public class EditModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(int id, CancellationToken cancellationToken)
     {
-        var entity = await _categories.GetByIdAsync(id, cancellationToken);
+        var entity = await categories.GetByIdAsync(id, cancellationToken);
         if (entity is null)
         {
             return NotFound();
@@ -57,10 +49,10 @@ public class EditModel : PageModel
 
         try
         {
-            await _categories.UpdateAsync(
+            await categories.UpdateAsync(
                 new UpdateCategoryDto { Id = Input.Id, Description = Input.Description },
                 cancellationToken);
-            TempData["Success"] = _L["Categories_Saved"].Value;
+            TempData["Success"] = localizer["Categories_Saved"].Value;
             return RedirectToPage("View", new { id = Input.Id });
         }
         catch (AppValidationException ex)

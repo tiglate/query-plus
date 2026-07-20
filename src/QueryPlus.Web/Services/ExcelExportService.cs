@@ -92,37 +92,27 @@ public sealed class ExcelExportService : IExcelExportService
 /// <summary>
 /// Processes queued Excel exports. Access was already authorized when the user clicked Export.
 /// </summary>
-public sealed class ExcelExportBackgroundService : BackgroundService
+public sealed class ExcelExportBackgroundService(
+    ExcelExportService exportService,
+    IServiceScopeFactory scopeFactory,
+    ILogger<ExcelExportBackgroundService> logger)
+    : BackgroundService
 {
-    private readonly ExcelExportService _exportService;
-    private readonly IServiceScopeFactory _scopeFactory;
-    private readonly ILogger<ExcelExportBackgroundService> _logger;
-
-    public ExcelExportBackgroundService(
-        ExcelExportService exportService,
-        IServiceScopeFactory scopeFactory,
-        ILogger<ExcelExportBackgroundService> logger)
-    {
-        _exportService = exportService;
-        _scopeFactory = scopeFactory;
-        _logger = logger;
-    }
-
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await foreach (var jobId in _exportService.Reader.ReadAllAsync(stoppingToken))
+        await foreach (var jobId in exportService.Reader.ReadAllAsync(stoppingToken))
         {
-            if (!_exportService.TryGetJobState(jobId, out var job) || job is null)
+            if (!exportService.TryGetJobState(jobId, out var job) || job is null)
             {
                 continue;
             }
 
             job.Status = ExportJobStatus.Running;
-            _exportService.UpdateJob(job);
+            exportService.UpdateJob(job);
 
             try
             {
-                await using var scope = _scopeFactory.CreateAsyncScope();
+                await using var scope = scopeFactory.CreateAsyncScope();
                 var procedures = scope.ServiceProvider.GetRequiredService<IProcedureRepository>();
                 var executions = scope.ServiceProvider.GetRequiredService<IExecutionRepository>();
                 var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
@@ -131,7 +121,22 @@ public sealed class ExcelExportBackgroundService : BackgroundService
                 var procedure = await procedures.GetEnabledByIdWithDetailsAsync(job.ProcedureId, stoppingToken)
                     ?? throw new InvalidOperationException($"Procedure {job.ProcedureId} not found or disabled.");
 
-                var bound = ParameterValueBinder.Bind(procedure.Parameters, job.ParameterValues);
+                // Never bind reserved pagination parameters from user/catalog; inject for export.
+                var userParameterDefs = procedure.Parameters
+                    .Where(p => !ProcedurePagination.IsReservedParameterName(p.Name))
+                    .ToList();
+                var bound = ParameterValueBinder.Bind(userParameterDefs, job.ParameterValues);
+
+                IReadOnlyDictionary<string, object?> execParameters = bound;
+                IReadOnlyCollection<string>? outputs = null;
+                if (procedure.SupportsPagination)
+                {
+                    execParameters = ProcedurePagination.WithPagingInputs(
+                        bound,
+                        ProcedurePagination.DefaultPageNumber,
+                        ProcedurePagination.ExportPageSize);
+                    outputs = [ProcedurePagination.TotalRecordsName];
+                }
 
                 var log = new Domain.Entities.ExecutionLog
                 {
@@ -145,19 +150,23 @@ public sealed class ExcelExportBackgroundService : BackgroundService
                 await executions.AddAsync(log, stoppingToken);
                 await unitOfWork.SaveChangesAsync(stoppingToken);
 
-                var data = await executor.ExecuteAsync(
+                var executed = await executor.ExecuteAsync(
                     procedure.DatabaseName,
                     procedure.ProcedureName,
-                    bound,
+                    execParameters,
+                    outputs,
                     stoppingToken);
 
+                var data = executed.Data;
                 log.Success = true;
-                log.RowCount = data.Rows.Count;
+                log.RowCount = procedure.SupportsPagination
+                    ? (int)Math.Min(executed.TotalRecords ?? data.Rows.Count, int.MaxValue)
+                    : data.Rows.Count;
                 log.ExecutionEnd = DateTime.UtcNow;
                 await unitOfWork.SaveChangesAsync(stoppingToken);
 
                 var fileName = $"export_{job.ProcedureId}_{job.Id:N}.xlsx";
-                var path = Path.Combine(_exportService.ExportDirectory, fileName);
+                var path = Path.Combine(exportService.ExportDirectory, fileName);
 
                 await Task.Run(() =>
                 {
@@ -173,15 +182,15 @@ public sealed class ExcelExportBackgroundService : BackgroundService
                 job.RowCount = data.Rows.Count;
                 job.Status = ExportJobStatus.Completed;
                 job.CompletedAt = DateTime.UtcNow;
-                _exportService.UpdateJob(job);
+                exportService.UpdateJob(job);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Excel export job {JobId} failed", jobId);
+                logger.LogError(ex, "Excel export job {JobId} failed", jobId);
                 job.Status = ExportJobStatus.Failed;
                 job.ErrorMessage = ex.Message;
                 job.CompletedAt = DateTime.UtcNow;
-                _exportService.UpdateJob(job);
+                exportService.UpdateJob(job);
             }
         }
     }

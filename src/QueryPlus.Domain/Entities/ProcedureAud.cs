@@ -15,6 +15,7 @@ public class ProcedureAud
     public string? DatabaseName { get; set; }
     public string? ProcedureName { get; set; }
     public bool? Enabled { get; set; }
+    public bool? SupportsPagination { get; set; }
     public string? RoleEntitlement { get; set; }
     public string? Description { get; set; }
     public DateTime? CreatedAt { get; set; }

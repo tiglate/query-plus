@@ -34,4 +34,14 @@
 .qp-card-body {
   @apply p-3;
 }
+
+/*
+ * Card footer for server-side pagers (home results + admin search grids).
+ * Sits as a sibling of qp-card-body so the grid body can stay padding-free.
+ */
+.qp-results-card-footer {
+  @apply flex shrink-0 flex-wrap items-center justify-between gap-2
+    border-t border-slate-200 bg-slate-50 px-3 py-2.5
+    dark:border-navy-600 dark:bg-navy-900;
+}
 }

@@ -28,6 +28,11 @@ public sealed class SaveProcedureDtoValidator : AbstractValidator<SaveProcedureD
         RuleForEach(x => x.Columns).SetValidator(new SaveProcedureColumnDtoValidator());
 
         RuleFor(x => x.Parameters)
+            .Must(p => p.All(param => !ProcedurePagination.IsReservedParameterName(param.Name)))
+            .WithMessage(
+                "Parameters @PageNumber, @PageSize, and @TotalRecords are reserved for system pagination and cannot be configured as user parameters.");
+
+        RuleFor(x => x.Parameters)
             .Must(p => p.Select(x => NormalizeName(x.Name)).Distinct(StringComparer.OrdinalIgnoreCase).Count() == p.Count)
             .WithMessage("Parameter names must be unique within the procedure.");
 
@@ -56,7 +61,10 @@ public sealed class SaveProcedureParameterDtoValidator : AbstractValidator<SaveP
                 var name = n.Trim().TrimStart('@');
                 return SqlIdentifier.IsValidSegment(name);
             })
-            .WithMessage("Parameter name must be a valid SQL identifier (optional leading @).");
+            .WithMessage("Parameter name must be a valid SQL identifier (optional leading @).")
+            .Must(n => !ProcedurePagination.IsReservedParameterName(n))
+            .WithMessage(
+                "Parameter names @PageNumber, @PageSize, and @TotalRecords are reserved for system pagination.");
         RuleFor(x => x.ParameterType).IsInEnum();
         RuleFor(x => x.DefaultValue).MaximumLength(500);
         RuleFor(x => x.ComboValues)

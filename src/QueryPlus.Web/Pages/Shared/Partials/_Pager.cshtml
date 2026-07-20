@@ -30,8 +30,8 @@
     var lastVisible = visible.Count > 0 ? visible[^1] : 0;
 }
 
-<nav class="mt-3 flex flex-wrap items-center justify-between gap-2" aria-label="@L["Pagination"]">
-    <p class="text-xs text-slate-600">
+<nav class="flex w-full flex-wrap items-center justify-between gap-2" aria-label="@L["Pagination"]">
+    <p class="text-xs text-slate-600 dark:text-slate-400">
         @string.Format(L["Pagination_Summary"].Value, Model.FromItem, Model.ToItem, Model.TotalCount)
     </p>
 

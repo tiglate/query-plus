@@ -11,6 +11,7 @@ public sealed class ProcedureListItemDto
     public required string DatabaseName { get; init; }
     public required string ProcedureName { get; init; }
     public bool Enabled { get; init; }
+    public bool SupportsPagination { get; init; }
     public required string RoleEntitlement { get; init; }
     public DateTime CreatedAt { get; init; }
     public DateTime? UpdatedAt { get; init; }
@@ -24,6 +25,7 @@ public sealed class ProcedureLookupDto
     public required string Caption { get; init; }
     public string? Description { get; init; }
     public required string RoleEntitlement { get; init; }
+    public bool SupportsPagination { get; init; }
 }
 
 public sealed class ProcedureDetailDto
@@ -35,6 +37,7 @@ public sealed class ProcedureDetailDto
     public required string DatabaseName { get; init; }
     public required string ProcedureName { get; init; }
     public bool Enabled { get; init; }
+    public bool SupportsPagination { get; init; }
     public required string RoleEntitlement { get; init; }
     public string? Description { get; init; }
     public DateTime CreatedAt { get; init; }
@@ -87,6 +90,7 @@ public sealed class SaveProcedureDto
     public required string DatabaseName { get; init; }
     public required string ProcedureName { get; init; }
     public bool Enabled { get; init; } = true;
+    public bool SupportsPagination { get; init; }
     public required string RoleEntitlement { get; init; }
     public string? Description { get; init; }
     public IList<SaveProcedureParameterDto> Parameters { get; init; } = [];

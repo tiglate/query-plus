@@ -21,14 +21,15 @@ public sealed class DapperStoredProcedureExecutor : IStoredProcedureExecutor
             ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
     }
 
-    public async Task<DataTable> ExecuteAsync(
+    public async Task<StoredProcedureExecutionResult> ExecuteAsync(
         string databaseName,
         string procedureName,
         IReadOnlyDictionary<string, object?> parameters,
+        IReadOnlyCollection<string>? outputParameterNames = null,
         CancellationToken cancellationToken = default)
     {
-        // Defense in depth: re-validate identifiers even if caller already checked.
         var qualifiedName = SqlIdentifier.BuildThreePartName(databaseName, procedureName);
+        var outputs = NormalizeOutputNames(outputParameterNames);
 
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
@@ -36,11 +37,15 @@ public sealed class DapperStoredProcedureExecutor : IStoredProcedureExecutor
         var dynamicParameters = new DynamicParameters();
         foreach (var (name, value) in parameters)
         {
-            // Reject anything that is not a simple parameter name (blocks name injection).
             ParameterSecurity.EnsureSafeParameterName(name);
             var paramName = SqlIdentifier.NormalizeParameterName(name);
 
-            // Never pass free-form SQL fragments as command text — values only.
+            if (outputs.Contains(paramName))
+            {
+                // OUTPUT: still registered below with direction; skip value add here.
+                continue;
+            }
+
             if (value is string s && s.Contains('\0'))
             {
                 throw new ArgumentException(
@@ -51,16 +56,66 @@ public sealed class DapperStoredProcedureExecutor : IStoredProcedureExecutor
             dynamicParameters.Add(paramName, value ?? DBNull.Value);
         }
 
+        foreach (var outputName in outputs)
+        {
+            ParameterSecurity.EnsureSafeParameterName(outputName);
+            dynamicParameters.Add(
+                outputName,
+                dbType: DbType.Int64,
+                direction: ParameterDirection.Output,
+                value: 0L);
+        }
+
         await using var reader = await connection.ExecuteReaderAsync(
             new CommandDefinition(
                 commandText: qualifiedName,
                 parameters: dynamicParameters,
                 commandType: CommandType.StoredProcedure,
-                commandTimeout: 120,
+                commandTimeout: ProcedurePagination.CommandTimeoutSeconds,
                 cancellationToken: cancellationToken));
 
         var table = new DataTable();
         table.Load(reader);
-        return table;
+
+        long? totalRecords = null;
+        if (outputs.Contains(ProcedurePagination.TotalRecordsName))
+        {
+            try
+            {
+                totalRecords = dynamicParameters.Get<long?>(ProcedurePagination.TotalRecordsName);
+            }
+            catch
+            {
+                // OUTPUT not returned by SP — leave null
+                totalRecords = null;
+            }
+        }
+
+        return new StoredProcedureExecutionResult
+        {
+            Data = table,
+            TotalRecords = totalRecords
+        };
+    }
+
+    private static HashSet<string> NormalizeOutputNames(IReadOnlyCollection<string>? names)
+    {
+        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (names is null)
+        {
+            return set;
+        }
+
+        foreach (var n in names)
+        {
+            if (string.IsNullOrWhiteSpace(n))
+            {
+                continue;
+            }
+
+            set.Add(SqlIdentifier.NormalizeParameterName(n));
+        }
+
+        return set;
     }
 }

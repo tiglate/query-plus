@@ -6,6 +6,15 @@
  * Home page fills main and never grows past it. Each column body scrolls
  * independently (overflow-y: auto → scrollbar only when content overflows).
  */
+
+/*
+ * Results card layout when server-side pagination is active:
+ * body (grid, no padding) + footer (pager with padding — see layout.css).
+ */
+.qp-results-body {
+  @apply flex min-h-0 flex-1 flex-col overflow-hidden;
+}
+
 .qp-home-page {
   @apply flex min-h-0 w-full flex-1 flex-col gap-3 overflow-hidden;
   height: 100%;

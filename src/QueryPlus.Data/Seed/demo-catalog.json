@@ -2053,5 +2053,200 @@
         "visible": true
       }
     ]
+  },
+  {
+    "caption": "Numbers - Paged",
+    "category": "Demo - Pagination",
+    "description": "Server-side paginated number sequence (default 5,000 rows). Tests home grid pager and Excel full export.",
+    "procedureName": "dbo.Sp_Demo_Numbers_Paged",
+    "role": "user",
+    "supportsPagination": true,
+    "parameters": [
+      {
+        "caption": "Max number",
+        "name": "@MaxNumber",
+        "type": "Numeric",
+        "default": "5000",
+        "combo": null,
+        "required": false
+      }
+    ],
+    "columns": [
+      {
+        "tech": "Number",
+        "caption": "Number",
+        "align": "Right",
+        "format": "{0:n0}",
+        "visible": true
+      },
+      {
+        "tech": "Code",
+        "caption": "Code",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Label",
+        "caption": "Label",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "Large Result - Paged",
+    "category": "Demo - Pagination",
+    "description": "Large synthetic dataset with server-side pagination (default 5,000 rows, max 50,000). Use the grid pager; Export Excel pulls the full set.",
+    "procedureName": "dbo.Sp_Demo_Large_Result_Paged",
+    "role": "user",
+    "supportsPagination": true,
+    "parameters": [
+      {
+        "caption": "Row count",
+        "name": "@RowCount",
+        "type": "Numeric",
+        "default": "5000",
+        "combo": null,
+        "required": false
+      }
+    ],
+    "columns": [
+      {
+        "tech": "RowId",
+        "caption": "Row #",
+        "align": "Right",
+        "format": "{0:n0}",
+        "visible": true
+      },
+      {
+        "tech": "ItemCode",
+        "caption": "Code",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Description",
+        "caption": "Description",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "CategoryId",
+        "caption": "Category",
+        "align": "Right",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Amount",
+        "caption": "Amount",
+        "align": "Right",
+        "format": "{0:c}",
+        "visible": true
+      },
+      {
+        "tech": "OrderDate",
+        "caption": "Order date",
+        "align": "Center",
+        "format": "{0:d}",
+        "visible": true
+      },
+      {
+        "tech": "IsActive",
+        "caption": "Active",
+        "align": "Center",
+        "format": null,
+        "visible": true
+      }
+    ]
+  },
+  {
+    "caption": "USA Presidents - Paged",
+    "category": "Demo - Pagination",
+    "description": "Paginated presidents list (same filters as the full list). Demonstrates pagination with user filters.",
+    "procedureName": "dbo.Sp_USA_President_List_Paged",
+    "role": "user",
+    "supportsPagination": true,
+    "parameters": [
+      {
+        "caption": "State",
+        "name": "@State",
+        "type": "Combo",
+        "default": null,
+        "combo": "[\"Virginia\", \"Massachusetts\", \"South Carolina\", \"New York\", \"North Carolina\", \"New Hampshire\", \"Pennsylvania\", \"Kentucky\", \"Ohio\", \"Vermont\", \"New Jersey\", \"Iowa\", \"Missouri\", \"Texas\", \"California\", \"Nebraska\", \"Georgia\", \"Illinois\", \"Arkansas\", \"Connecticut\", \"Hawaii\"]",
+        "required": false
+      },
+      {
+        "caption": "Start",
+        "name": "@Start",
+        "type": "Date",
+        "default": null,
+        "combo": null,
+        "required": false
+      },
+      {
+        "caption": "End",
+        "name": "@End",
+        "type": "Date",
+        "default": null,
+        "combo": null,
+        "required": false
+      }
+    ],
+    "columns": [
+      {
+        "tech": "TermNumber",
+        "caption": "Term",
+        "align": "Right",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "FullName",
+        "caption": "President",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "Party",
+        "caption": "Party",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "BirthState",
+        "caption": "Birth State",
+        "align": "Left",
+        "format": null,
+        "visible": true
+      },
+      {
+        "tech": "BirthDate",
+        "caption": "Born",
+        "align": "Center",
+        "format": "{0:d}",
+        "visible": true
+      },
+      {
+        "tech": "TermStart",
+        "caption": "Term Start",
+        "align": "Center",
+        "format": "{0:d}",
+        "visible": true
+      },
+      {
+        "tech": "TermEnd",
+        "caption": "Term End",
+        "align": "Center",
+        "format": "{0:d}",
+        "visible": true
+      }
+    ]
   }
 ]

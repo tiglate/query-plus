@@ -32,6 +32,7 @@ public class ProcedureAudConfiguration : IEntityTypeConfiguration<ProcedureAud>
             .HasMaxLength(128)
             .IsUnicode(false);
         builder.Property(e => e.Enabled).HasColumnName("enabled");
+        builder.Property(e => e.SupportsPagination).HasColumnName("supports_pagination");
         builder.Property(e => e.RoleEntitlement)
             .HasColumnName("role_entitlement")
             .HasMaxLength(100)

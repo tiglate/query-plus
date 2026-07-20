@@ -11,22 +11,12 @@ using QueryPlus.Web.Resources;
 
 namespace QueryPlus.Web.Pages.Admin.Procedures;
 
-public class IndexModel : PageModel
+public class IndexModel(
+    IProcedureService procedures,
+    ICategoryService categories,
+    IStringLocalizer<SharedResource> localizer)
+    : PageModel
 {
-    private readonly IProcedureService _procedures;
-    private readonly ICategoryService _categories;
-    private readonly IStringLocalizer<SharedResource> _L;
-
-    public IndexModel(
-        IProcedureService procedures,
-        ICategoryService categories,
-        IStringLocalizer<SharedResource> localizer)
-    {
-        _procedures = procedures;
-        _categories = categories;
-        _L = localizer;
-    }
-
     [BindProperty(SupportsGet = true)]
     public int? CategoryId { get; set; }
 
@@ -60,7 +50,7 @@ public class IndexModel : PageModel
     public async Task OnGetAsync(CancellationToken cancellationToken)
     {
         await LoadCategoriesAsync(cancellationToken);
-        Result = await _procedures.SearchAsync(new ProcedureFilterDto
+        Result = await procedures.SearchAsync(new ProcedureFilterDto
         {
             CategoryId = CategoryId,
             Caption = Caption,
@@ -88,8 +78,8 @@ public class IndexModel : PageModel
     {
         try
         {
-            await _procedures.DeleteAsync(id, cancellationToken);
-            TempData["Success"] = _L["Procedures_Deleted"].Value;
+            await procedures.DeleteAsync(id, cancellationToken);
+            TempData["Success"] = localizer["Procedures_Deleted"].Value;
         }
         catch (Exception ex) when (ex is DomainException or Application.Common.ValidationException)
         {
@@ -109,7 +99,7 @@ public class IndexModel : PageModel
 
     private async Task LoadCategoriesAsync(CancellationToken cancellationToken)
     {
-        var cats = await _categories.ListAllAsync(cancellationToken);
+        var cats = await categories.ListAllAsync(cancellationToken);
         CategoryOptions = cats
             .Select(c => new SelectListItem(c.Description, c.Id.ToString(), CategoryId == c.Id))
             .ToList();

@@ -8,15 +8,10 @@ using QueryPlus.Domain.Enums;
 
 namespace QueryPlus.Data.Metadata;
 
-public sealed class SqlProcedureMetadataSyncService : IProcedureMetadataSyncService
+public sealed class SqlProcedureMetadataSyncService(IConfiguration configuration) : IProcedureMetadataSyncService
 {
-    private readonly string _connectionString;
-
-    public SqlProcedureMetadataSyncService(IConfiguration configuration)
-    {
-        _connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
-    }
+    private readonly string _connectionString = configuration.GetConnectionString("DefaultConnection")
+                                                ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
 
     public async Task<ProcedureMetadataSnapshot> FetchAsync(
         string databaseName,
@@ -75,6 +70,12 @@ public sealed class SqlProcedureMetadataSyncService : IProcedureMetadataSyncServ
         {
             var paramName = reader.GetString(0);
             var typeName = reader.GetString(1);
+            // Never catalog reserved pagination parameters as user-facing fields.
+            if (ProcedurePagination.IsReservedParameterName(paramName))
+            {
+                continue;
+            }
+
             list.Add(new SaveProcedureParameterDto
             {
                 Caption = paramName.TrimStart('@'),

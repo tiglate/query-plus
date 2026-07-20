@@ -5,16 +5,11 @@ using QueryPlus.Domain.Interfaces;
 
 namespace QueryPlus.Data.Repositories;
 
-public class Repository<TEntity> : IRepository<TEntity> where TEntity : class
+public class Repository<TEntity>(ApplicationDbContext context) : IRepository<TEntity>
+    where TEntity : class
 {
-    protected readonly ApplicationDbContext Context;
-    protected readonly DbSet<TEntity> DbSet;
-
-    public Repository(ApplicationDbContext context)
-    {
-        Context = context;
-        DbSet = context.Set<TEntity>();
-    }
+    protected readonly ApplicationDbContext Context = context;
+    protected readonly DbSet<TEntity> DbSet = context.Set<TEntity>();
 
     public virtual async Task<TEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         => await DbSet.FindAsync([id], cancellationToken);

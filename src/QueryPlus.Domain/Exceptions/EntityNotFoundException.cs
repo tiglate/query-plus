@@ -1,14 +1,8 @@
 namespace QueryPlus.Domain.Exceptions;
 
-public sealed class EntityNotFoundException : DomainException
+public sealed class EntityNotFoundException(string entityName, int id)
+    : DomainException($"{entityName} with id {id} was not found.")
 {
-    public EntityNotFoundException(string entityName, int id)
-        : base($"{entityName} with id {id} was not found.")
-    {
-        EntityName = entityName;
-        Id = id;
-    }
-
-    public string EntityName { get; }
-    public int Id { get; }
+    public string EntityName { get; } = entityName;
+    public int Id { get; } = id;
 }

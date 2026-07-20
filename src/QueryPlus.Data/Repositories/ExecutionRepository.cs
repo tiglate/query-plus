@@ -5,27 +5,20 @@ using QueryPlus.Domain.Interfaces;
 
 namespace QueryPlus.Data.Repositories;
 
-public sealed class ExecutionRepository : IExecutionRepository
+public sealed class ExecutionRepository(ApplicationDbContext db) : IExecutionRepository
 {
-    private readonly ApplicationDbContext _db;
-
-    public ExecutionRepository(ApplicationDbContext db)
-    {
-        _db = db;
-    }
-
     public async Task AddAsync(ExecutionLog log, CancellationToken cancellationToken = default)
-        => await _db.ExecutionLogs.AddAsync(log, cancellationToken);
+        => await db.ExecutionLogs.AddAsync(log, cancellationToken);
 
     public Task<ExecutionLog?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
-        => _db.ExecutionLogs.AsNoTracking()
+        => db.ExecutionLogs.AsNoTracking()
             .FirstOrDefaultAsync(l => l.IdExecutionLog == id, cancellationToken);
 
     public async Task<IReadOnlyList<ExecutionLog>> GetByProcedureAsync(
         int procedureId,
         int take = 50,
         CancellationToken cancellationToken = default)
-        => await _db.ExecutionLogs.AsNoTracking()
+        => await db.ExecutionLogs.AsNoTracking()
             .Where(l => l.IdProcedure == procedureId)
             .OrderByDescending(l => l.ExecutionStart)
             .Take(take)
@@ -35,7 +28,7 @@ public sealed class ExecutionRepository : IExecutionRepository
         string username,
         int take = 50,
         CancellationToken cancellationToken = default)
-        => await _db.ExecutionLogs.AsNoTracking()
+        => await db.ExecutionLogs.AsNoTracking()
             .Where(l => l.Username == username)
             .OrderByDescending(l => l.ExecutionStart)
             .Take(take)

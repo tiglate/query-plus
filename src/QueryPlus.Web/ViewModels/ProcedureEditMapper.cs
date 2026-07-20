@@ -13,6 +13,7 @@ public static class ProcedureEditMapper
         DatabaseName = dto.DatabaseName,
         ProcedureName = dto.ProcedureName,
         Enabled = dto.Enabled,
+        SupportsPagination = dto.SupportsPagination,
         RoleEntitlement = dto.RoleEntitlement,
         Description = dto.Description,
         CreatedAt = dto.CreatedAt,
@@ -47,6 +48,7 @@ public static class ProcedureEditMapper
         DatabaseName = model.DatabaseName,
         ProcedureName = model.ProcedureName,
         Enabled = model.Enabled,
+        SupportsPagination = model.SupportsPagination,
         RoleEntitlement = model.RoleEntitlement,
         Description = model.Description,
         Parameters = model.Parameters.Select(p => new SaveProcedureParameterDto

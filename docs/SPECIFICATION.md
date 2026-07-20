@@ -101,20 +101,32 @@ The system replaces manual query execution by the Production team, reducing risk
 - Audit fields visible on Edit/View
 - Atomic save of main record + details
 
-### 2.6 Excel Export
+### 2.6 Server-side pagination (heavy procedures)
+
+- Procedure catalog flag: **Supports pagination** (`supports_pagination`).
+- Contract (fixed, non-customizable SP arguments — never exposed as user parameters):
+  - `@PageNumber BIGINT = 1`
+  - `@PageSize BIGINT = 50`
+  - `@TotalRecords BIGINT OUTPUT`
+- Home execute injects page args when the flag is set; the results grid shows a server-side pager.
+- Metadata sync and validation reject cataloging reserved pagination parameter names.
+- ADO.NET command timeout for stored procedures: **30 minutes**.
+
+### 2.7 Excel Export
 
 - For large datasets, execution is queued to a background worker.
 - User receives progress feedback (persists across refresh via polling)
 - Notification + download link when file is ready
+- For paginated procedures, export re-executes with `@PageNumber = 1` and `@PageSize = 999,999,999` so the full dataset is exported (not only the current page).
 
-### 2.7 Auditing & Logging
+### 2.8 Auditing & Logging
 
 - **Execution Log**: username, IP address, execution timestamps, procedure, parameter values (JSON), row count, success flag, error message
 - **Configuration Audit**: Full history (\_aud tables) for Categories, Procedures, Parameters and Columns using revision pattern
 - Configurable log levels
 - Email notification on errors (deduplication mechanism required)
 
-### 2.8 Internationalization
+### 2.9 Internationalization
 
 - Default: Brazilian Portuguese (pt-BR)
 - Secondary: English (en)

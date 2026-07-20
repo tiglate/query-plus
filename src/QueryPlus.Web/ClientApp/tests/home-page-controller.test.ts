@@ -158,4 +158,35 @@ describe("HomePageController", () => {
 
     home.dispose();
   });
+
+  it("pager HTMX request overrides pageNumber on form and parameters", () => {
+    buildHomeDom({ procedureId: "7", requiredEmpty: false });
+    const form = document.getElementById("exec-form")!;
+    form.insertAdjacentHTML(
+      "beforeend",
+      `<input id="pageNumber" name="pageNumber" class="js-page-number" value="1" />
+       <button type="button" class="js-results-page" data-page="3" id="page-btn">3</button>`,
+    );
+
+    const c = createTestContainer();
+    const home = c.resolve(HomePageController);
+    home.mount(document);
+
+    const parameters: Record<string, string> = { pageNumber: "1" };
+    const btn = document.getElementById("page-btn")!;
+    const event = new CustomEvent("htmx:configRequest", {
+      bubbles: true,
+      cancelable: true,
+      detail: { elt: btn, headers: {}, parameters },
+    });
+    document.body.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(
+      (document.getElementById("pageNumber") as HTMLInputElement).value,
+    ).toBe("3");
+    expect(parameters.pageNumber).toBe("3");
+
+    home.dispose();
+  });
 });

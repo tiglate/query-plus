@@ -69,6 +69,9 @@
                name="procedureId"
                class="js-procedure-select"
                value="@(Model.ProcedureId is > 0 ? Model.ProcedureId.Value.ToString() : "")" />
+        @* Server-side pagination (injected only for SupportsPagination procedures; never user params). *@
+        <input type="hidden" id="pageNumber" name="pageNumber" value="1" class="js-page-number" />
+        <input type="hidden" id="pageSize" name="pageSize" value="50" class="js-page-size" />
 
         <div class="qp-home-columns">
             @* Column 1 (~20%): procedure list (Outlook-style inbox) *@

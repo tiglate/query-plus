@@ -5,27 +5,20 @@ using QueryPlus.Domain.Interfaces;
 
 namespace QueryPlus.Data.Repositories;
 
-public sealed class ProcedureRepository : IProcedureRepository
+public sealed class ProcedureRepository(ApplicationDbContext db) : IProcedureRepository
 {
-    private readonly ApplicationDbContext _db;
-
-    public ProcedureRepository(ApplicationDbContext db)
-    {
-        _db = db;
-    }
-
     public Task<Procedure?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
-        => _db.Procedures.FirstOrDefaultAsync(p => p.IdProcedure == id, cancellationToken);
+        => db.Procedures.FirstOrDefaultAsync(p => p.IdProcedure == id, cancellationToken);
 
     public Task<Procedure?> GetByIdWithDetailsAsync(int id, CancellationToken cancellationToken = default)
-        => _db.Procedures
+        => db.Procedures
             .Include(p => p.Category)
             .Include(p => p.Parameters)
             .Include(p => p.Columns)
             .FirstOrDefaultAsync(p => p.IdProcedure == id, cancellationToken);
 
     public Task<Procedure?> GetEnabledByIdWithDetailsAsync(int id, CancellationToken cancellationToken = default)
-        => _db.Procedures
+        => db.Procedures
             .Include(p => p.Category)
             .Include(p => p.Parameters)
             .Include(p => p.Columns)
@@ -37,7 +30,7 @@ public sealed class ProcedureRepository : IProcedureRepository
         int pageSize,
         CancellationToken cancellationToken = default)
     {
-        var query = _db.Procedures
+        var query = db.Procedures
             .AsNoTracking()
             .Include(p => p.Category)
             .AsQueryable();
@@ -66,8 +59,8 @@ public sealed class ProcedureRepository : IProcedureRepository
 
         if (!string.IsNullOrWhiteSpace(criteria.DatabaseName))
         {
-            var db = criteria.DatabaseName.Trim();
-            query = query.Where(p => p.DatabaseName == db);
+            var database = criteria.DatabaseName.Trim();
+            query = query.Where(p => p.DatabaseName == database);
         }
 
         if (!string.IsNullOrWhiteSpace(criteria.ProcedureName))
@@ -91,7 +84,7 @@ public sealed class ProcedureRepository : IProcedureRepository
         IReadOnlyCollection<string> userRoles,
         CancellationToken cancellationToken = default)
     {
-        var query = _db.Procedures
+        var query = db.Procedures
             .AsNoTracking()
             .Include(p => p.Category)
             .Where(p => p.Enabled);
@@ -106,7 +99,7 @@ public sealed class ProcedureRepository : IProcedureRepository
             {
                 var required = p.RoleEntitlement
                     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                return required.Length == 0 || required.Any(r => roleSet.Contains(r));
+                return required.Length == 0 || required.Any(roleSet.Contains);
             });
         }
 
@@ -122,7 +115,7 @@ public sealed class ProcedureRepository : IProcedureRepository
         int? excludeId = null,
         CancellationToken cancellationToken = default)
     {
-        var query = _db.Procedures.AsNoTracking().Where(p => p.Caption == caption);
+        var query = db.Procedures.AsNoTracking().Where(p => p.Caption == caption);
         if (excludeId is not null)
         {
             query = query.Where(p => p.IdProcedure != excludeId.Value);
@@ -137,7 +130,7 @@ public sealed class ProcedureRepository : IProcedureRepository
         int? excludeId = null,
         CancellationToken cancellationToken = default)
     {
-        var query = _db.Procedures.AsNoTracking()
+        var query = db.Procedures.AsNoTracking()
             .Where(p => p.DatabaseName == databaseName && p.ProcedureName == procedureName);
 
         if (excludeId is not null)
@@ -149,15 +142,15 @@ public sealed class ProcedureRepository : IProcedureRepository
     }
 
     public async Task AddAsync(Procedure procedure, CancellationToken cancellationToken = default)
-        => await _db.Procedures.AddAsync(procedure, cancellationToken);
+        => await db.Procedures.AddAsync(procedure, cancellationToken);
 
-    public void Update(Procedure procedure) => _db.Procedures.Update(procedure);
+    public void Update(Procedure procedure) => db.Procedures.Update(procedure);
 
-    public void Remove(Procedure procedure) => _db.Procedures.Remove(procedure);
+    public void Remove(Procedure procedure) => db.Procedures.Remove(procedure);
 
     public void RemoveParameter(ProcedureParameter parameter)
-        => _db.ProcedureParameters.Remove(parameter);
+        => db.ProcedureParameters.Remove(parameter);
 
     public void RemoveColumn(ProcedureColumn column)
-        => _db.ProcedureColumns.Remove(column);
+        => db.ProcedureColumns.Remove(column);
 }

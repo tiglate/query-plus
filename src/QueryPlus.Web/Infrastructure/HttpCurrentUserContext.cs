@@ -3,16 +3,9 @@ using QueryPlus.Application.Abstractions;
 
 namespace QueryPlus.Web.Infrastructure;
 
-public sealed class HttpCurrentUserContext : ICurrentUserContext
+public sealed class HttpCurrentUserContext(IHttpContextAccessor httpContextAccessor) : ICurrentUserContext
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
-
-    public HttpCurrentUserContext(IHttpContextAccessor httpContextAccessor)
-    {
-        _httpContextAccessor = httpContextAccessor;
-    }
-
-    private ClaimsPrincipal? User => _httpContextAccessor.HttpContext?.User;
+    private ClaimsPrincipal? User => httpContextAccessor.HttpContext?.User;
 
     public bool IsAuthenticated => User?.Identity?.IsAuthenticated == true;
 
@@ -38,7 +31,7 @@ public sealed class HttpCurrentUserContext : ICurrentUserContext
     {
         get
         {
-            var ctx = _httpContextAccessor.HttpContext;
+            var ctx = httpContextAccessor.HttpContext;
             if (ctx is null)
             {
                 return null;
