@@ -26,8 +26,10 @@
   @apply w-full max-w-3xl;
 }
 
+/* Keep View / Edit / Delete on one line; column width must fit PT labels.
+   Parent cell/header use text-align:center so this inline-flex group is centered. */
 .qp-grid-actions {
-  @apply inline-flex flex-wrap items-center gap-0.5 whitespace-nowrap;
+  @apply inline-flex flex-nowrap items-center justify-center gap-0.5 whitespace-nowrap;
 }
 
 .qp-grid-actions form {
@@ -36,7 +38,7 @@
 
 .qp-grid-actions .qp-btn,
 .qp-grid-actions .qp-btn-ghost {
-  @apply text-xs;
+  @apply shrink-0 text-xs;
   padding: 0.15rem 0.4rem;
 }
 }

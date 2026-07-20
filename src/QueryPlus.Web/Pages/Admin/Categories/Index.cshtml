@@ -53,7 +53,8 @@
             new SheetGridColumn { Caption = L["Description"].Value },
             new SheetGridColumn { Caption = L["CreatedAt"].Value },
             new SheetGridColumn { Caption = L["UpdatedAt"].Value },
-            new SheetGridColumn { Caption = L["Actions"].Value, IsHtml = true, Sortable = false, Width = 220 }
+            // PT labels (Visualizar/Editar/Excluir) + icons need ~300px; keep single-line actions.
+            new SheetGridColumn { Caption = L["Actions"].Value, Align = "center", IsHtml = true, Sortable = false, Width = 300 }
         ],
         Cells = cells,
         EmptyMessage = L["NoRecords"].Value,
