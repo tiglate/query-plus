@@ -1,0 +1,10 @@
+@layer base {
+html {
+  /* Slightly denser than browser default (16px), still compact for data screens. */
+  font-size: 14px;
+}
+
+body {
+  @apply bg-slate-100 text-navy antialiased leading-snug;
+}
+}

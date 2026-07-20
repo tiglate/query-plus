@@ -85,14 +85,14 @@ nunit-*.xml
 *.publishsettings
 PublishScripts/
 
-## Node / Tailwind
+## Node / Tailwind / ClientApp
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 package-lock.json
-# Keep generated CSS committed for zero-node local runs; uncomment if you prefer CI-only builds:
-# src/QueryPlus.Web/wwwroot/css/site.css
+# Vite ClientApp output (built via pnpm/vp; produced on publish / Docker)
+src/QueryPlus.Web/wwwroot/dist/
 
 ## Docker
 *.log.json

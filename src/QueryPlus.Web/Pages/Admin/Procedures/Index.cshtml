@@ -5,6 +5,7 @@
 @using System.Net
 @{
     ViewData["Title"] = L["Procedures_Title"].Value;
+    ViewData["PageKey"] = "admin-procedures";
 
     const int idToken = 987654321;
     var viewUrlTemplate = (Url.Page("View", new { id = idToken }) ?? "").Replace(idToken.ToString(), "__ID__");
@@ -65,7 +66,8 @@
             new SheetGridColumn { Caption = L["Procedures_Name"].Value },
             new SheetGridColumn { Caption = L["Procedures_Role"].Value },
             new SheetGridColumn { Caption = L["Enabled"].Value, IsHtml = true, Width = 90 },
-            new SheetGridColumn { Caption = L["Actions"].Value, IsHtml = true, Sortable = false, Width = 220 }
+            // PT labels (Visualizar/Editar/Excluir) + icons need ~300px; keep single-line actions.
+            new SheetGridColumn { Caption = L["Actions"].Value, Align = "center", IsHtml = true, Sortable = false, Width = 300 }
         ],
         Cells = cells,
         EmptyMessage = L["NoRecords"].Value,
@@ -160,13 +162,3 @@
         </div>
     </div>
 </div>
-
-@section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('.js-sheet-root.qp-sheet-grid--admin').forEach(function (el) {
-                if (window.QueryPlusSheetGrid) QueryPlusSheetGrid.mount(el);
-            });
-        });
-    </script>
-}

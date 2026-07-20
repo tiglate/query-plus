@@ -3,6 +3,7 @@
 @inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> L
 @{
     ViewData["Title"] = L["Procedures_Edit"].Value;
+    ViewData["PageKey"] = "admin-procedure-edit";
     ViewData["CategoryOptions"] = Model.CategoryOptions;
     ViewData.TemplateInfo.HtmlFieldPrefix = "Input";
 }

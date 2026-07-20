@@ -3,10 +3,12 @@
 @inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> L
 @{
     ViewData["Title"] = L["Home_Title"].Value;
+    ViewData["PageKey"] = "home";
     var hasProcedure = Model.ProcedureId is > 0;
 }
 
 <div class="qp-page qp-home-page"
+     data-page="home"
      data-msg-select-procedure="@L["Home_SelectProcedureRequired"]"
      data-msg-export-requires-data="@L["Home_ExportRequiresData"]"
      data-msg-required-params="@L["Home_RequiredParametersClient"]"
@@ -59,7 +61,7 @@
         </div>
     </div>
 
-    @* Enter is intercepted in site.js (prevent full post that wipes procedure list). *@
+    @* Enter is intercepted in ClientApp HomePageController (prevent full post that wipes procedure list). *@
     <form id="exec-form" method="post" class="js-exec-form qp-home-workspace">
         @Html.AntiForgeryToken()
         <input type="hidden"

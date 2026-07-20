@@ -11,32 +11,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - QueryPlus</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
-          crossorigin="anonymous"
-          referrerpolicy="no-referrer" />
-    @* Clusterize CSS first; site.css overrides its default max-height:200px on the scroll area. *@
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/clusterize.js/0.19.0/clusterize.min.css"
-          crossorigin="anonymous"
-          referrerpolicy="no-referrer" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <script src="https://unpkg.com/htmx.org@2.0.4" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/clusterize.js/0.19.0/clusterize.min.js"
-            crossorigin="anonymous"
-            referrerpolicy="no-referrer"></script>
-    <script src="~/js/sheet-grid.js" asp-append-version="true"></script>
+    @* ClientApp build (Vite): CSS includes Tailwind, Clusterize, Font Awesome, Inter (no CDNs). *@
+    <link rel="stylesheet" href="~/dist/css/site.css" asp-append-version="true" />
     @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
     @{
         var af = Antiforgery.GetAndStoreTokens(Context);
     }
     <meta name="csrf-token" content="@af.RequestToken" />
+    @* Preferred page key for ClientApp (set in page models / views via ViewData["PageKey"]). *@
+    <meta name="qp-page" content="@(ViewData["PageKey"] as string ?? "")" />
 </head>
 @* h-dvh + overflow-hidden: chrome stays fixed; main scrolls for admin pages; home fills main and scrolls per-column. *@
-<body class="flex h-dvh flex-col overflow-hidden font-sans">
+@* data-page on body is secondary; meta[name=qp-page] is primary for ClientApp routing. *@
+<body class="flex h-dvh flex-col overflow-hidden font-sans"
+      data-page="@(ViewData["PageKey"] as string ?? "")">
     <header class="shrink-0 bg-navy text-white shadow">
         <div class="flex w-full items-center justify-between gap-3 px-3 py-2 lg:px-4">
             <div class="flex items-center gap-6">
@@ -158,15 +146,12 @@
         </div>
     </footer>
 
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    <script>
-        document.body.addEventListener('htmx:configRequest', function (event) {
-            var token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            if (token) {
-                event.detail.headers['RequestVerificationToken'] = token;
-            }
-        });
-    </script>
+    @*
+      ClientApp shell (Vite → wwwroot/dist): nav, confirm, CSRF, SheetGrid, page controllers.
+      Built as a single ESM entry (inlineDynamicImports) so MapStaticAssets fingerprinting
+      of this URL is safe — no async chunk re-imports "./app.js" as a second module instance.
+    *@
+    <script type="module" src="~/dist/js/app.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -19,6 +19,35 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Set SkipClientAppBuild=true to publish without Node (legacy wwwroot assets only). -->
+    <SkipClientAppBuild Condition="'$(SkipClientAppBuild)' == ''">false</SkipClientAppBuild>
   </PropertyGroup>
+
+  <!--
+    ClientApp (Vite+ / pnpm) → wwwroot/dist.
+    - Publish always rebuilds ClientApp.
+    - Local Build rebuilds when dist/js/app.js is missing (layout loads the module).
+  -->
+  <Target Name="BuildClientAppIfMissing"
+          BeforeTargets="BeforeBuild"
+          Condition="'$(SkipClientAppBuild)' != 'true' And !Exists('$(MSBuildProjectDirectory)\wwwroot\dist\js\app.js')">
+    <Message Importance="high" Text="ClientApp dist missing — running pnpm build → wwwroot/dist" />
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)" Command="pnpm install --frozen-lockfile" />
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)" Command="pnpm run build" />
+  </Target>
+
+  <Target Name="BuildClientAppOnPublish" BeforeTargets="ComputeFilesToPublish" Condition="'$(SkipClientAppBuild)' != 'true'">
+    <Message Importance="high" Text="Building ClientApp (pnpm) → wwwroot/dist" />
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)" Command="pnpm install --frozen-lockfile" />
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)" Command="pnpm run build" />
+    <ItemGroup>
+      <DistFiles Include="$(MSBuildProjectDirectory)\wwwroot\dist\**" />
+      <ResolvedFileToPublish Include="@(DistFiles)">
+        <RelativePath>wwwroot\dist\%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
 
 </Project>

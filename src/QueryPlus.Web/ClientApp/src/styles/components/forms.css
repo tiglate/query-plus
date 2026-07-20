@@ -1,0 +1,49 @@
+@layer components {
+.qp-input {
+  @apply w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-navy shadow-sm
+    focus:border-cyan focus:outline-none focus:ring-1 focus:ring-cyan;
+}
+
+.qp-label {
+  @apply mb-0.5 block text-xs font-medium text-navy;
+}
+
+.qp-label-required {
+  @apply font-bold;
+}
+
+.qp-th-required {
+  @apply font-bold;
+}
+
+.qp-field-error {
+  @apply mt-0.5 block text-xs text-red-600;
+}
+
+.qp-validation-summary {
+  @apply rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700;
+}
+
+.qp-validation-summary ul {
+  @apply list-disc space-y-1 pl-5;
+}
+
+.qp-input.input-validation-error,
+select.input-validation-error,
+textarea.input-validation-error {
+  @apply border-red-500 focus:border-red-500 focus:ring-red-500;
+}
+
+/* Align aspnet-client-validation defaults with QueryPlus field errors */
+.field-validation-error {
+  @apply mt-0.5 block text-xs text-red-600 not-italic;
+}
+
+.validation-summary-errors {
+  @apply rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 not-italic;
+}
+
+.validation-summary-errors ul {
+  @apply list-disc space-y-1 pl-5;
+}
+}
