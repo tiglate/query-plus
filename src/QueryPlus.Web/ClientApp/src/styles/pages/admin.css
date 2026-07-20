@@ -14,7 +14,7 @@
 }
 
 .qp-admin-results-pager {
-  @apply shrink-0 border-t border-slate-100 pt-2;
+  @apply shrink-0 border-t border-slate-100 pt-2 dark:border-navy-600;
 }
 
 .qp-admin-results-pager nav {

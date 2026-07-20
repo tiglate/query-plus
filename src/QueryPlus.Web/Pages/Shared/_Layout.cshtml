@@ -11,6 +11,25 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - QueryPlus</title>
+    @*
+      Apply theme before CSS paint to avoid FOUC.
+      Key + values must stay in sync with ClientApp ThemeService (qp-theme).
+    *@
+    <script>
+        (function () {
+            try {
+                var key = "qp-theme";
+                var pref = localStorage.getItem(key) || "system";
+                if (pref !== "light" && pref !== "dark" && pref !== "system") pref = "system";
+                var dark = pref === "dark" || (pref === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+                var root = document.documentElement;
+                root.classList.toggle("dark", dark);
+                root.style.colorScheme = dark ? "dark" : "light";
+                root.dataset.theme = pref;
+                root.dataset.themeResolved = dark ? "dark" : "light";
+            } catch (e) { /* private mode */ }
+        })();
+    </script>
     @* ClientApp build (Vite): CSS includes Tailwind, Clusterize, Font Awesome, Inter (no CDNs). *@
     <link rel="stylesheet" href="~/dist/css/site.css" asp-append-version="true" />
     @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
@@ -55,17 +74,17 @@
                              role="menu"
                              aria-labelledby="nav-admin-trigger"
                              hidden>
-                            <div class="rounded-md border border-slate-200 bg-white py-1 text-navy shadow-lg">
+                            <div class="rounded-md border border-slate-200 bg-white py-1 text-navy shadow-lg dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100">
                                 <a asp-page="/Admin/Categories/Index"
                                    role="menuitem"
-                                   class="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-cyan-50">
-                                    <i class="fa-solid fa-folder text-slate-500" aria-hidden="true"></i>
+                                   class="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-cyan-50 dark:hover:bg-navy-700">
+                                    <i class="fa-solid fa-folder text-slate-500 dark:text-slate-400" aria-hidden="true"></i>
                                     @L["Nav_Categories"]
                                 </a>
                                 <a asp-page="/Admin/Procedures/Index"
                                    role="menuitem"
-                                   class="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-cyan-50">
-                                    <i class="fa-solid fa-database text-slate-500" aria-hidden="true"></i>
+                                   class="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-cyan-50 dark:hover:bg-navy-700">
+                                    <i class="fa-solid fa-database text-slate-500 dark:text-slate-400" aria-hidden="true"></i>
                                     @L["Nav_Procedures"]
                                 </a>
                             </div>
@@ -79,6 +98,22 @@
                 </nav>
             </div>
             <div class="flex items-center gap-2">
+                @* Theme: Light / Dark / System (default). Wired by ClientApp ThemeService. *@
+                <div class="flex items-center gap-1.5 text-sm" data-theme-control>
+                    <label class="sr-only" for="theme-preference">@L["Theme"]</label>
+                    <i class="fa-solid fa-circle-half-stroke text-white/80"
+                       data-theme-icon
+                       aria-hidden="true"
+                       title="@L["Theme"]"></i>
+                    <select id="theme-preference"
+                            class="qp-lang-select"
+                            data-theme-select
+                            aria-label="@L["Theme"]">
+                        <option value="system">@L["Theme_System"]</option>
+                        <option value="light">@L["Theme_Light"]</option>
+                        <option value="dark">@L["Theme_Dark"]</option>
+                    </select>
+                </div>
                 <form method="post" asp-page="/Culture" class="flex items-center gap-1.5 text-sm">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
@@ -123,24 +158,24 @@
         </div>
     </header>
 
-    <main class="flex min-h-0 w-full flex-1 flex-col overflow-y-auto">
+    <main class="flex min-h-0 w-full flex-1 flex-col overflow-y-auto bg-slate-100 dark:bg-navy-900">
         @if (TempData["Success"] is string success)
         {
-            <div class="mx-3 mt-3 shrink-0 rounded border border-leaf bg-leaf/20 px-3 py-1.5 text-xs text-navy lg:mx-4">
+            <div class="mx-3 mt-3 shrink-0 rounded border border-leaf bg-leaf/20 px-3 py-1.5 text-xs text-navy dark:border-leaf/40 dark:bg-leaf/15 dark:text-slate-100 lg:mx-4">
                 <i class="fa-solid fa-circle-check mr-1" aria-hidden="true"></i>@success
             </div>
         }
         @if (TempData["Error"] is string error)
         {
-            <div class="mx-3 mt-3 shrink-0 rounded border border-red-300 bg-red-50 px-3 py-1.5 text-xs text-red-800 lg:mx-4">
+            <div class="mx-3 mt-3 shrink-0 rounded border border-red-300 bg-red-50 px-3 py-1.5 text-xs text-red-800 dark:border-red-700 dark:bg-red-950/50 dark:text-red-200 lg:mx-4">
                 <i class="fa-solid fa-circle-exclamation mr-1" aria-hidden="true"></i>@error
             </div>
         }
         @RenderBody()
     </main>
 
-    <footer class="shrink-0 border-t border-slate-200 bg-white">
-        <div class="flex w-full items-center justify-between px-3 py-2 text-[11px] text-slate-500 lg:px-4">
+    <footer class="shrink-0 border-t border-slate-200 bg-white dark:border-navy-600 dark:bg-navy-800">
+        <div class="flex w-full items-center justify-between px-3 py-2 text-[11px] text-slate-500 dark:text-slate-400 lg:px-4">
             <span>&copy; @DateTime.UtcNow.Year QueryPlus</span>
             <span>@L["Footer_Tagline"]</span>
         </div>
