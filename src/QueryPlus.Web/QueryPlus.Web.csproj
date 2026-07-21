@@ -15,6 +15,10 @@
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.19.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="App_Data\exports\" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
