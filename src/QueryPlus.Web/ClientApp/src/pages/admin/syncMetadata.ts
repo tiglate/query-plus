@@ -3,8 +3,8 @@
  */
 
 export function canSyncMetadata(
-  database: string | null | undefined,
-  procedure: string | null | undefined,
+    database: string | null | undefined,
+    procedure: string | null | undefined,
 ): boolean {
-  return !!(database || "").trim() && !!(procedure || "").trim();
+    return !!(database || "").trim() && !!(procedure || "").trim();
 }

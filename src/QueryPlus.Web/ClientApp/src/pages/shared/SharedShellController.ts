@@ -14,35 +14,35 @@ import { TOKENS } from "@/core/di/tokens";
 @singleton()
 @injectable()
 export class SharedShellController extends PageController {
-  constructor(
-    @inject(TOKENS.Document) private readonly doc: Document,
-    @inject(HtmxBridge) private readonly htmx: HtmxBridge,
-    @inject(ThemeService) private readonly theme: ThemeService,
-    @inject(LoadingBarService) private readonly loadingBar: LoadingBarService,
-    @inject(NavDropdownService) private readonly navDropdowns: NavDropdownService,
-    @inject(ConfirmSubmitService)
-    private readonly confirmSubmit: ConfirmSubmitService,
-    @inject(ClientValidationService)
-    private readonly clientValidation: ClientValidationService,
-  ) {
-    super();
-  }
+    constructor(
+        @inject(TOKENS.Document) private readonly doc: Document,
+        @inject(HtmxBridge) private readonly htmx: HtmxBridge,
+        @inject(ThemeService) private readonly theme: ThemeService,
+        @inject(LoadingBarService) private readonly loadingBar: LoadingBarService,
+        @inject(NavDropdownService) private readonly navDropdowns: NavDropdownService,
+        @inject(ConfirmSubmitService)
+        private readonly confirmSubmit: ConfirmSubmitService,
+        @inject(ClientValidationService)
+        private readonly clientValidation: ClientValidationService,
+    ) {
+        super();
+    }
 
-  mount(root: ParentNode = this.doc): void {
-    this.htmx.wireCsrfFromMeta();
-    this.theme.mount(root);
-    this.loadingBar.mount(root);
-    this.navDropdowns.mountAll(root);
-    this.confirmSubmit.mount(root);
-    this.clientValidation.mount(root);
-  }
+    mount(root: ParentNode = this.doc): void {
+        this.htmx.wireCsrfFromMeta();
+        this.theme.mount(root);
+        this.loadingBar.mount(root);
+        this.navDropdowns.mountAll(root);
+        this.confirmSubmit.mount(root);
+        this.clientValidation.mount(root);
+    }
 
-  unmount(): void {
-    this.theme.dispose();
-    this.loadingBar.dispose();
-    this.navDropdowns.dispose();
-    this.confirmSubmit.dispose();
-    this.clientValidation.dispose();
-    this.htmx.dispose();
-  }
+    unmount(): void {
+        this.theme.dispose();
+        this.loadingBar.dispose();
+        this.navDropdowns.dispose();
+        this.confirmSubmit.dispose();
+        this.clientValidation.dispose();
+        this.htmx.dispose();
+    }
 }

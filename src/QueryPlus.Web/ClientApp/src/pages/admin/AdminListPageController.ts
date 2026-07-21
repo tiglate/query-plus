@@ -11,22 +11,22 @@ const ADMIN_SHEET_SELECTOR = ".js-sheet-root.qp-sheet-grid--admin";
 @singleton()
 @injectable()
 export class AdminListPageController extends PageController {
-  constructor(
-    @inject(TOKENS.Document) private readonly doc: Document,
-    @inject(SheetGridService) private readonly sheetGrid: SheetGridService,
-  ) {
-    super();
-  }
+    constructor(
+        @inject(TOKENS.Document) private readonly doc: Document,
+        @inject(SheetGridService) private readonly sheetGrid: SheetGridService,
+    ) {
+        super();
+    }
 
-  mount(root: ParentNode = this.doc): void {
-    root.querySelectorAll(ADMIN_SHEET_SELECTOR).forEach((el) => {
-      this.sheetGrid.mount(el);
-    });
-  }
+    mount(root: ParentNode = this.doc): void {
+        root.querySelectorAll(ADMIN_SHEET_SELECTOR).forEach((el) => {
+            this.sheetGrid.mount(el);
+        });
+    }
 
-  unmount(): void {
-    this.doc.querySelectorAll(ADMIN_SHEET_SELECTOR).forEach((el) => {
-      this.sheetGrid.destroy(el);
-    });
-  }
+    unmount(): void {
+        this.doc.querySelectorAll(ADMIN_SHEET_SELECTOR).forEach((el) => {
+            this.sheetGrid.destroy(el);
+        });
+    }
 }

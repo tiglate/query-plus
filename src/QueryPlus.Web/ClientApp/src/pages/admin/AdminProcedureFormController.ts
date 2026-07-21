@@ -10,22 +10,22 @@ import { SyncMetadataService } from "./SyncMetadataService";
 @singleton()
 @injectable()
 export class AdminProcedureFormController extends PageController {
-  constructor(
-    @inject(TOKENS.Document) private readonly doc: Document,
-    @inject(ParameterComboService)
-    private readonly combo: ParameterComboService,
-    @inject(SyncMetadataService) private readonly sync: SyncMetadataService,
-  ) {
-    super();
-  }
+    constructor(
+        @inject(TOKENS.Document) private readonly doc: Document,
+        @inject(ParameterComboService)
+        private readonly combo: ParameterComboService,
+        @inject(SyncMetadataService) private readonly sync: SyncMetadataService,
+    ) {
+        super();
+    }
 
-  mount(root: ParentNode = this.doc): void {
-    this.combo.mountAll(root);
-    this.sync.mount(root);
-  }
+    mount(root: ParentNode = this.doc): void {
+        this.combo.mountAll(root);
+        this.sync.mount(root);
+    }
 
-  unmount(): void {
-    this.combo.dispose();
-    this.sync.dispose();
-  }
+    unmount(): void {
+        this.combo.dispose();
+        this.sync.dispose();
+    }
 }

@@ -4,94 +4,94 @@ import { createTestContainer } from "@/core/di/container";
 import { LoadingBarService } from "@/components/loading-bar/LoadingBarService";
 
 function dispatch(name: string, elt: Element): void {
-  elt.dispatchEvent(new CustomEvent(name, { bubbles: true, detail: { elt } }));
+    elt.dispatchEvent(new CustomEvent(name, { bubbles: true, detail: { elt } }));
 }
 
 describe("LoadingBarService", () => {
-  let bar: HTMLElement;
+    let bar: HTMLElement;
 
-  beforeEach(() => {
-    document.body.innerHTML = `<div id="qp-loading-bar"></div>`;
-    bar = document.getElementById("qp-loading-bar")!;
-  });
+    beforeEach(() => {
+        document.body.innerHTML = `<div id="qp-loading-bar"></div>`;
+        bar = document.getElementById("qp-loading-bar")!;
+    });
 
-  afterEach(() => {
-    document.body.innerHTML = "";
-  });
+    afterEach(() => {
+        document.body.innerHTML = "";
+    });
 
-  it("activates on request start and deactivates on request end", () => {
-    const c = createTestContainer();
-    const service = c.resolve(LoadingBarService);
-    service.mount();
+    it("activates on request start and deactivates on request end", () => {
+        const c = createTestContainer();
+        const service = c.resolve(LoadingBarService);
+        service.mount();
 
-    const trigger = document.createElement("button");
-    document.body.appendChild(trigger);
+        const trigger = document.createElement("button");
+        document.body.appendChild(trigger);
 
-    dispatch("htmx:beforeRequest", trigger);
-    expect(bar.classList.contains("is-active")).toBe(true);
+        dispatch("htmx:beforeRequest", trigger);
+        expect(bar.classList.contains("is-active")).toBe(true);
 
-    dispatch("htmx:afterRequest", trigger);
-    expect(bar.classList.contains("is-active")).toBe(false);
+        dispatch("htmx:afterRequest", trigger);
+        expect(bar.classList.contains("is-active")).toBe(false);
 
-    service.dispose();
-  });
+        service.dispose();
+    });
 
-  it("stays active while any of several overlapping requests is in flight", () => {
-    const c = createTestContainer();
-    const service = c.resolve(LoadingBarService);
-    service.mount();
+    it("stays active while any of several overlapping requests is in flight", () => {
+        const c = createTestContainer();
+        const service = c.resolve(LoadingBarService);
+        service.mount();
 
-    const a = document.createElement("button");
-    const b = document.createElement("button");
-    document.body.append(a, b);
+        const a = document.createElement("button");
+        const b = document.createElement("button");
+        document.body.append(a, b);
 
-    dispatch("htmx:beforeRequest", a);
-    dispatch("htmx:beforeRequest", b);
-    expect(bar.classList.contains("is-active")).toBe(true);
+        dispatch("htmx:beforeRequest", a);
+        dispatch("htmx:beforeRequest", b);
+        expect(bar.classList.contains("is-active")).toBe(true);
 
-    dispatch("htmx:afterRequest", a);
-    expect(bar.classList.contains("is-active")).toBe(true);
+        dispatch("htmx:afterRequest", a);
+        expect(bar.classList.contains("is-active")).toBe(true);
 
-    dispatch("htmx:afterRequest", b);
-    expect(bar.classList.contains("is-active")).toBe(false);
+        dispatch("htmx:afterRequest", b);
+        expect(bar.classList.contains("is-active")).toBe(false);
 
-    service.dispose();
-  });
+        service.dispose();
+    });
 
-  it("ignores elements opted out via data-loading-indicator=skip", () => {
-    const c = createTestContainer();
-    const service = c.resolve(LoadingBarService);
-    service.mount();
+    it("ignores elements opted out via data-loading-indicator=skip", () => {
+        const c = createTestContainer();
+        const service = c.resolve(LoadingBarService);
+        service.mount();
 
-    const polling = document.createElement("div");
-    polling.setAttribute("data-loading-indicator", "skip");
-    document.body.appendChild(polling);
+        const polling = document.createElement("div");
+        polling.setAttribute("data-loading-indicator", "skip");
+        document.body.appendChild(polling);
 
-    dispatch("htmx:beforeRequest", polling);
-    expect(bar.classList.contains("is-active")).toBe(false);
+        dispatch("htmx:beforeRequest", polling);
+        expect(bar.classList.contains("is-active")).toBe(false);
 
-    dispatch("htmx:afterRequest", polling);
-    expect(bar.classList.contains("is-active")).toBe(false);
+        dispatch("htmx:afterRequest", polling);
+        expect(bar.classList.contains("is-active")).toBe(false);
 
-    service.dispose();
-  });
+        service.dispose();
+    });
 
-  it("clears state on dispose", () => {
-    const c = createTestContainer();
-    const service = c.resolve(LoadingBarService);
-    service.mount();
+    it("clears state on dispose", () => {
+        const c = createTestContainer();
+        const service = c.resolve(LoadingBarService);
+        service.mount();
 
-    const trigger = document.createElement("button");
-    document.body.appendChild(trigger);
+        const trigger = document.createElement("button");
+        document.body.appendChild(trigger);
 
-    dispatch("htmx:beforeRequest", trigger);
-    expect(bar.classList.contains("is-active")).toBe(true);
+        dispatch("htmx:beforeRequest", trigger);
+        expect(bar.classList.contains("is-active")).toBe(true);
 
-    service.dispose();
-    expect(bar.classList.contains("is-active")).toBe(false);
+        service.dispose();
+        expect(bar.classList.contains("is-active")).toBe(false);
 
-    // Further events must not be handled after dispose.
-    dispatch("htmx:beforeRequest", trigger);
-    expect(bar.classList.contains("is-active")).toBe(false);
-  });
+        // Further events must not be handled after dispose.
+        dispatch("htmx:beforeRequest", trigger);
+        expect(bar.classList.contains("is-active")).toBe(false);
+    });
 });

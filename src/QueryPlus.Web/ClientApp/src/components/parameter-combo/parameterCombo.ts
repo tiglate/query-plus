@@ -5,10 +5,10 @@
 export const DEFAULT_COMBO_TYPE_VALUE = "6";
 
 export function isComboType(
-  typeValue: string | null | undefined,
-  comboTypeValue: string = DEFAULT_COMBO_TYPE_VALUE,
+    typeValue: string | null | undefined,
+    comboTypeValue: string = DEFAULT_COMBO_TYPE_VALUE,
 ): boolean {
-  return String(typeValue ?? "") === String(comboTypeValue);
+    return String(typeValue ?? "") === String(comboTypeValue);
 }
 
 /**
@@ -16,16 +16,16 @@ export function isComboType(
  * Returns whether the field is in combo mode.
  */
 export function applyComboVisibility(
-  typeSelect: HTMLSelectElement | HTMLInputElement | null | undefined,
-  comboInput: HTMLInputElement | HTMLTextAreaElement | null | undefined,
+    typeSelect: HTMLSelectElement | HTMLInputElement | null | undefined,
+    comboInput: HTMLInputElement | HTMLTextAreaElement | null | undefined,
 ): boolean {
-  if (!typeSelect || !comboInput) return false;
+    if (!typeSelect || !comboInput) return false;
 
-  const comboTypeValue =
-    comboInput.getAttribute("data-combo-type-value") || DEFAULT_COMBO_TYPE_VALUE;
-  const isCombo = isComboType(typeSelect.value, comboTypeValue);
+    const comboTypeValue =
+        comboInput.getAttribute("data-combo-type-value") || DEFAULT_COMBO_TYPE_VALUE;
+    const isCombo = isComboType(typeSelect.value, comboTypeValue);
 
-  comboInput.disabled = !isCombo;
-  comboInput.classList.toggle("hidden", !isCombo);
-  return isCombo;
+    comboInput.disabled = !isCombo;
+    comboInput.classList.toggle("hidden", !isCombo);
+    return isCombo;
 }
