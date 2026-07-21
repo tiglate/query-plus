@@ -12,6 +12,12 @@ public interface IProcedureService
     Task<ProcedureDetailDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// All procedures ordered by caption (admin dropdowns / lookups).
+    /// </summary>
+    Task<IReadOnlyList<ProcedureLookupDto>> ListAllAsync(
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Procedures the current user may execute (Home combo).
     /// </summary>
     Task<IReadOnlyList<ProcedureLookupDto>> GetAccessibleForCurrentUserAsync(

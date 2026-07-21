@@ -64,6 +64,7 @@ function resolvePageController(
             return c.resolve(HomePageController);
         case "admin-categories":
         case "admin-procedures":
+        case "admin-execution-logs":
             return c.resolve(AdminListPageController);
         case "admin-procedure-edit":
             return c.resolve(AdminProcedureFormController);

@@ -136,4 +136,35 @@ public class ProcedureServiceTests
 
         await act.Should().ThrowAsync<EntityNotFoundException>();
     }
+
+    [Fact]
+    public async Task ListAllAsync_MapsAllProcedures()
+    {
+        _procedures.GetAllAsync(Arg.Any<CancellationToken>()).Returns(
+        [
+            new Procedure
+            {
+                IdProcedure = 1,
+                IdCategory = 1,
+                Caption = "Alpha",
+                DatabaseName = "Sales",
+                ProcedureName = "dbo.usp_Alpha",
+                RoleEntitlement = "user"
+            },
+            new Procedure
+            {
+                IdProcedure = 2,
+                IdCategory = 1,
+                Caption = "Beta",
+                DatabaseName = "Sales",
+                ProcedureName = "dbo.usp_Beta",
+                RoleEntitlement = "user"
+            }
+        ]);
+
+        var result = await _sut.ListAllAsync();
+
+        result.Should().HaveCount(2);
+        result.Select(p => p.Caption).Should().Equal("Alpha", "Beta");
+    }
 }

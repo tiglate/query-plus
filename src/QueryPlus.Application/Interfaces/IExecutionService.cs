@@ -1,3 +1,4 @@
+using QueryPlus.Application.DTOs.Common;
 using QueryPlus.Application.DTOs.Execution;
 
 namespace QueryPlus.Application.Interfaces;
@@ -15,5 +16,12 @@ public interface IExecutionService
     Task<IReadOnlyList<ExecutionLogDto>> GetRecentByProcedureAsync(
         int procedureId,
         int take = 50,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Filtered execution log search (admin screen) with server-side pagination.
+    /// </summary>
+    Task<PagedResult<ExecutionLogListItemDto>> SearchAsync(
+        ExecutionLogFilterDto filter,
         CancellationToken cancellationToken = default);
 }

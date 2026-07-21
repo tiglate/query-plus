@@ -72,3 +72,33 @@ public sealed class ExecutionLogDto
     public string? ParameterValuesJson { get; init; }
     public int? RowCount { get; init; }
 }
+
+public sealed class ExecutionLogListItemDto
+{
+    public int Id { get; init; }
+    public int ProcedureId { get; init; }
+    public required string ProcedureCaption { get; init; }
+    public required string Username { get; init; }
+    public string? IpAddress { get; init; }
+    public DateTime ExecutionStart { get; init; }
+    public DateTime? ExecutionEnd { get; init; }
+    public bool Success { get; init; }
+    public string? ErrorMessage { get; init; }
+    public int? RowCount { get; init; }
+}
+
+public sealed class ExecutionLogFilterDto
+{
+    public string? Username { get; init; }
+    public int? ProcedureId { get; init; }
+    public bool? Success { get; init; }
+
+    /// <summary>Inclusive local calendar date (time component ignored).</summary>
+    public DateTime? StartFrom { get; init; }
+
+    /// <summary>Inclusive local calendar date (time component ignored).</summary>
+    public DateTime? StartTo { get; init; }
+
+    public int Page { get; init; } = 1;
+    public int PageSize { get; init; } = 20;
+}

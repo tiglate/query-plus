@@ -51,5 +51,10 @@ public sealed class QueryPlusMappingProfile : Profile
             .ForMember(d => d.Id, o => o.MapFrom(s => s.IdExecutionLog))
             .ForMember(d => d.ProcedureId, o => o.MapFrom(s => s.IdProcedure))
             .ForMember(d => d.ParameterValuesJson, o => o.MapFrom(s => s.ParameterValues));
+
+        CreateMap<ExecutionLog, ExecutionLogListItemDto>()
+            .ForMember(d => d.Id, o => o.MapFrom(s => s.IdExecutionLog))
+            .ForMember(d => d.ProcedureId, o => o.MapFrom(s => s.IdProcedure))
+            .ForMember(d => d.ProcedureCaption, o => o.MapFrom(s => s.Procedure.Caption));
     }
 }

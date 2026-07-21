@@ -60,6 +60,13 @@ public sealed class ProcedureService(
         return entity is null ? null : mapper.Map<ProcedureDetailDto>(entity);
     }
 
+    public async Task<IReadOnlyList<ProcedureLookupDto>> ListAllAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var items = await procedures.GetAllAsync(cancellationToken);
+        return mapper.Map<IReadOnlyList<ProcedureLookupDto>>(items);
+    }
+
     public async Task<IReadOnlyList<ProcedureLookupDto>> GetAccessibleForCurrentUserAsync(
         CancellationToken cancellationToken = default)
     {

@@ -93,6 +93,20 @@
   <data name="Col_Alignment" xml:space="preserve"><value>Alinhamento</value></data>
   <data name="Col_Format" xml:space="preserve"><value>Máscara</value></data>
   <data name="Col_Visible" xml:space="preserve"><value>Visível</value></data>
+  <data name="Nav_ExecutionLogs" xml:space="preserve"><value>Log de execução</value></data>
+  <data name="ExecutionLog_Title" xml:space="preserve"><value>Log de execução</value></data>
+  <data name="ExecutionLog_Procedure" xml:space="preserve"><value>Procedure</value></data>
+  <data name="ExecutionLog_Username" xml:space="preserve"><value>Usuário</value></data>
+  <data name="ExecutionLog_IpAddress" xml:space="preserve"><value>Endereço IP</value></data>
+  <data name="ExecutionLog_StartedAt" xml:space="preserve"><value>Iniciado em</value></data>
+  <data name="ExecutionLog_Duration" xml:space="preserve"><value>Duração</value></data>
+  <data name="ExecutionLog_Status" xml:space="preserve"><value>Status</value></data>
+  <data name="ExecutionLog_StatusSuccess" xml:space="preserve"><value>Sucesso</value></data>
+  <data name="ExecutionLog_StatusFailed" xml:space="preserve"><value>Falha</value></data>
+  <data name="ExecutionLog_RowCount" xml:space="preserve"><value>Linhas</value></data>
+  <data name="ExecutionLog_Error" xml:space="preserve"><value>Erro</value></data>
+  <data name="ExecutionLog_StartFrom" xml:space="preserve"><value>Início (de)</value></data>
+  <data name="ExecutionLog_StartTo" xml:space="preserve"><value>Início (até)</value></data>
   <data name="Home_Title" xml:space="preserve"><value>Execução de consultas</value></data>
   <data name="Home_SelectProcedure" xml:space="preserve"><value>Procedure</value></data>
   <data name="Home_Uncategorized" xml:space="preserve"><value>Sem categoria</value></data>

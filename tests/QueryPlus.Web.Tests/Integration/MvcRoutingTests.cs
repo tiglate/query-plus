@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using NSubstitute;
 using QueryPlus.Application.DTOs.Categories;
 using QueryPlus.Application.DTOs.Common;
+using QueryPlus.Application.DTOs.Execution;
 using QueryPlus.Application.DTOs.Procedures;
 using QueryPlus.Web.Tests.Infrastructure;
 
@@ -41,6 +42,15 @@ public sealed class MvcRoutingTests : IClassFixture<QueryPlusWebApplicationFacto
                 Page = 1,
                 PageSize = 20
             });
+        _factory.Procedures.ListAllAsync(Arg.Any<CancellationToken>()).Returns([]);
+        _factory.Execution.SearchAsync(Arg.Any<ExecutionLogFilterDto>(), Arg.Any<CancellationToken>())
+            .Returns(new PagedResult<ExecutionLogListItemDto>
+            {
+                Items = [],
+                TotalCount = 0,
+                Page = 1,
+                PageSize = 20
+            });
     }
 
     [Theory]
@@ -52,6 +62,7 @@ public sealed class MvcRoutingTests : IClassFixture<QueryPlusWebApplicationFacto
     [InlineData("/Admin/Categories/Create")]
     [InlineData("/Admin/Procedures")]
     [InlineData("/Admin/Procedures/Create")]
+    [InlineData("/Admin/ExecutionLogs")]
     [InlineData("/Account/AccessDenied")]
     public async Task Authenticated_get_routes_return_success(string url)
     {
