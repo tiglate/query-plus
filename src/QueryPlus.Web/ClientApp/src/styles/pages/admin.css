@@ -1,37 +1,37 @@
 @layer components {
-.qp-admin-search-page {
-  @apply flex min-h-0 w-full flex-1 flex-col gap-3 overflow-hidden;
-  height: 100%;
-  max-height: 100%;
-}
+  .qp-admin-search-page {
+    @apply flex min-h-0 w-full flex-1 flex-col gap-3 overflow-hidden;
+    height: 100%;
+    max-height: 100%;
+  }
 
-.qp-admin-results-card {
-  @apply flex min-h-0 flex-1 flex-col overflow-hidden;
-}
+  .qp-admin-results-card {
+    @apply flex min-h-0 flex-1 flex-col overflow-hidden;
+  }
 
-/* Grid only — no padding (pager lives in qp-results-card-footer). */
-.qp-admin-results-body {
-  @apply flex min-h-0 flex-1 flex-col overflow-hidden p-0;
-}
+  /* Grid only — no padding (pager lives in qp-results-card-footer). */
+  .qp-admin-results-body {
+    @apply flex min-h-0 flex-1 flex-col overflow-hidden p-0;
+  }
 
-/* Shared width for Category Description on Create / Edit / View. */
-.qp-category-description {
-  @apply w-full max-w-3xl;
-}
+  /* Shared width for Category Description on Create / Edit / View. */
+  .qp-category-description {
+    @apply w-full max-w-3xl;
+  }
 
-/* Keep View / Edit / Delete on one line; column width must fit PT labels.
+  /* Keep View / Edit / Delete on one line; column width must fit PT labels.
    Parent cell/header use text-align:center so this inline-flex group is centered. */
-.qp-grid-actions {
-  @apply inline-flex flex-nowrap items-center justify-center gap-0.5 whitespace-nowrap;
-}
+  .qp-grid-actions {
+    @apply inline-flex flex-nowrap items-center justify-center gap-0.5 whitespace-nowrap;
+  }
 
-.qp-grid-actions form {
-  display: inline;
-}
+  .qp-grid-actions form {
+    display: inline;
+  }
 
-.qp-grid-actions .qp-btn,
-.qp-grid-actions .qp-btn-ghost {
-  @apply shrink-0 text-xs;
-  padding: 0.15rem 0.4rem;
-}
+  .qp-grid-actions .qp-btn,
+  .qp-grid-actions .qp-btn-ghost {
+    @apply shrink-0 text-xs;
+    padding: 0.15rem 0.4rem;
+  }
 }

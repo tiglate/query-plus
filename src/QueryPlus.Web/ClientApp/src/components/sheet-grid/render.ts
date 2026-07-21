@@ -3,10 +3,7 @@ import { escapeHtml, qs } from "./dom";
 import { totalColumnsWidth } from "./measure";
 import type { SheetColumn, SheetGridState } from "./types";
 
-export function buildRowHtml(
-  rowCells: string[],
-  columns: SheetColumn[],
-): string {
+export function buildRowHtml(rowCells: string[], columns: SheetColumn[]): string {
   let html = "<tr>";
   for (let c = 0; c < columns.length; c++) {
     const align = columns[c].align || "left";
@@ -25,22 +22,10 @@ export function buildAllRowHtml(state: SheetGridState): string[] {
 export function applyColumnWidths(state: SheetGridState): void {
   const root = state.root;
   const total = totalColumnsWidth(state.columns);
-  const headerTable = qs(
-    root,
-    ".js-sheet-headers-table",
-    ".js-results-headers-table",
-  );
+  const headerTable = qs(root, ".js-sheet-headers-table", ".js-results-headers-table");
   const bodyTable = qs(root, ".js-sheet-body-table", ".js-results-body-table");
-  const headerGroup = qs(
-    root,
-    ".js-sheet-colgroup-header",
-    ".js-results-colgroup-header",
-  );
-  const bodyGroup = qs(
-    root,
-    ".js-sheet-colgroup-body",
-    ".js-results-colgroup-body",
-  );
+  const headerGroup = qs(root, ".js-sheet-colgroup-header", ".js-results-colgroup-header");
+  const bodyGroup = qs(root, ".js-sheet-colgroup-body", ".js-results-colgroup-body");
   if (!headerTable || !bodyTable || !headerGroup || !bodyGroup) return;
 
   const colsHtml = state.columns
@@ -70,14 +55,8 @@ export function renderHeaderCells(state: SheetGridState): string {
     const col = state.columns[c];
     const sortable = col.sortable !== false;
     const sorted = state.sortCol === c;
-    const sortClass = sorted
-      ? state.sortAsc
-        ? "fa-sort-up"
-        : "fa-sort-down"
-      : "fa-sort";
-    const dirAttr = sorted
-      ? ` data-sort-dir="${state.sortAsc ? "asc" : "desc"}"`
-      : "";
+    const sortClass = sorted ? (state.sortAsc ? "fa-sort-up" : "fa-sort-down") : "fa-sort";
+    const dirAttr = sorted ? ` data-sort-dir="${state.sortAsc ? "asc" : "desc"}"` : "";
     const dragAttr = sortable ? ` draggable="true"` : "";
     const title = sortable
       ? "Click to sort · Drag to reorder · Drag edge to resize"

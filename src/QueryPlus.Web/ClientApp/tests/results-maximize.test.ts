@@ -39,19 +39,15 @@ describe("ResultsMaximize", () => {
     const columns = document.querySelector(".qp-home-columns")!;
     expect(columns.classList.contains("is-results-maximized")).toBe(false);
 
-    document.querySelector(".js-results-max-icon")!.dispatchEvent(
-      new MouseEvent("click", { bubbles: true }),
-    );
+    document
+      .querySelector(".js-results-max-icon")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
 
     expect(columns.classList.contains("is-results-maximized")).toBe(true);
-    expect(
-      document.getElementById("btn-toggle-results-max")!.getAttribute(
-        "aria-pressed",
-      ),
-    ).toBe("true");
-    expect(document.querySelector(".js-results-max-label")!.textContent).toBe(
-      "Restore",
+    expect(document.getElementById("btn-toggle-results-max")!.getAttribute("aria-pressed")).toBe(
+      "true",
     );
+    expect(document.querySelector(".js-results-max-label")!.textContent).toBe("Restore");
 
     document.getElementById("btn-toggle-results-max")!.click();
     expect(columns.classList.contains("is-results-maximized")).toBe(false);

@@ -26,9 +26,7 @@ describe("AdminListPageController", () => {
     page.mount(document);
 
     expect(mountSpy).toHaveBeenCalledTimes(1);
-    expect(mountSpy.mock.calls[0][0]).toBe(
-      document.getElementById("grid-a"),
-    );
+    expect(mountSpy.mock.calls[0][0]).toBe(document.getElementById("grid-a"));
 
     page.dispose();
   });

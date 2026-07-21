@@ -57,8 +57,7 @@ describe("SheetGridService", () => {
   afterEach(() => {
     document.body.innerHTML = "";
     delete (window as Window & { Clusterize?: unknown }).Clusterize;
-    delete (window as Window & { QueryPlusSheetGrid?: unknown })
-      .QueryPlusSheetGrid;
+    delete (window as Window & { QueryPlusSheetGrid?: unknown }).QueryPlusSheetGrid;
     vi.restoreAllMocks();
   });
 

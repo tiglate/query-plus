@@ -1,21 +1,21 @@
 @layer components {
-.qp-table {
-  @apply w-full border-collapse text-left text-xs;
-}
+  .qp-table {
+    @apply w-full border-collapse text-left text-xs;
+  }
 
-.qp-table thead {
-  @apply bg-navy text-white;
-}
+  .qp-table thead {
+    @apply bg-navy text-white;
+  }
 
-.qp-table th {
-  @apply px-2 py-1.5 font-semibold;
-}
+  .qp-table th {
+    @apply px-2 py-1.5 font-semibold;
+  }
 
-.qp-table td {
-  @apply border-b border-slate-100 px-2 py-1.5 align-top dark:border-navy-600;
-}
+  .qp-table td {
+    @apply border-b border-slate-100 px-2 py-1.5 align-top dark:border-navy-600;
+  }
 
-.qp-table tbody tr:hover {
-  @apply bg-cyan-50/40 dark:bg-navy-700/60;
-}
+  .qp-table tbody tr:hover {
+    @apply bg-cyan-50/40 dark:bg-navy-700/60;
+  }
 }

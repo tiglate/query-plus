@@ -21,9 +21,7 @@ export class ParameterComboService {
 
   wireRow(row: HTMLElement): void {
     const typeSelect = row.querySelector<HTMLSelectElement>(".js-param-type");
-    const comboInput = row.querySelector<HTMLInputElement>(
-      ".js-param-combo-values",
-    );
+    const comboInput = row.querySelector<HTMLInputElement>(".js-param-combo-values");
     applyComboVisibility(typeSelect, comboInput);
 
     if (!typeSelect || typeSelect.dataset.comboWired === "1") return;

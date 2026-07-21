@@ -38,10 +38,7 @@ export function resetMeasureContextForTests(): void {
   measureCanvasCtx = null;
 }
 
-export function measureTextWidth(
-  ctx: CanvasRenderingContext2D | null,
-  text: string,
-): number {
+export function measureTextWidth(ctx: CanvasRenderingContext2D | null, text: string): number {
   if (!ctx || !text) return 0;
   const sample = text.length > 80 ? text.slice(0, 80) + "…" : text;
   // Strip simple HTML for sizing action columns roughly.
@@ -70,9 +67,7 @@ export function autoSizeColumns(
         if (w > maxPx) maxPx = w;
       }
     }
-    columns[c].width = Math.round(
-      Math.min(COL_MAX, Math.max(COL_MIN, maxPx + COL_PAD)),
-    );
+    columns[c].width = Math.round(Math.min(COL_MAX, Math.max(COL_MIN, maxPx + COL_PAD)));
   }
 }
 

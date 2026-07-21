@@ -1,47 +1,47 @@
 @layer components {
-.qp-page {
-  @apply w-full px-3 py-3 lg:px-4;
-}
+  .qp-page {
+    @apply w-full px-3 py-3 lg:px-4;
+  }
 
-.qp-page-title {
-  @apply inline-flex items-center gap-1.5 text-base font-semibold text-navy dark:text-slate-100;
-}
+  .qp-page-title {
+    @apply inline-flex items-center gap-1.5 text-base font-semibold text-navy dark:text-slate-100;
+  }
 
-.qp-section-title {
-  @apply inline-flex items-center gap-1.5 text-sm font-semibold text-navy dark:text-slate-100;
-}
+  .qp-section-title {
+    @apply inline-flex items-center gap-1.5 text-sm font-semibold text-navy dark:text-slate-100;
+  }
 
-.qp-card {
-  @apply rounded-md border border-slate-200 bg-white shadow-sm
+  .qp-card {
+    @apply rounded-md border border-slate-200 bg-white shadow-sm
     dark:border-navy-600 dark:bg-navy-800 dark:shadow-none;
-}
+  }
 
-.qp-card-header {
-  @apply flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-3 py-2
+  .qp-card-header {
+    @apply flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-3 py-2
     dark:border-navy-600;
-}
+  }
 
-/* Toolbar actions in card headers read a bit larger than dense form buttons. */
-.qp-card-header .qp-btn,
-.qp-card-header .qp-btn-primary,
-.qp-card-header .qp-btn-secondary,
-.qp-card-header .qp-btn-danger,
-.qp-card-header .qp-btn-ghost,
-.qp-card-header .qp-btn-accent {
-  @apply text-sm;
-}
+  /* Toolbar actions in card headers read a bit larger than dense form buttons. */
+  .qp-card-header .qp-btn,
+  .qp-card-header .qp-btn-primary,
+  .qp-card-header .qp-btn-secondary,
+  .qp-card-header .qp-btn-danger,
+  .qp-card-header .qp-btn-ghost,
+  .qp-card-header .qp-btn-accent {
+    @apply text-sm;
+  }
 
-.qp-card-body {
-  @apply p-3;
-}
+  .qp-card-body {
+    @apply p-3;
+  }
 
-/*
+  /*
  * Card footer for server-side pagers (home results + admin search grids).
  * Sits as a sibling of qp-card-body so the grid body can stay padding-free.
  */
-.qp-results-card-footer {
-  @apply flex shrink-0 flex-wrap items-center justify-between gap-2
+  .qp-results-card-footer {
+    @apply flex shrink-0 flex-wrap items-center justify-between gap-2
     border-t border-slate-200 bg-slate-50 px-3 py-2.5
     dark:border-navy-600 dark:bg-navy-900;
-}
+  }
 }

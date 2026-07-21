@@ -27,8 +27,7 @@ export class ResultsMaximize {
     columns.classList.toggle("is-results-maximized", maximized);
 
     if (btn) {
-      const labelMaximize =
-        btn.getAttribute("data-label-maximize") || "Maximize";
+      const labelMaximize = btn.getAttribute("data-label-maximize") || "Maximize";
       const labelRestore = btn.getAttribute("data-label-restore") || "Restore";
       const label = maximized ? labelRestore : labelMaximize;
       const icon = btn.querySelector(".js-results-max-icon");
@@ -44,10 +43,7 @@ export class ResultsMaximize {
     }
 
     try {
-      this.win.sessionStorage.setItem(
-        RESULTS_MAX_STORAGE_KEY,
-        maximized ? "1" : "0",
-      );
+      this.win.sessionStorage.setItem(RESULTS_MAX_STORAGE_KEY, maximized ? "1" : "0");
     } catch {
       // private mode / blocked storage
     }
@@ -63,8 +59,7 @@ export class ResultsMaximize {
 
     let initial = false;
     try {
-      initial =
-        this.win.sessionStorage.getItem(RESULTS_MAX_STORAGE_KEY) === "1";
+      initial = this.win.sessionStorage.getItem(RESULTS_MAX_STORAGE_KEY) === "1";
     } catch {
       initial = false;
     }

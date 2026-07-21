@@ -33,9 +33,7 @@ export interface RequiredParamField {
 /**
  * Given field descriptors, return captions that are empty (required missing).
  */
-export function findMissingRequiredCaptions(
-  fields: RequiredParamField[],
-): string[] {
+export function findMissingRequiredCaptions(fields: RequiredParamField[]): string[] {
   const missing: string[] = [];
   for (const field of fields) {
     if (!(field.value || "").trim()) {
@@ -46,9 +44,6 @@ export function findMissingRequiredCaptions(
   return missing;
 }
 
-export function canExport(
-  hasProcedure: boolean,
-  exportReady: boolean,
-): boolean {
+export function canExport(hasProcedure: boolean, exportReady: boolean): boolean {
   return hasProcedure && exportReady;
 }

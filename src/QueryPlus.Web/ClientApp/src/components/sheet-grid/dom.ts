@@ -1,7 +1,4 @@
-export function qs(
-  root: ParentNode,
-  ...selectors: string[]
-): HTMLElement | null {
+export function qs(root: ParentNode, ...selectors: string[]): HTMLElement | null {
   for (const sel of selectors) {
     const el = root.querySelector(sel);
     if (el instanceof HTMLElement) return el;

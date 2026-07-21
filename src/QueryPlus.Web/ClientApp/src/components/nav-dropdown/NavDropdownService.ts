@@ -16,12 +16,8 @@ export class NavDropdownService {
     this.dispose();
     const roots = scope.querySelectorAll<HTMLElement>("[data-nav-dropdown]");
     roots.forEach((root) => {
-      const trigger = root.querySelector<HTMLElement>(
-        "[data-nav-dropdown-trigger]",
-      );
-      const panel = root.querySelector<HTMLElement>(
-        "[data-nav-dropdown-panel]",
-      );
+      const trigger = root.querySelector<HTMLElement>("[data-nav-dropdown-trigger]");
+      const panel = root.querySelector<HTMLElement>("[data-nav-dropdown-panel]");
       if (!trigger || !panel) return;
       const dropdown = new NavDropdown(root, trigger, panel);
       dropdown.mount();

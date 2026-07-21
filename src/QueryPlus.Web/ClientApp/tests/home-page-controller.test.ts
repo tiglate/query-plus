@@ -67,12 +67,8 @@ describe("HomePageController", () => {
     home.mount(document);
 
     expect(home.hasSelectedProcedure()).toBe(false);
-    expect(
-      (document.getElementById("btn-execute") as HTMLButtonElement).disabled,
-    ).toBe(true);
-    expect(
-      (document.getElementById("btn-export") as HTMLButtonElement).disabled,
-    ).toBe(true);
+    expect((document.getElementById("btn-execute") as HTMLButtonElement).disabled).toBe(true);
+    expect((document.getElementById("btn-export") as HTMLButtonElement).disabled).toBe(true);
 
     home.dispose();
   });
@@ -84,20 +80,12 @@ describe("HomePageController", () => {
     home.mount(document);
 
     expect(home.hasSelectedProcedure()).toBe(true);
-    expect(
-      (document.getElementById("btn-execute") as HTMLButtonElement).disabled,
-    ).toBe(false);
-    expect(
-      (document.getElementById("btn-export") as HTMLButtonElement).disabled,
-    ).toBe(true);
+    expect((document.getElementById("btn-execute") as HTMLButtonElement).disabled).toBe(false);
+    expect((document.getElementById("btn-export") as HTMLButtonElement).disabled).toBe(true);
 
-    document
-      .querySelector(".js-results-root")!
-      .setAttribute("data-export-ready", "true");
+    document.querySelector(".js-results-root")!.setAttribute("data-export-ready", "true");
     home.updateHomeActionButtons();
-    expect(
-      (document.getElementById("btn-export") as HTMLButtonElement).disabled,
-    ).toBe(false);
+    expect((document.getElementById("btn-export") as HTMLButtonElement).disabled).toBe(false);
 
     home.dispose();
   });
@@ -111,9 +99,7 @@ describe("HomePageController", () => {
     const missing = home.validateRequiredParameters();
     expect(missing).toEqual(["StartDate"]);
     expect(
-      document.querySelector(".js-param-input")!.classList.contains(
-        "input-validation-error",
-      ),
+      document.querySelector(".js-param-input")!.classList.contains("input-validation-error"),
     ).toBe(true);
 
     home.dispose();
@@ -134,9 +120,7 @@ describe("HomePageController", () => {
     document.body.dispatchEvent(event);
 
     expect(event.defaultPrevented).toBe(true);
-    expect(document.getElementById("results-panel")!.textContent).toContain(
-      "Select a procedure",
-    );
+    expect(document.getElementById("results-panel")!.textContent).toContain("Select a procedure");
 
     home.dispose();
   });
@@ -150,9 +134,7 @@ describe("HomePageController", () => {
     const item = document.querySelector(".js-procedure-item") as HTMLElement;
     item.click();
 
-    expect(
-      (document.getElementById("procedureId") as HTMLInputElement).value,
-    ).toBe("42");
+    expect((document.getElementById("procedureId") as HTMLInputElement).value).toBe("42");
     expect(item.classList.contains("is-selected")).toBe(true);
     expect(home.hasSelectedProcedure()).toBe(true);
 
@@ -182,9 +164,7 @@ describe("HomePageController", () => {
     document.body.dispatchEvent(event);
 
     expect(event.defaultPrevented).toBe(false);
-    expect(
-      (document.getElementById("pageNumber") as HTMLInputElement).value,
-    ).toBe("3");
+    expect((document.getElementById("pageNumber") as HTMLInputElement).value).toBe("3");
     expect(parameters.pageNumber).toBe("3");
 
     home.dispose();

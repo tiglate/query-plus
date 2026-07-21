@@ -25,19 +25,11 @@ export class SyncMetadataService {
 
     const searchRoot: ParentNode = form ?? this.doc;
     const database =
-      searchRoot.querySelector<HTMLInputElement>(
-        '[data-sync-field="database"]',
-      ) ||
-      searchRoot.querySelector<HTMLInputElement>(
-        'input[name="Input.DatabaseName"]',
-      );
+      searchRoot.querySelector<HTMLInputElement>('[data-sync-field="database"]') ||
+      searchRoot.querySelector<HTMLInputElement>('input[name="Input.DatabaseName"]');
     const procedure =
-      searchRoot.querySelector<HTMLInputElement>(
-        '[data-sync-field="procedure"]',
-      ) ||
-      searchRoot.querySelector<HTMLInputElement>(
-        'input[name="Input.ProcedureName"]',
-      );
+      searchRoot.querySelector<HTMLInputElement>('[data-sync-field="procedure"]') ||
+      searchRoot.querySelector<HTMLInputElement>('input[name="Input.ProcedureName"]');
 
     const canSync = canSyncMetadata(database?.value, procedure?.value);
 
@@ -78,12 +70,8 @@ export class SyncMetadataService {
       const form = e.target;
       if (!(form instanceof HTMLFormElement)) return;
 
-      const database = form.querySelector<HTMLInputElement>(
-        '[data-sync-field="database"]',
-      );
-      const procedure = form.querySelector<HTMLInputElement>(
-        '[data-sync-field="procedure"]',
-      );
+      const database = form.querySelector<HTMLInputElement>('[data-sync-field="database"]');
+      const procedure = form.querySelector<HTMLInputElement>('[data-sync-field="procedure"]');
 
       if (!canSyncMetadata(database?.value, procedure?.value)) {
         e.preventDefault();
@@ -92,9 +80,7 @@ export class SyncMetadataService {
     };
 
     this.doc.body.addEventListener("submit", onSubmit);
-    this.disposers.push(() =>
-      this.doc.body.removeEventListener("submit", onSubmit),
-    );
+    this.disposers.push(() => this.doc.body.removeEventListener("submit", onSubmit));
   }
 
   dispose(): void {

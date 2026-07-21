@@ -33,10 +33,7 @@ export function writeThemePreference(
   }
 }
 
-export function resolveTheme(
-  preference: ThemePreference,
-  prefersDark: boolean,
-): ResolvedTheme {
+export function resolveTheme(preference: ThemePreference, prefersDark: boolean): ResolvedTheme {
   if (preference === "light") return "light";
   if (preference === "dark") return "dark";
   return prefersDark ? "dark" : "light";
@@ -45,10 +42,7 @@ export function resolveTheme(
 /**
  * Apply light/dark to <html>: class `dark` + color-scheme for native controls.
  */
-export function applyResolvedTheme(
-  root: HTMLElement,
-  resolved: ResolvedTheme,
-): void {
+export function applyResolvedTheme(root: HTMLElement, resolved: ResolvedTheme): void {
   root.classList.toggle("dark", resolved === "dark");
   root.style.colorScheme = resolved;
   root.dataset.themeResolved = resolved;
@@ -65,9 +59,7 @@ export function applyThemePreference(
   return resolved;
 }
 
-export function systemPrefersDark(
-  win: Pick<Window, "matchMedia"> = window,
-): boolean {
+export function systemPrefersDark(win: Pick<Window, "matchMedia"> = window): boolean {
   try {
     return win.matchMedia("(prefers-color-scheme: dark)").matches;
   } catch {
