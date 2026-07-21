@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import "reflect-metadata";
-import { bootstrap, resolvePageKey } from "../src/core/bootstrap";
-import { getAppContainer, resetContainerConfiguration } from "../src/core/di/container";
-import { HomePageController } from "../src/pages/home/HomePageController";
-import { ResultsMaximize } from "../src/pages/home/ResultsMaximize";
-import { SharedShellController } from "../src/pages/shared/SharedShellController";
+import { bootstrap, resolvePageKey } from "@/core/bootstrap";
+import { getAppContainer, resetContainerConfiguration } from "@/core/di/container";
+import { HomePageController } from "@/pages/home/HomePageController";
+import { ResultsMaximize } from "@/pages/home/ResultsMaximize";
+import { SharedShellController } from "@/pages/shared/SharedShellController";
 
 /**
  * Full home DOM + bootstrap: Maximize must toggle once per click.

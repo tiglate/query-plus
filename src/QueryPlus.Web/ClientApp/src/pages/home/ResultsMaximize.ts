@@ -1,5 +1,5 @@
 import { inject, injectable, singleton } from "tsyringe";
-import { TOKENS } from "../../core/di/tokens";
+import { TOKENS } from "@/core/di/tokens";
 import { HomeResultsService } from "./HomeResultsService";
 
 export const RESULTS_MAX_STORAGE_KEY = "qp-home-results-maximized";

@@ -1,5 +1,5 @@
 import { inject, injectable, singleton } from "tsyringe";
-import { TOKENS, type ConfirmFn } from "../../core/di/tokens";
+import { TOKENS, type ConfirmFn } from "@/core/di/tokens";
 
 /**
  * Intercepts form submit when form[data-confirm] is set; cancels if user declines.

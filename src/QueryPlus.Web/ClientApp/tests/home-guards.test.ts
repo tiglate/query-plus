@@ -5,7 +5,7 @@ import {
   formatRequiredParamsMessage,
   isParamFieldName,
   isValidProcedureId,
-} from "../src/pages/home/homeGuards";
+} from "@/pages/home/homeGuards";
 
 describe("homeGuards", () => {
   it("isValidProcedureId", () => {

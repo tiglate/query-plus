@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { resolvePageKey } from "../src/core/pageKey";
+import { resolvePageKey } from "@/core/pageKey";
 
 describe("resolvePageKey", () => {
   it("prefers meta[name=qp-page] over empty body data-page", () => {

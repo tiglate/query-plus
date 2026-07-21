@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import "reflect-metadata";
-import { createTestContainer } from "../src/core/di/container";
-import { canSyncMetadata } from "../src/pages/admin/syncMetadata";
-import { SyncMetadataService } from "../src/pages/admin/SyncMetadataService";
+import { createTestContainer } from "@/core/di/container";
+import { canSyncMetadata } from "@/pages/admin/syncMetadata";
+import { SyncMetadataService } from "@/pages/admin/SyncMetadataService";
 
 describe("canSyncMetadata", () => {
   it("requires both database and procedure", () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { markClientAppLoaded, QUERYPLUS_CLIENT_VERSION } from "../src/clientMeta";
+import { markClientAppLoaded, QUERYPLUS_CLIENT_VERSION } from "@/clientMeta";
 
 describe("ClientApp smoke", () => {
   it("exports a client version marker", () => {

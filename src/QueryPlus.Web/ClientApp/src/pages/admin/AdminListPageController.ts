@@ -1,7 +1,7 @@
 import { inject, injectable, singleton } from "tsyringe";
-import { SheetGridService } from "../../components/sheet-grid/SheetGridService";
-import { PageController } from "../../core/PageController";
-import { TOKENS } from "../../core/di/tokens";
+import { SheetGridService } from "@/components/sheet-grid/SheetGridService";
+import { PageController } from "@/core/PageController";
+import { TOKENS } from "@/core/di/tokens";
 
 const ADMIN_SHEET_SELECTOR = ".js-sheet-root.qp-sheet-grid--admin";
 

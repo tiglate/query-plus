@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vite-plus/test";
-import { COL_MIN } from "../src/components/sheet-grid/constants";
-import { escapeHtml } from "../src/components/sheet-grid/dom";
-import { totalColumnsWidth } from "../src/components/sheet-grid/measure";
-import { buildRowHtml } from "../src/components/sheet-grid/render";
-import { applyColumnReorder, compareSortValues } from "../src/components/sheet-grid/sort";
-import type { SheetColumn } from "../src/components/sheet-grid/types";
+import { COL_MIN } from "@/components/sheet-grid/constants";
+import { escapeHtml } from "@/components/sheet-grid/dom";
+import { totalColumnsWidth } from "@/components/sheet-grid/measure";
+import { buildRowHtml } from "@/components/sheet-grid/render";
+import { applyColumnReorder, compareSortValues } from "@/components/sheet-grid/sort";
+import type { SheetColumn } from "@/components/sheet-grid/types";
 
 describe("sheet-grid pure helpers", () => {
   it("escapeHtml encodes markup", () => {

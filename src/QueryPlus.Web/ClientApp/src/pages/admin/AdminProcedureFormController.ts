@@ -1,7 +1,7 @@
 import { inject, injectable, singleton } from "tsyringe";
-import { ParameterComboService } from "../../components/parameter-combo/ParameterComboService";
-import { PageController } from "../../core/PageController";
-import { TOKENS } from "../../core/di/tokens";
+import { ParameterComboService } from "@/components/parameter-combo/ParameterComboService";
+import { PageController } from "@/core/PageController";
+import { TOKENS } from "@/core/di/tokens";
 import { SyncMetadataService } from "./SyncMetadataService";
 
 /**

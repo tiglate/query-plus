@@ -29,5 +29,5 @@ declare module "clusterize.js" {
 interface Window {
   Clusterize?: ClusterizeConstructor;
   htmx?: unknown;
-  QueryPlusSheetGrid?: import("../components/sheet-grid/types").QueryPlusSheetGridApi;
+  QueryPlusSheetGrid?: import("@/components/sheet-grid/types").QueryPlusSheetGridApi;
 }

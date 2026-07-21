@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import "reflect-metadata";
-import { createTestContainer } from "../src/core/di/container";
-import { SheetGridService } from "../src/components/sheet-grid/SheetGridService";
-import { AdminListPageController } from "../src/pages/admin/AdminListPageController";
+import { createTestContainer } from "@/core/di/container";
+import { SheetGridService } from "@/components/sheet-grid/SheetGridService";
+import { AdminListPageController } from "@/pages/admin/AdminListPageController";
 
 describe("AdminListPageController", () => {
   beforeEach(() => {

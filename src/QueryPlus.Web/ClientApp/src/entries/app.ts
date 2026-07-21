@@ -4,9 +4,9 @@
  * Font Awesome / Inter / Clusterize CSS load via styles/main.css.
  */
 import "reflect-metadata";
-import "../styles/main.css";
-import { markClientAppLoaded, QUERYPLUS_CLIENT_VERSION } from "../clientMeta";
-import { bootstrap } from "../core/bootstrap";
+import "@/styles/main.css";
+import { markClientAppLoaded, QUERYPLUS_CLIENT_VERSION } from "@/clientMeta";
+import { bootstrap } from "@/core/bootstrap";
 
 export { markClientAppLoaded, QUERYPLUS_CLIENT_VERSION };
 
@@ -28,7 +28,7 @@ async function start(): Promise<void> {
   g[BOOT_FLAG] = true;
 
   // Dynamic import keeps Vitest free of htmx's jsdom XPath init.
-  await import("../vendor");
+  await import("@/vendor");
   markClientAppLoaded(document);
   bootstrap();
 }

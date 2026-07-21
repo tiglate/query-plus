@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import "reflect-metadata";
-import { createTestContainer } from "../src/core/di/container";
-import { ThemeService } from "../src/components/theme/ThemeService";
+import { createTestContainer } from "@/core/di/container";
+import { ThemeService } from "@/components/theme/ThemeService";
 import {
   applyThemePreference,
   readThemePreference,
   resolveTheme,
   THEME_STORAGE_KEY,
   writeThemePreference,
-} from "../src/components/theme/theme";
+} from "@/components/theme/theme";
 
 describe("theme helpers", () => {
   it("resolves light/dark/system against OS preference", () => {

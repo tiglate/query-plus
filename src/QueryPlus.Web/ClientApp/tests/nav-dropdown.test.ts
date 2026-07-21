@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
-import { NavDropdown } from "../src/components/nav-dropdown/NavDropdown";
+import { NavDropdown } from "@/components/nav-dropdown/NavDropdown";
 
 function buildDropdownDom() {
   const root = document.createElement("div");

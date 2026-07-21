@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import "reflect-metadata";
-import { createTestContainer } from "../src/core/di/container";
-import { SheetGridService } from "../src/components/sheet-grid/SheetGridService";
+import { createTestContainer } from "@/core/di/container";
+import { SheetGridService } from "@/components/sheet-grid/SheetGridService";
 
 class FakeClusterize {
   static lastOptions: unknown;

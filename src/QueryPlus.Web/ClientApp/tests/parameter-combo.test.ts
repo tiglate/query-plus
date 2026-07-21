@@ -1,11 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import "reflect-metadata";
-import {
-  applyComboVisibility,
-  isComboType,
-} from "../src/components/parameter-combo/parameterCombo";
-import { ParameterComboService } from "../src/components/parameter-combo/ParameterComboService";
-import { createTestContainer } from "../src/core/di/container";
+import { applyComboVisibility, isComboType } from "@/components/parameter-combo/parameterCombo";
+import { ParameterComboService } from "@/components/parameter-combo/ParameterComboService";
+import { createTestContainer } from "@/core/di/container";
 
 describe("parameterCombo pure", () => {
   it("isComboType matches combo type value", () => {

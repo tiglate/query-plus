@@ -1,5 +1,5 @@
 import { inject, injectable, singleton } from "tsyringe";
-import { TOKENS } from "../../core/di/tokens";
+import { TOKENS } from "@/core/di/tokens";
 import { applyComboVisibility } from "./parameterCombo";
 
 @singleton()

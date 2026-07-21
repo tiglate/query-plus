@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import "reflect-metadata";
-import { createTestContainer } from "../src/core/di/container";
-import { ConfirmSubmitService } from "../src/components/confirm-submit/ConfirmSubmitService";
+import { createTestContainer } from "@/core/di/container";
+import { ConfirmSubmitService } from "@/components/confirm-submit/ConfirmSubmitService";
 
 describe("ConfirmSubmitService", () => {
   beforeEach(() => {

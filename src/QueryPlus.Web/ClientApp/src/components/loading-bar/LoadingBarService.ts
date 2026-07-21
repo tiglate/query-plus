@@ -1,6 +1,6 @@
 import { inject, injectable, singleton } from "tsyringe";
-import { HtmxBridge } from "../../core/HtmxBridge";
-import { TOKENS } from "../../core/di/tokens";
+import { HtmxBridge } from "@/core/HtmxBridge";
+import { TOKENS } from "@/core/di/tokens";
 
 const INDICATOR_SELECTOR = "#qp-loading-bar";
 const ACTIVE_CLASS = "is-active";

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import "reflect-metadata";
-import { createTestContainer } from "../src/core/di/container";
-import { LoadingBarService } from "../src/components/loading-bar/LoadingBarService";
+import { createTestContainer } from "@/core/di/container";
+import { LoadingBarService } from "@/components/loading-bar/LoadingBarService";
 
 function dispatch(name: string, elt: Element): void {
   elt.dispatchEvent(new CustomEvent(name, { bubbles: true, detail: { elt } }));

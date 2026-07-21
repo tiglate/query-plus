@@ -1,9 +1,9 @@
-import { SheetGridService } from "../components/sheet-grid/SheetGridService";
-import { AdminListPageController } from "../pages/admin/AdminListPageController";
-import { AdminProcedureFormController } from "../pages/admin/AdminProcedureFormController";
-import { HomePageController } from "../pages/home/HomePageController";
-import { ResultsMaximize } from "../pages/home/ResultsMaximize";
-import { SharedShellController } from "../pages/shared/SharedShellController";
+import { SheetGridService } from "@/components/sheet-grid/SheetGridService";
+import { AdminListPageController } from "@/pages/admin/AdminListPageController";
+import { AdminProcedureFormController } from "@/pages/admin/AdminProcedureFormController";
+import { HomePageController } from "@/pages/home/HomePageController";
+import { ResultsMaximize } from "@/pages/home/ResultsMaximize";
+import { SharedShellController } from "@/pages/shared/SharedShellController";
 import { configureContainer, getAppContainer } from "./di/container";
 import type { PageController } from "./PageController";
 import { resolvePageKey } from "./pageKey";

@@ -1,6 +1,6 @@
 import { inject, injectable, singleton } from "tsyringe";
-import { SheetGridService } from "../../components/sheet-grid/SheetGridService";
-import { TOKENS } from "../../core/di/tokens";
+import { SheetGridService } from "@/components/sheet-grid/SheetGridService";
+import { TOKENS } from "@/core/di/tokens";
 
 /**
  * Home results panel: mount/destroy/refresh sheet grids after HTMX swaps.

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import "reflect-metadata";
-import { createTestContainer } from "../src/core/di/container";
-import { HomePageController } from "../src/pages/home/HomePageController";
+import { createTestContainer } from "@/core/di/container";
+import { HomePageController } from "@/pages/home/HomePageController";
 
 function buildHomeDom(options?: {
   procedureId?: string;

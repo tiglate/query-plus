@@ -1,7 +1,7 @@
 import { inject, injectable, singleton } from "tsyringe";
-import { HtmxBridge } from "../../core/HtmxBridge";
-import { PageController } from "../../core/PageController";
-import { TOKENS } from "../../core/di/tokens";
+import { HtmxBridge } from "@/core/HtmxBridge";
+import { PageController } from "@/core/PageController";
+import { TOKENS } from "@/core/di/tokens";
 import {
   canExport,
   formatRequiredParamsMessage,

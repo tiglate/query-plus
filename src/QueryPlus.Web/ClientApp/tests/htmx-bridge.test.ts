@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import "reflect-metadata";
-import { createTestContainer } from "../src/core/di/container";
-import { HtmxBridge } from "../src/core/HtmxBridge";
+import { createTestContainer } from "@/core/di/container";
+import { HtmxBridge } from "@/core/HtmxBridge";
 
 describe("HtmxBridge", () => {
   beforeEach(() => {
