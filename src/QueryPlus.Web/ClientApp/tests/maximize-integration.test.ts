@@ -1,10 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import "reflect-metadata";
 import { bootstrap, resolvePageKey } from "../src/core/bootstrap";
-import {
-  getAppContainer,
-  resetContainerConfiguration,
-} from "../src/core/di/container";
+import { getAppContainer, resetContainerConfiguration } from "../src/core/di/container";
 import { HomePageController } from "../src/pages/home/HomePageController";
 import { ResultsMaximize } from "../src/pages/home/ResultsMaximize";
 import { SharedShellController } from "../src/pages/shared/SharedShellController";
@@ -81,9 +78,7 @@ describe("Maximize integration via bootstrap", () => {
 
     document.getElementById("btn-toggle-results-max")!.click();
     expect(columns.classList.contains("is-results-maximized")).toBe(true);
-    expect(document.querySelector(".js-results-max-label")!.textContent).toBe(
-      "Restore",
-    );
+    expect(document.querySelector(".js-results-max-label")!.textContent).toBe("Restore");
 
     document
       .querySelector(".js-results-max-icon")!

@@ -27,9 +27,7 @@ export interface BootstrapResult {
  * Configure DI, install sheet-grid global bridge, mount shared shell + page controller.
  */
 export function bootstrap(options: BootstrapOptions = {}): BootstrapResult {
-  configureContainer(
-    options.document ? { document: options.document } : undefined,
-  );
+  configureContainer(options.document ? { document: options.document } : undefined);
   const c = getAppContainer();
   const doc = options.document ?? document;
 

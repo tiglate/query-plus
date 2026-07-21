@@ -75,22 +75,13 @@ export class ThemeService {
   }
 
   private apply(preference: ThemePreference): void {
-    applyThemePreference(
-      this.doc.documentElement,
-      preference,
-      systemPrefersDark(this.win),
-    );
+    applyThemePreference(this.doc.documentElement, preference, systemPrefersDark(this.win));
   }
 
   private syncIcon(preference: ThemePreference): void {
     const icon = this.doc.querySelector(ICON_SELECTOR);
     if (!icon) return;
-    icon.classList.remove(
-      "fa-sun",
-      "fa-moon",
-      "fa-circle-half-stroke",
-      "fa-desktop",
-    );
+    icon.classList.remove("fa-sun", "fa-moon", "fa-circle-half-stroke", "fa-desktop");
     if (preference === "light") {
       icon.classList.add("fa-sun");
     } else if (preference === "dark") {

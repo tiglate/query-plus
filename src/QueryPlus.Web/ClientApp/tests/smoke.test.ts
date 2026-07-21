@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import {
-  markClientAppLoaded,
-  QUERYPLUS_CLIENT_VERSION,
-} from "../src/clientMeta";
+import { markClientAppLoaded, QUERYPLUS_CLIENT_VERSION } from "../src/clientMeta";
 
 describe("ClientApp smoke", () => {
   it("exports a client version marker", () => {
@@ -18,8 +15,6 @@ describe("ClientApp smoke", () => {
 
   it("marks the document root when loaded", () => {
     markClientAppLoaded(document);
-    expect(document.documentElement.getAttribute("data-qp-client")).toBe(
-      QUERYPLUS_CLIENT_VERSION,
-    );
+    expect(document.documentElement.getAttribute("data-qp-client")).toBe(QUERYPLUS_CLIENT_VERSION);
   });
 });

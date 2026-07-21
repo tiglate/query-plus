@@ -60,9 +60,7 @@ describe("ParameterComboService", () => {
     const service = c.resolve(ParameterComboService);
     service.mountAll(document);
 
-    const combo = document.querySelector(
-      ".js-param-combo-values",
-    ) as HTMLInputElement;
+    const combo = document.querySelector(".js-param-combo-values") as HTMLInputElement;
     expect(combo.disabled).toBe(true);
     expect(combo.classList.contains("hidden")).toBe(true);
 

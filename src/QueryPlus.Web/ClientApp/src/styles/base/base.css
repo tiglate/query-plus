@@ -1,16 +1,16 @@
 @layer base {
-html {
-  /* Slightly denser than browser default (16px), still compact for data screens. */
-  font-size: 14px;
-}
+  html {
+    /* Slightly denser than browser default (16px), still compact for data screens. */
+    font-size: 14px;
+  }
 
-body {
-  @apply bg-slate-100 text-navy antialiased leading-snug
+  body {
+    @apply bg-slate-100 text-navy antialiased leading-snug
     dark:bg-navy-900 dark:text-slate-100;
-}
+  }
 
-/* Native form controls follow resolved theme (color-scheme set in JS). */
-.dark {
-  color-scheme: dark;
-}
+  /* Native form controls follow resolved theme (color-scheme set in JS). */
+  .dark {
+    color-scheme: dark;
+  }
 }

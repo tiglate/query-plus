@@ -1,8 +1,4 @@
-export function compareSortValues(
-  av: unknown,
-  bv: unknown,
-  asc: boolean,
-): number {
+export function compareSortValues(av: unknown, bv: unknown, asc: boolean): number {
   const a = String(av ?? "")
     .replace(/<[^>]+>/g, " ")
     .trim();

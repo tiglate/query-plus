@@ -34,22 +34,12 @@ describe("SyncMetadataService", () => {
     const service = c.resolve(SyncMetadataService);
     service.mount(document);
 
-    const btn = document.getElementById(
-      "btn-sync-metadata",
-    ) as HTMLButtonElement;
+    const btn = document.getElementById("btn-sync-metadata") as HTMLButtonElement;
     expect(btn.disabled).toBe(true);
-    expect(
-      document.getElementById("sync-metadata-hint")!.classList.contains(
-        "hidden",
-      ),
-    ).toBe(false);
+    expect(document.getElementById("sync-metadata-hint")!.classList.contains("hidden")).toBe(false);
 
-    const db = document.querySelector(
-      '[data-sync-field="database"]',
-    ) as HTMLInputElement;
-    const proc = document.querySelector(
-      '[data-sync-field="procedure"]',
-    ) as HTMLInputElement;
+    const db = document.querySelector('[data-sync-field="database"]') as HTMLInputElement;
+    const proc = document.querySelector('[data-sync-field="procedure"]') as HTMLInputElement;
     db.value = "QueryPlus";
     db.dispatchEvent(new Event("input"));
     expect(btn.disabled).toBe(true);
@@ -57,11 +47,7 @@ describe("SyncMetadataService", () => {
     proc.value = "Sp_Demo";
     proc.dispatchEvent(new Event("input"));
     expect(btn.disabled).toBe(false);
-    expect(
-      document.getElementById("sync-metadata-hint")!.classList.contains(
-        "hidden",
-      ),
-    ).toBe(true);
+    expect(document.getElementById("sync-metadata-hint")!.classList.contains("hidden")).toBe(true);
 
     service.dispose();
   });
@@ -72,9 +58,7 @@ describe("SyncMetadataService", () => {
     service.mount(document);
 
     const form = document.getElementById("procedure-form") as HTMLFormElement;
-    const btn = document.getElementById(
-      "btn-sync-metadata",
-    ) as HTMLButtonElement;
+    const btn = document.getElementById("btn-sync-metadata") as HTMLButtonElement;
 
     const event = new Event("submit", { bubbles: true, cancelable: true });
     Object.defineProperty(event, "submitter", { value: btn });

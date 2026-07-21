@@ -99,27 +99,23 @@ export class HomePageController extends PageController {
     const missing: string[] = [];
 
     this.doc
-      .querySelectorAll<HTMLElement>(
-        "#execution-parameters .js-param-field[data-required='true']",
-      )
+      .querySelectorAll<HTMLElement>("#execution-parameters .js-param-field[data-required='true']")
       .forEach((field) => {
-        const input = field.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
-          ".js-param-input",
-        );
+        const input = field.querySelector<
+          HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+        >(".js-param-input");
         if (!input) return;
 
         const value = (input.value || "").trim();
         if (!value) {
-          const caption =
-            field.getAttribute("data-caption") || input.name || "Parameter";
+          const caption = field.getAttribute("data-caption") || input.name || "Parameter";
           missing.push(caption);
           input.classList.add("input-validation-error");
           const err = field.querySelector(".js-param-error");
           if (err) {
             const page = this.doc.querySelector("[data-msg-required-params]");
             const template =
-              page?.getAttribute("data-msg-required-params") ||
-              "Required parameter: {0}";
+              page?.getAttribute("data-msg-required-params") || "Required parameter: {0}";
             err.textContent = template.replace("{0}", caption);
             err.classList.remove("hidden");
           }
@@ -132,10 +128,7 @@ export class HomePageController extends PageController {
   // --- private ---
 
   private isHomeMounted(): boolean {
-    return !!(
-      this.doc.getElementById("exec-form") ||
-      this.doc.querySelector(".js-procedure-item")
-    );
+    return !!(this.doc.getElementById("exec-form") || this.doc.querySelector(".js-procedure-item"));
   }
 
   private getProcedureIdInput(): HTMLInputElement | HTMLSelectElement | null {
@@ -144,9 +137,7 @@ export class HomePageController extends PageController {
       this.doc.querySelector<HTMLInputElement | HTMLSelectElement>(
         "#exec-form .js-procedure-select",
       ) ||
-      this.doc.querySelector<HTMLInputElement | HTMLSelectElement>(
-        ".js-procedure-select",
-      )
+      this.doc.querySelector<HTMLInputElement | HTMLSelectElement>(".js-procedure-select")
     );
   }
 
@@ -162,13 +153,8 @@ export class HomePageController extends PageController {
       page?.getAttribute("data-msg-export-requires-data") ||
       "Execute a procedure that returns data before exporting.";
     const selectMsg =
-      page?.getAttribute("data-msg-select-procedure") ||
-      "Select a procedure before executing.";
-    btn.title = enabled
-      ? requiresData
-      : this.hasSelectedProcedure()
-        ? requiresData
-        : selectMsg;
+      page?.getAttribute("data-msg-select-procedure") || "Select a procedure before executing.";
+    btn.title = enabled ? requiresData : this.hasSelectedProcedure() ? requiresData : selectMsg;
   }
 
   private clearRequiredParameterErrors(): void {
@@ -176,11 +162,9 @@ export class HomePageController extends PageController {
       el.classList.add("hidden");
       el.textContent = "";
     });
-    this.doc
-      .querySelectorAll(".js-param-input.input-validation-error")
-      .forEach((el) => {
-        el.classList.remove("input-validation-error");
-      });
+    this.doc.querySelectorAll(".js-param-input.input-validation-error").forEach((el) => {
+      el.classList.remove("input-validation-error");
+    });
   }
 
   private selectProcedureItem(item: Element): void {
@@ -242,9 +226,7 @@ export class HomePageController extends PageController {
       this.win.location.href = url;
     };
     this.doc.body.addEventListener("click", onClick);
-    this.disposers.push(() =>
-      this.doc.body.removeEventListener("click", onClick),
-    );
+    this.disposers.push(() => this.doc.body.removeEventListener("click", onClick));
   }
 
   private wireProcedureGuards(): void {
@@ -252,29 +234,19 @@ export class HomePageController extends PageController {
     if (!form && !this.doc.querySelector(".js-procedure-item")) return;
 
     const onListClick = (e: Event) => {
-      const item = (e.target as Element | null)?.closest?.(
-        ".js-procedure-item",
-      );
+      const item = (e.target as Element | null)?.closest?.(".js-procedure-item");
       if (!item) return;
       this.selectProcedureItem(item);
     };
     this.doc.body.addEventListener("click", onListClick);
-    this.disposers.push(() =>
-      this.doc.body.removeEventListener("click", onListClick),
-    );
+    this.disposers.push(() => this.doc.body.removeEventListener("click", onListClick));
 
     if (form) {
       const onSubmit = (e: Event) => {
         e.preventDefault();
         e.stopPropagation();
-        const executeBtn = this.doc.getElementById(
-          "btn-execute",
-        ) as HTMLButtonElement | null;
-        if (
-          executeBtn &&
-          !executeBtn.disabled &&
-          this.hasSelectedProcedure()
-        ) {
+        const executeBtn = this.doc.getElementById("btn-execute") as HTMLButtonElement | null;
+        if (executeBtn && !executeBtn.disabled && this.hasSelectedProcedure()) {
           executeBtn.click();
         }
       };
@@ -286,9 +258,7 @@ export class HomePageController extends PageController {
         if (!t || t.id === "procedureId" || t.name === "procedureId") return;
         if (isParamFieldName(t.name)) {
           this.setExportEnabled(false);
-          const root = this.doc.querySelector(
-            "#results-panel .js-results-root",
-          );
+          const root = this.doc.querySelector("#results-panel .js-results-root");
           if (root) root.setAttribute("data-export-ready", "false");
         }
       };
@@ -364,8 +334,7 @@ export class HomePageController extends PageController {
         pagerBtn ??
         (rawElt.id
           ? rawElt
-          : ((rawElt.closest?.("#btn-execute, #btn-export") as HTMLElement | null) ??
-            rawElt));
+          : ((rawElt.closest?.("#btn-execute, #btn-export") as HTMLElement | null) ?? rawElt));
 
       if (elt.id === "btn-execute") {
         if (!this.hasSelectedProcedure()) {
@@ -386,14 +355,10 @@ export class HomePageController extends PageController {
           this.setExportEnabled(false);
           const page = this.doc.querySelector("[data-msg-required-params]");
           const single =
-            page?.getAttribute("data-msg-required-params") ||
-            "Fill required parameters: {0}";
+            page?.getAttribute("data-msg-required-params") || "Fill required parameters: {0}";
           const multi =
-            page?.getAttribute("data-msg-required-params-multi") ||
-            "Fill required parameters: {0}";
-          this.showResultsMessage(
-            formatRequiredParamsMessage(missing, single, multi),
-          );
+            page?.getAttribute("data-msg-required-params-multi") || "Fill required parameters: {0}";
+          this.showResultsMessage(formatRequiredParamsMessage(missing, single, multi));
           return;
         }
 
@@ -417,9 +382,7 @@ export class HomePageController extends PageController {
           this.updateHomeActionButtons();
           const status = this.doc.getElementById("export-status");
           if (status) {
-            const page = this.doc.querySelector(
-              "[data-msg-export-requires-data]",
-            );
+            const page = this.doc.querySelector("[data-msg-export-requires-data]");
             const msg =
               page?.getAttribute("data-msg-export-requires-data") ||
               "Execute a procedure that returns data before exporting.";
@@ -431,9 +394,7 @@ export class HomePageController extends PageController {
     };
 
     this.doc.body.addEventListener("htmx:configRequest", onConfig);
-    this.disposers.push(() =>
-      this.doc.body.removeEventListener("htmx:configRequest", onConfig),
-    );
+    this.disposers.push(() => this.doc.body.removeEventListener("htmx:configRequest", onConfig));
   }
 
   /**

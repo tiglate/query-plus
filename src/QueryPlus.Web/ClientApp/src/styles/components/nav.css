@@ -1,70 +1,81 @@
 @layer components {
-/* Language switcher on the navy header.
+  /* Language switcher on the navy header.
    Closed control stays light-on-dark; options must be dark-on-light because
    native <option> lists often use a white popup and inherit the select color. */
-.qp-lang-select {
-  @apply rounded border-0 bg-white/10 px-2 py-1 text-sm text-white;
-}
+  .qp-lang-select {
+    @apply rounded border-0 bg-white/10 px-2 py-1 text-sm text-white;
+  }
 
-.qp-lang-select option {
-  color: #0b1f3a; /* navy */
-  background-color: #ffffff;
-}
+  .qp-lang-select option {
+    color: #0b1f3a; /* navy */
+    background-color: #ffffff;
+  }
 
-.qp-nav-link {
-  @apply inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-sm font-medium hover:bg-white/10;
-}
+  .qp-nav-link {
+    @apply inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-sm font-medium hover:bg-white/10;
+  }
 
-/* Admin dropdown: panel sits under trigger; pt-1 is a live hover bridge (no margin gap). */
-.qp-nav-dropdown-panel {
-  /* Ensure the bridge + menu sit above page content while open */
-  z-index: 50;
-}
+  /* Admin dropdown: panel sits under trigger; pt-1 is a live hover bridge (no margin gap). */
+  .qp-nav-dropdown-panel {
+    /* Ensure the bridge + menu sit above page content while open */
+    z-index: 50;
+  }
 
-.qp-nav-dropdown.is-open > .qp-nav-link {
-  @apply bg-white/10;
-}
+  .qp-nav-dropdown.is-open > .qp-nav-link {
+    @apply bg-white/10;
+  }
 
-/* Header chrome buttons (logout / login) — same soft volume language. */
-.qp-header-btn {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background-color: rgba(255, 255, 255, 0.1);
-  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 60%);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.12) inset,
-    0 1px 2px rgba(0, 0, 0, 0.18);
-  transition: background-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
-}
+  /* Header chrome buttons (logout / login) — same soft volume language. */
+  .qp-header-btn {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background-color: rgba(255, 255, 255, 0.1);
+    background-image: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.14) 0%,
+      rgba(255, 255, 255, 0) 60%
+    );
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.12) inset,
+      0 1px 2px rgba(0, 0, 0, 0.18);
+    transition:
+      background-color 150ms ease,
+      box-shadow 150ms ease,
+      transform 150ms ease;
+  }
 
-.qp-header-btn:hover {
-  background-color: rgba(255, 255, 255, 0.18);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.16) inset,
-    0 2px 4px rgba(0, 0, 0, 0.22);
-}
+  .qp-header-btn:hover {
+    background-color: rgba(255, 255, 255, 0.18);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.16) inset,
+      0 2px 4px rgba(0, 0, 0, 0.22);
+  }
 
-.qp-header-btn:active {
-  transform: translateY(1px);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.08) inset,
-    0 1px 1px rgba(0, 0, 0, 0.2);
-}
+  .qp-header-btn:active {
+    transform: translateY(1px);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.08) inset,
+      0 1px 1px rgba(0, 0, 0, 0.2);
+  }
 
-.qp-header-btn-login {
-  border-color: rgba(14, 154, 167, 0.35);
-  background-color: #21bbee;
-  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0) 55%);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.45) inset,
-    0 1px 2px rgba(0, 0, 0, 0.18),
-    0 2px 6px rgba(33, 187, 238, 0.35);
-}
+  .qp-header-btn-login {
+    border-color: rgba(14, 154, 167, 0.35);
+    background-color: #21bbee;
+    background-image: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.32) 0%,
+      rgba(255, 255, 255, 0) 55%
+    );
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.45) inset,
+      0 1px 2px rgba(0, 0, 0, 0.18),
+      0 2px 6px rgba(33, 187, 238, 0.35);
+  }
 
-.qp-header-btn-login:hover {
-  background-color: #0ea5e9;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.4) inset,
-    0 2px 4px rgba(0, 0, 0, 0.2),
-    0 4px 10px rgba(33, 187, 238, 0.4);
-}
+  .qp-header-btn-login:hover {
+    background-color: #0ea5e9;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.4) inset,
+      0 2px 4px rgba(0, 0, 0, 0.2),
+      0 4px 10px rgba(33, 187, 238, 0.4);
+  }
 }

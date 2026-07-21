@@ -25,20 +25,12 @@ describe("homeGuards", () => {
   });
 
   it("formatRequiredParamsMessage", () => {
-    expect(
-      formatRequiredParamsMessage(
-        ["Name"],
-        "Required: {0}",
-        "Required many: {0}",
-      ),
-    ).toBe("Required: Name");
-    expect(
-      formatRequiredParamsMessage(
-        ["A", "B"],
-        "Required: {0}",
-        "Required many: {0}",
-      ),
-    ).toBe("Required many: A, B");
+    expect(formatRequiredParamsMessage(["Name"], "Required: {0}", "Required many: {0}")).toBe(
+      "Required: Name",
+    );
+    expect(formatRequiredParamsMessage(["A", "B"], "Required: {0}", "Required many: {0}")).toBe(
+      "Required many: A, B",
+    );
   });
 
   it("findMissingRequiredCaptions marks empty fields", () => {

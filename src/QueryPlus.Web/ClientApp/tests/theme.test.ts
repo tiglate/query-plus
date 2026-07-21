@@ -88,24 +88,18 @@ describe("ThemeService", () => {
     const theme = c.resolve(ThemeService);
     theme.mount();
 
-    const select = document.querySelector(
-      "[data-theme-select]",
-    ) as HTMLSelectElement;
+    const select = document.querySelector("[data-theme-select]") as HTMLSelectElement;
     select.value = "dark";
     select.dispatchEvent(new Event("change", { bubbles: true }));
 
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
     expect(document.documentElement.classList.contains("dark")).toBe(true);
-    expect(
-      document.querySelector("[data-theme-icon]")!.classList.contains("fa-moon"),
-    ).toBe(true);
+    expect(document.querySelector("[data-theme-icon]")!.classList.contains("fa-moon")).toBe(true);
 
     select.value = "light";
     select.dispatchEvent(new Event("change", { bubbles: true }));
     expect(document.documentElement.classList.contains("dark")).toBe(false);
-    expect(
-      document.querySelector("[data-theme-icon]")!.classList.contains("fa-sun"),
-    ).toBe(true);
+    expect(document.querySelector("[data-theme-icon]")!.classList.contains("fa-sun")).toBe(true);
 
     theme.dispose();
   });

@@ -1,19 +1,9 @@
 import { COL_MAX, COL_MIN } from "./constants";
 import { qs } from "./dom";
 import { autoSizeColumns } from "./measure";
-import {
-  applyColumnWidths,
-  buildAllRowHtml,
-  renderHeaderCells,
-  syncHeaderScroll,
-} from "./render";
+import { applyColumnWidths, buildAllRowHtml, renderHeaderCells, syncHeaderScroll } from "./render";
 import { applyColumnReorder, compareSortValues } from "./sort";
-import type {
-  SheetColumn,
-  SheetGridState,
-  SheetPayload,
-  SheetPayloadColumn,
-} from "./types";
+import type { SheetColumn, SheetGridState, SheetPayload, SheetPayloadColumn } from "./types";
 
 function parseColumns(raw: SheetPayloadColumn[] | undefined): SheetColumn[] {
   return (Array.isArray(raw) ? raw : []).map((c) => ({
@@ -43,8 +33,7 @@ export class SheetGrid {
 
   mount(): SheetGridState | null {
     const ClusterizeCtor =
-      this.win.Clusterize ??
-      (typeof Clusterize !== "undefined" ? Clusterize : undefined);
+      this.win.Clusterize ?? (typeof Clusterize !== "undefined" ? Clusterize : undefined);
     if (!ClusterizeCtor) return null;
 
     this.destroy();
@@ -108,9 +97,7 @@ export class SheetGrid {
         // ignore
       }
     };
-    this.win.requestAnimationFrame(() =>
-      this.win.requestAnimationFrame(settle),
-    );
+    this.win.requestAnimationFrame(() => this.win.requestAnimationFrame(settle));
     this.win.setTimeout(settle, 50);
 
     state.onScroll = () => syncHeaderScroll(this.root);
@@ -171,11 +158,7 @@ export class SheetGrid {
 
     const indices = state.cells.map((_, i) => i);
     indices.sort((ia, ib) =>
-      compareSortValues(
-        state.cells[ia]?.[colIndex],
-        state.cells[ib]?.[colIndex],
-        asc,
-      ),
+      compareSortValues(state.cells[ia]?.[colIndex], state.cells[ib]?.[colIndex], asc),
     );
     state.cells = indices.map((i) => state.cells[i]);
 
@@ -287,9 +270,7 @@ export class SheetGrid {
       });
       th.addEventListener("dragend", () => {
         th.classList.remove("is-dragging");
-        row
-          .querySelectorAll(".qp-sheet-th")
-          .forEach((el) => el.classList.remove("is-drop-target"));
+        row.querySelectorAll(".qp-sheet-th").forEach((el) => el.classList.remove("is-drop-target"));
         dragFrom = null;
         this.win.setTimeout(() => {
           state.suppressClick = false;
@@ -308,9 +289,7 @@ export class SheetGrid {
         th.classList.remove("is-drop-target");
         const toIndex = Number(th.dataset.colIndex);
         const fromIndex =
-          dragFrom !== null
-            ? dragFrom
-            : Number(e.dataTransfer?.getData("text/plain"));
+          dragFrom !== null ? dragFrom : Number(e.dataTransfer?.getData("text/plain"));
         if (Number.isNaN(fromIndex) || Number.isNaN(toIndex)) return;
         this.reorderColumn(fromIndex, toIndex);
       });

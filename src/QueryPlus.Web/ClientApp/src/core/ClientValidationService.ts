@@ -45,10 +45,7 @@ export class ClientValidationService {
  * Equivalent to the library's submitValidForm body, but always posts via the
  * native HTMLFormElement.prototype.submit (no second submit event).
  */
-function submitFormNatively(
-  form: HTMLFormElement,
-  submitEvent?: SubmitEvent,
-): void {
+function submitFormNatively(form: HTMLFormElement, submitEvent?: SubmitEvent): void {
   const submitter = submitEvent?.submitter ?? null;
   let submitterInput: HTMLInputElement | null = null;
   const initialFormAction = form.action;

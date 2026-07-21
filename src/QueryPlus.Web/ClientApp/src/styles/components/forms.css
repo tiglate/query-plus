@@ -1,61 +1,61 @@
 @layer components {
-.qp-input {
-  @apply w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-navy shadow-sm
+  .qp-input {
+    @apply w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-navy shadow-sm
     focus:border-cyan focus:outline-none focus:ring-1 focus:ring-cyan
     dark:border-navy-500 dark:bg-navy-900 dark:text-slate-100 dark:shadow-none
     dark:focus:border-cyan dark:focus:ring-cyan;
-}
+  }
 
-/* Read-only / muted fields (View pages, Id on Edit). Prefer this over bg-slate-50
+  /* Read-only / muted fields (View pages, Id on Edit). Prefer this over bg-slate-50
    so dark mode stays consistent without per-page dark: utilities. */
-.qp-input:read-only,
-.qp-input[readonly],
-.qp-input.qp-input-readonly {
-  @apply bg-slate-50 text-slate-700 dark:bg-navy-950 dark:text-slate-300 dark:border-navy-600;
-}
+  .qp-input:read-only,
+  .qp-input[readonly],
+  .qp-input.qp-input-readonly {
+    @apply bg-slate-50 text-slate-700 dark:bg-navy-950 dark:text-slate-300 dark:border-navy-600;
+  }
 
-.qp-label {
-  @apply mb-0.5 block text-xs font-medium text-navy dark:text-slate-200;
-}
+  .qp-label {
+    @apply mb-0.5 block text-xs font-medium text-navy dark:text-slate-200;
+  }
 
-.qp-label-required {
-  @apply font-bold;
-}
+  .qp-label-required {
+    @apply font-bold;
+  }
 
-.qp-th-required {
-  @apply font-bold;
-}
+  .qp-th-required {
+    @apply font-bold;
+  }
 
-.qp-field-error {
-  @apply mt-0.5 block text-xs text-red-600 dark:text-red-400;
-}
+  .qp-field-error {
+    @apply mt-0.5 block text-xs text-red-600 dark:text-red-400;
+  }
 
-.qp-validation-summary {
-  @apply rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700
+  .qp-validation-summary {
+    @apply rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700
     dark:border-red-800 dark:bg-red-950/40 dark:text-red-300;
-}
+  }
 
-.qp-validation-summary ul {
-  @apply list-disc space-y-1 pl-5;
-}
+  .qp-validation-summary ul {
+    @apply list-disc space-y-1 pl-5;
+  }
 
-.qp-input.input-validation-error,
-select.input-validation-error,
-textarea.input-validation-error {
-  @apply border-red-500 focus:border-red-500 focus:ring-red-500;
-}
+  .qp-input.input-validation-error,
+  select.input-validation-error,
+  textarea.input-validation-error {
+    @apply border-red-500 focus:border-red-500 focus:ring-red-500;
+  }
 
-/* Align aspnet-client-validation defaults with QueryPlus field errors */
-.field-validation-error {
-  @apply mt-0.5 block text-xs text-red-600 not-italic dark:text-red-400;
-}
+  /* Align aspnet-client-validation defaults with QueryPlus field errors */
+  .field-validation-error {
+    @apply mt-0.5 block text-xs text-red-600 not-italic dark:text-red-400;
+  }
 
-.validation-summary-errors {
-  @apply rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 not-italic
+  .validation-summary-errors {
+    @apply rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 not-italic
     dark:border-red-800 dark:bg-red-950/40 dark:text-red-300;
-}
+  }
 
-.validation-summary-errors ul {
-  @apply list-disc space-y-1 pl-5;
-}
+  .validation-summary-errors ul {
+    @apply list-disc space-y-1 pl-5;
+  }
 }

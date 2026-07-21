@@ -33,4 +33,24 @@ describe("HtmxBridge", () => {
     expect(headers["RequestVerificationToken"]).toBe("test-token-123");
     bridge.dispose();
   });
+
+  it("dispatches beforeRequest/afterRequest to registered handlers", () => {
+    const c = createTestContainer();
+    const bridge = c.resolve(HtmxBridge);
+
+    const starts: unknown[] = [];
+    const ends: unknown[] = [];
+    bridge.onBeforeRequest((event) => starts.push((event as CustomEvent).detail));
+    bridge.onAfterRequest((event) => ends.push((event as CustomEvent).detail));
+
+    const elt = document.createElement("button");
+    document.body.appendChild(elt);
+
+    elt.dispatchEvent(new CustomEvent("htmx:beforeRequest", { bubbles: true, detail: { elt } }));
+    elt.dispatchEvent(new CustomEvent("htmx:afterRequest", { bubbles: true, detail: { elt } }));
+
+    expect(starts).toHaveLength(1);
+    expect(ends).toHaveLength(1);
+    bridge.dispose();
+  });
 });

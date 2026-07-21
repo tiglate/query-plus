@@ -44,8 +44,7 @@ export class ConfirmSubmitService {
 
   mount(scope: ParentNode = this.doc): void {
     if (this.bound) return;
-    const body =
-      scope instanceof Document ? scope.body : (this.doc.body as HTMLElement);
+    const body = scope instanceof Document ? scope.body : (this.doc.body as HTMLElement);
     // Capture: run before form-level validation listeners.
     body.addEventListener("submit", this.onSubmit, true);
     this.bound = true;

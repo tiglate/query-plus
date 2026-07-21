@@ -27,10 +27,7 @@ export class NavDropdown {
   /** Blocks open() while Escape focuses the trigger (focusin would re-open). */
   private suppressOpen = false;
   private readonly closeDelayMs: number;
-  private readonly setTimeoutFn: (
-    handler: () => void,
-    timeout: number,
-  ) => TimeoutId;
+  private readonly setTimeoutFn: (handler: () => void, timeout: number) => TimeoutId;
   private readonly clearTimeoutFn: (id: TimeoutId) => void;
   private readonly disposers: Array<() => void> = [];
 

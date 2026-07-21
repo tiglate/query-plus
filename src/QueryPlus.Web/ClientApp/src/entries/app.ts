@@ -5,10 +5,7 @@
  */
 import "reflect-metadata";
 import "../styles/main.css";
-import {
-  markClientAppLoaded,
-  QUERYPLUS_CLIENT_VERSION,
-} from "../clientMeta";
+import { markClientAppLoaded, QUERYPLUS_CLIENT_VERSION } from "../clientMeta";
 import { bootstrap } from "../core/bootstrap";
 
 export { markClientAppLoaded, QUERYPLUS_CLIENT_VERSION };

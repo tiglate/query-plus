@@ -96,9 +96,7 @@ describe("NavDropdown", () => {
     expect(dropdown.isOpen()).toBe(true);
 
     // Real focus() fires focusin on root; suppressOpen must keep the panel closed.
-    const focusSpy = vi.spyOn(trigger, "focus").mockImplementation(function (
-      this: HTMLElement,
-    ) {
+    const focusSpy = vi.spyOn(trigger, "focus").mockImplementation(function (this: HTMLElement) {
       this.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
     });
 

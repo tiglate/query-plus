@@ -3,17 +3,12 @@ import { COL_MIN } from "../src/components/sheet-grid/constants";
 import { escapeHtml } from "../src/components/sheet-grid/dom";
 import { totalColumnsWidth } from "../src/components/sheet-grid/measure";
 import { buildRowHtml } from "../src/components/sheet-grid/render";
-import {
-  applyColumnReorder,
-  compareSortValues,
-} from "../src/components/sheet-grid/sort";
+import { applyColumnReorder, compareSortValues } from "../src/components/sheet-grid/sort";
 import type { SheetColumn } from "../src/components/sheet-grid/types";
 
 describe("sheet-grid pure helpers", () => {
   it("escapeHtml encodes markup", () => {
-    expect(escapeHtml(`a <b> & "c"`)).toBe(
-      "a &lt;b&gt; &amp; &quot;c&quot;",
-    );
+    expect(escapeHtml(`a <b> & "c"`)).toBe("a &lt;b&gt; &amp; &quot;c&quot;");
   });
 
   it("compareSortValues sorts numbers and strings", () => {
@@ -57,7 +52,7 @@ describe("sheet-grid pure helpers", () => {
     const html = buildRowHtml(["<x>", "<button>x</button>"], columns);
     expect(html).toContain("&lt;x&gt;");
     expect(html).toContain("<button>x</button>");
-    expect(html).toContain('text-align:center');
+    expect(html).toContain("text-align:center");
   });
 
   it("totalColumnsWidth sums widths with fallback", () => {
