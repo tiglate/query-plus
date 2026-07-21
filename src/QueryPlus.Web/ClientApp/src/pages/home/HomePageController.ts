@@ -1,10 +1,15 @@
-import {inject, injectable, singleton} from "tsyringe";
-import {HtmxBridge} from "@/core/HtmxBridge";
-import {PageController} from "@/core/PageController";
-import {TOKENS} from "@/core/di/tokens";
-import {canExport, formatRequiredParamsMessage, isParamFieldName, isValidProcedureId,} from "./homeGuards";
-import {HomeResultsService} from "./HomeResultsService";
-import {ResultsMaximize} from "./ResultsMaximize";
+import { inject, injectable, singleton } from "tsyringe";
+import { HtmxBridge } from "@/core/HtmxBridge";
+import { PageController } from "@/core/PageController";
+import { TOKENS } from "@/core/di/tokens";
+import {
+    canExport,
+    formatRequiredParamsMessage,
+    isParamFieldName,
+    isValidProcedureId,
+} from "./homeGuards";
+import { HomeResultsService } from "./HomeResultsService";
+import { ResultsMaximize } from "./ResultsMaximize";
 
 /**
  * Main execution screen: procedure list, execute/export guards, results grid, maximize.
