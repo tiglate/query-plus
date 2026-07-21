@@ -11,6 +11,13 @@
     background-color: #ffffff;
   }
 
+  /* Compact icon buttons on the navy header (font-size stepper, etc). */
+  .qp-header-icon-btn {
+    @apply inline-flex h-6 w-6 items-center justify-center rounded text-xs text-white/80
+    transition-colors hover:bg-white/10 hover:text-white
+    disabled:pointer-events-none disabled:opacity-40;
+  }
+
   .qp-nav-link {
     @apply inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-sm font-medium hover:bg-white/10;
   }

@@ -6,8 +6,8 @@ import htmx from "htmx.org";
 import Clusterize from "clusterize.js";
 
 const win = window as Window & {
-  htmx?: typeof htmx;
-  Clusterize?: typeof Clusterize;
+    htmx?: typeof htmx;
+    Clusterize?: typeof Clusterize;
 };
 
 win.htmx = htmx;

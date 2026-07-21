@@ -17,6 +17,9 @@
   <data name="Theme_Light" xml:space="preserve"><value>Claro</value></data>
   <data name="Theme_Dark" xml:space="preserve"><value>Escuro</value></data>
   <data name="Theme_System" xml:space="preserve"><value>Sistema</value></data>
+  <data name="FontSize" xml:space="preserve"><value>Tamanho da fonte</value></data>
+  <data name="FontSize_Increase" xml:space="preserve"><value>Aumentar fonte</value></data>
+  <data name="FontSize_Decrease" xml:space="preserve"><value>Diminuir fonte</value></data>
   <data name="Footer_Tagline" xml:space="preserve"><value>Consultas governadas com segurança</value></data>
   <data name="Footer_DatabaseServer" xml:space="preserve"><value>Servidor de banco</value></data>
   <data name="Footer_Database" xml:space="preserve"><value>Banco de dados</value></data>

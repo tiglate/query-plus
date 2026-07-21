@@ -1,6 +1,6 @@
 import { inject, injectable, singleton } from "tsyringe";
-import { HtmxBridge } from "../../core/HtmxBridge";
-import { TOKENS } from "../../core/di/tokens";
+import { HtmxBridge } from "@/core/HtmxBridge";
+import { TOKENS } from "@/core/di/tokens";
 
 const INDICATOR_SELECTOR = "#qp-loading-bar";
 const ACTIVE_CLASS = "is-active";
@@ -20,55 +20,55 @@ const SKIP_VALUE = "skip";
 @singleton()
 @injectable()
 export class LoadingBarService {
-  private el: HTMLElement | null = null;
-  private inFlight = 0;
-  private readonly disposers: Array<() => void> = [];
+    private el: HTMLElement | null = null;
+    private inFlight = 0;
+    private readonly disposers: Array<() => void> = [];
 
-  constructor(
-    @inject(TOKENS.Document) private readonly doc: Document,
-    @inject(HtmxBridge) private readonly htmx: HtmxBridge,
-  ) {}
+    constructor(
+        @inject(TOKENS.Document) private readonly doc: Document,
+        @inject(HtmxBridge) private readonly htmx: HtmxBridge,
+    ) {}
 
-  mount(root: ParentNode = this.doc): void {
-    this.dispose();
+    mount(root: ParentNode = this.doc): void {
+        this.dispose();
 
-    this.el =
-      root.querySelector<HTMLElement>(INDICATOR_SELECTOR) ??
-      this.doc.querySelector<HTMLElement>(INDICATOR_SELECTOR);
-    this.inFlight = 0;
+        this.el =
+            root.querySelector<HTMLElement>(INDICATOR_SELECTOR) ??
+            this.doc.querySelector<HTMLElement>(INDICATOR_SELECTOR);
+        this.inFlight = 0;
 
-    this.disposers.push(
-      this.htmx.onBeforeRequest((event) => this.handleStart(event)),
-      this.htmx.onAfterRequest((event) => this.handleEnd(event)),
-    );
-  }
-
-  dispose(): void {
-    while (this.disposers.length) {
-      this.disposers.pop()?.();
+        this.disposers.push(
+            this.htmx.onBeforeRequest((event) => this.handleStart(event)),
+            this.htmx.onAfterRequest((event) => this.handleEnd(event)),
+        );
     }
-    this.inFlight = 0;
-    this.el?.classList.remove(ACTIVE_CLASS);
-  }
 
-  private handleStart(event: Event): void {
-    if (this.shouldSkip(event)) return;
-    this.inFlight += 1;
-    if (this.inFlight === 1) {
-      this.el?.classList.add(ACTIVE_CLASS);
+    dispose(): void {
+        while (this.disposers.length) {
+            this.disposers.pop()?.();
+        }
+        this.inFlight = 0;
+        this.el?.classList.remove(ACTIVE_CLASS);
     }
-  }
 
-  private handleEnd(event: Event): void {
-    if (this.shouldSkip(event)) return;
-    this.inFlight = Math.max(0, this.inFlight - 1);
-    if (this.inFlight === 0) {
-      this.el?.classList.remove(ACTIVE_CLASS);
+    private handleStart(event: Event): void {
+        if (this.shouldSkip(event)) return;
+        this.inFlight += 1;
+        if (this.inFlight === 1) {
+            this.el?.classList.add(ACTIVE_CLASS);
+        }
     }
-  }
 
-  private shouldSkip(event: Event): boolean {
-    const elt = (event as CustomEvent<{ elt?: unknown }>).detail?.elt;
-    return elt instanceof Element && elt.closest(`[${SKIP_ATTR}="${SKIP_VALUE}"]`) !== null;
-  }
+    private handleEnd(event: Event): void {
+        if (this.shouldSkip(event)) return;
+        this.inFlight = Math.max(0, this.inFlight - 1);
+        if (this.inFlight === 0) {
+            this.el?.classList.remove(ACTIVE_CLASS);
+        }
+    }
+
+    private shouldSkip(event: Event): boolean {
+        const elt = (event as CustomEvent<{ elt?: unknown }>).detail?.elt;
+        return elt instanceof Element && elt.closest(`[${SKIP_ATTR}="${SKIP_VALUE}"]`) !== null;
+    }
 }
