@@ -67,6 +67,7 @@
 @import "./components/forms.css";
 @import "./components/tables.css";
 @import "./components/badges.css";
+@import "./components/loading-bar.css";
 @import "./components/nav.css";
 @import "./components/sheet-grid.css";
 @import "./pages/home.css";

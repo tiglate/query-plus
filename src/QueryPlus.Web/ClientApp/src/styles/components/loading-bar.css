@@ -1,0 +1,61 @@
+@layer components {
+  /*
+ * Fixed top-of-viewport activity strip driven by LoadingBarService (every
+ * htmx request, app-wide). Indeterminate sliding fill — request duration is
+ * unknown, so we don't fake a percentage.
+ */
+  .qp-loading-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 70;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 200ms ease;
+  }
+
+  .qp-loading-bar.is-active {
+    opacity: 1;
+  }
+
+  .qp-loading-bar::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 40%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--color-cyan) 35%,
+      var(--color-lime) 65%,
+      transparent
+    );
+    animation: qp-loading-bar-slide 1.1s ease-in-out infinite;
+    animation-play-state: paused;
+  }
+
+  .qp-loading-bar.is-active::before {
+    animation-play-state: running;
+  }
+
+  @keyframes qp-loading-bar-slide {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(350%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .qp-loading-bar::before {
+      animation: none;
+      width: 100%;
+      transform: none;
+    }
+  }
+}

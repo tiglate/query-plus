@@ -23,10 +23,12 @@ else if (job.Status == ExportJobStatus.Failed)
 }
 else
 {
+    @* Background poll already shows its own pulse below; skip the global bar to avoid flicker every 2s. *@
     <div class="flex items-center gap-2 text-xs text-slate-600"
          hx-get="@Url.Action("ExportStatus", "Home", new { jobId = Model })"
          hx-trigger="every 2s"
-         hx-swap="outerHTML">
+         hx-swap="outerHTML"
+         data-loading-indicator="skip">
         <span class="inline-block h-2 w-2 animate-pulse rounded-full bg-cyan"></span>
         @L["Home_ExportRunning"] (@job.Status)
     </div>

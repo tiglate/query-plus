@@ -1,5 +1,6 @@
 import { container, type DependencyContainer } from "tsyringe";
 import { ConfirmSubmitService } from "../../components/confirm-submit/ConfirmSubmitService";
+import { LoadingBarService } from "../../components/loading-bar/LoadingBarService";
 import { NavDropdownService } from "../../components/nav-dropdown/NavDropdownService";
 import { ParameterComboService } from "../../components/parameter-combo/ParameterComboService";
 import { SheetGridService } from "../../components/sheet-grid/SheetGridService";
@@ -21,13 +22,11 @@ let configured = false;
  * Register default bindings for the browser runtime.
  * Safe to call more than once (no-ops after first configure).
  */
-export function configureContainer(
-  overrides?: {
-    document?: Document;
-    window?: Window;
-    confirmFn?: ConfirmFn;
-  },
-): DependencyContainer {
+export function configureContainer(overrides?: {
+  document?: Document;
+  window?: Window;
+  confirmFn?: ConfirmFn;
+}): DependencyContainer {
   if (!configured) {
     container.register(TOKENS.Document, {
       useValue: overrides?.document ?? globalThis.document,
@@ -36,9 +35,7 @@ export function configureContainer(
       useValue: overrides?.window ?? globalThis.window,
     });
     container.register(TOKENS.ConfirmFn, {
-      useValue:
-        overrides?.confirmFn ??
-        ((message: string) => globalThis.confirm(message)),
+      useValue: overrides?.confirmFn ?? ((message: string) => globalThis.confirm(message)),
     });
 
     registerAppServices(container);
@@ -54,6 +51,7 @@ export function configureContainer(
 function registerAppServices(c: DependencyContainer): void {
   c.registerSingleton(HtmxBridge);
   c.registerSingleton(ThemeService);
+  c.registerSingleton(LoadingBarService);
   c.registerSingleton(NavDropdownService);
   c.registerSingleton(ConfirmSubmitService);
   c.registerSingleton(ClientValidationService);
@@ -82,8 +80,7 @@ export function createTestContainer(overrides?: {
     useValue: overrides?.window ?? globalThis.window,
   });
   child.register(TOKENS.ConfirmFn, {
-    useValue:
-      overrides?.confirmFn ?? ((message: string) => globalThis.confirm(message)),
+    useValue: overrides?.confirmFn ?? ((message: string) => globalThis.confirm(message)),
   });
   registerAppServices(child);
   return child;

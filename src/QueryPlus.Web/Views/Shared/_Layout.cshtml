@@ -46,6 +46,8 @@
 @* data-page on body is secondary; meta[name=qp-page] is primary for ClientApp routing. *@
 <body class="flex h-dvh flex-col overflow-hidden font-sans"
       data-page="@(ViewData["PageKey"] as string ?? "")">
+    @* Global ajax activity indicator (any htmx request); see ClientApp LoadingBarService. Purely visual. *@
+    <div id="qp-loading-bar" class="qp-loading-bar" aria-hidden="true"></div>
     <header class="shrink-0 bg-navy text-white shadow">
         <div class="flex w-full items-center justify-between gap-3 px-3 py-2 lg:px-4">
             <div class="flex items-center gap-6">

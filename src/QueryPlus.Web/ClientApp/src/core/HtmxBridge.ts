@@ -24,9 +24,7 @@ export class HtmxBridge {
    */
   wireCsrfFromMeta(metaName = "csrf-token"): void {
     this.onConfigRequest((detail) => {
-      const token = this.doc
-        .querySelector(`meta[name="${metaName}"]`)
-        ?.getAttribute("content");
+      const token = this.doc.querySelector(`meta[name="${metaName}"]`)?.getAttribute("content");
       if (token) {
         detail.headers["RequestVerificationToken"] = token;
       }
@@ -41,8 +39,7 @@ export class HtmxBridge {
       }
     };
     this.doc.body.addEventListener("htmx:configRequest", listener);
-    const off = () =>
-      this.doc.body.removeEventListener("htmx:configRequest", listener);
+    const off = () => this.doc.body.removeEventListener("htmx:configRequest", listener);
     this.unsubscribers.push(off);
     return off;
   }
@@ -50,8 +47,7 @@ export class HtmxBridge {
   onAfterSwap(handler: (event: Event) => void): () => void {
     const listener = (event: Event) => handler(event);
     this.doc.body.addEventListener("htmx:afterSwap", listener);
-    const off = () =>
-      this.doc.body.removeEventListener("htmx:afterSwap", listener);
+    const off = () => this.doc.body.removeEventListener("htmx:afterSwap", listener);
     this.unsubscribers.push(off);
     return off;
   }
@@ -59,8 +55,31 @@ export class HtmxBridge {
   onBeforeSwap(handler: (event: Event) => void): () => void {
     const listener = (event: Event) => handler(event);
     this.doc.body.addEventListener("htmx:beforeSwap", listener);
-    const off = () =>
-      this.doc.body.removeEventListener("htmx:beforeSwap", listener);
+    const off = () => this.doc.body.removeEventListener("htmx:beforeSwap", listener);
+    this.unsubscribers.push(off);
+    return off;
+  }
+
+  /**
+   * Fires for every htmx-issued request, before it is sent (regardless of
+   * any element-level hx-indicator). `event.detail.elt` is the triggering element.
+   */
+  onBeforeRequest(handler: (event: Event) => void): () => void {
+    const listener = (event: Event) => handler(event);
+    this.doc.body.addEventListener("htmx:beforeRequest", listener);
+    const off = () => this.doc.body.removeEventListener("htmx:beforeRequest", listener);
+    this.unsubscribers.push(off);
+    return off;
+  }
+
+  /**
+   * Fires for every htmx-issued request once it settles — success, HTTP
+   * error, network error, timeout, or abort all reach this event.
+   */
+  onAfterRequest(handler: (event: Event) => void): () => void {
+    const listener = (event: Event) => handler(event);
+    this.doc.body.addEventListener("htmx:afterRequest", listener);
+    const off = () => this.doc.body.removeEventListener("htmx:afterRequest", listener);
     this.unsubscribers.push(off);
     return off;
   }
