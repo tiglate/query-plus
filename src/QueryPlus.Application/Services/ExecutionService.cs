@@ -3,6 +3,7 @@ using FluentValidation;
 using Microsoft.Extensions.Logging;
 using QueryPlus.Application.Abstractions;
 using QueryPlus.Application.Common;
+using QueryPlus.Application.DTOs.Common;
 using QueryPlus.Application.DTOs.Execution;
 using QueryPlus.Application.Interfaces;
 using QueryPlus.Application.Validation;
@@ -149,6 +150,45 @@ public sealed class ExecutionService(
     {
         var logs = await executions.GetByProcedureAsync(procedureId, take, cancellationToken);
         return mapper.Map<IReadOnlyList<ExecutionLogDto>>(logs);
+    }
+
+    public async Task<PagedResult<ExecutionLogListItemDto>> SearchAsync(
+        ExecutionLogFilterDto filter,
+        CancellationToken cancellationToken = default)
+    {
+        // Dates come in as local calendar days (browser <input type=date>); the
+        // repository compares against ExecutionStart, which is stored in UTC.
+        var criteria = new ExecutionLogSearchCriteria
+        {
+            Username = filter.Username,
+            ProcedureId = filter.ProcedureId,
+            Success = filter.Success,
+            StartFrom = filter.StartFrom is { } from
+                ? DateTime.SpecifyKind(from.Date, DateTimeKind.Local).ToUniversalTime()
+                : null,
+            StartTo = filter.StartTo is { } to
+                ? DateTime.SpecifyKind(to.Date.AddDays(1), DateTimeKind.Local).ToUniversalTime()
+                : null
+        };
+
+        var (page, pageSize) = PagedResult<ExecutionLogListItemDto>.Normalize(filter.Page, filter.PageSize);
+
+        var (items, totalCount) = await executions.SearchAsync(criteria, page, pageSize, cancellationToken);
+
+        // If the requested page is past the end, clamp and re-fetch once.
+        if (totalCount > 0 && (page - 1) * pageSize >= totalCount)
+        {
+            (page, pageSize) = PagedResult<ExecutionLogListItemDto>.Normalize(page, pageSize, totalCount);
+            (items, totalCount) = await executions.SearchAsync(criteria, page, pageSize, cancellationToken);
+        }
+
+        return new PagedResult<ExecutionLogListItemDto>
+        {
+            Items = mapper.Map<IReadOnlyList<ExecutionLogListItemDto>>(items),
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 
     private void EnsureUserMayExecute(Procedure procedure)

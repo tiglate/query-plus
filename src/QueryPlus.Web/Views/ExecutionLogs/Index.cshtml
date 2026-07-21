@@ -1,0 +1,168 @@
+@model ExecutionLogIndexViewModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> L
+@using System.Net
+@using System.Globalization
+@{
+    ViewData["Title"] = L["ExecutionLog_Title"].Value;
+    ViewData["PageKey"] = "admin-execution-logs";
+
+    string StatusHtml(bool success) =>
+        success
+            ? $"""<span class="qp-badge-ok">{WebUtility.HtmlEncode(L["ExecutionLog_StatusSuccess"].Value)}</span>"""
+            : $"""<span class="qp-badge-danger">{WebUtility.HtmlEncode(L["ExecutionLog_StatusFailed"].Value)}</span>""";
+
+    string DurationText(DateTime start, DateTime? end)
+    {
+        if (end is null || end.Value < start)
+        {
+            return "—";
+        }
+
+        var span = end.Value - start;
+        if (span.TotalSeconds < 1)
+        {
+            return $"{span.TotalMilliseconds:0}ms";
+        }
+
+        if (span.TotalMinutes < 1)
+        {
+            return $"{span.TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture)}s";
+        }
+
+        return $"{(int)span.TotalMinutes}m {span.Seconds:00}s";
+    }
+
+    string ErrorHtml(string? error)
+    {
+        if (string.IsNullOrWhiteSpace(error))
+        {
+            return "—";
+        }
+
+        var truncated = error.Length > 60 ? error[..60] + "…" : error;
+        return $"""<span class="text-red-700 dark:text-red-400" title="{WebUtility.HtmlEncode(error)}">{WebUtility.HtmlEncode(truncated)}</span>""";
+    }
+
+    var cells = Model.Items.Select(item => (IReadOnlyList<string>)new[]
+    {
+        item.Id.ToString(),
+        item.ProcedureCaption,
+        item.Username,
+        item.IpAddress ?? "—",
+        item.ExecutionStart.ToLocalTime().ToString("g"),
+        DurationText(item.ExecutionStart, item.ExecutionEnd),
+        StatusHtml(item.Success),
+        item.RowCount?.ToString() ?? "—",
+        ErrorHtml(item.ErrorMessage)
+    }).ToList();
+
+    var sheet = new SheetGridModel
+    {
+        Columns =
+        [
+            new SheetGridColumn { Caption = L["Id"].Value, Align = "right", Width = 70 },
+            new SheetGridColumn { Caption = L["ExecutionLog_Procedure"].Value },
+            new SheetGridColumn { Caption = L["ExecutionLog_Username"].Value, Width = 130 },
+            new SheetGridColumn { Caption = L["ExecutionLog_IpAddress"].Value, Width = 120 },
+            new SheetGridColumn { Caption = L["ExecutionLog_StartedAt"].Value, Width = 150 },
+            new SheetGridColumn { Caption = L["ExecutionLog_Duration"].Value, Align = "right", Width = 90 },
+            new SheetGridColumn { Caption = L["ExecutionLog_Status"].Value, IsHtml = true, Width = 90 },
+            new SheetGridColumn { Caption = L["ExecutionLog_RowCount"].Value, Align = "right", Width = 80 },
+            new SheetGridColumn { Caption = L["ExecutionLog_Error"].Value, IsHtml = true }
+        ],
+        Cells = cells,
+        EmptyMessage = L["NoRecords"].Value,
+        MetaText = string.Format(L["Pagination_Summary"].Value,
+            Model.Pager.FromItem, Model.Pager.ToItem, Model.Pager.TotalCount),
+        ShowInteractionHint = true,
+        CssClass = "qp-sheet-grid--admin"
+    };
+}
+
+<div class="qp-page qp-admin-search-page">
+    @* Toolbar: title left, actions right *@
+    <div class="qp-card shrink-0">
+        <div class="qp-card-header">
+            <h1 class="qp-page-title">
+                <i class="fa-solid fa-list-check text-cyan" aria-hidden="true"></i>
+                @L["ExecutionLog_Title"]
+            </h1>
+            <div class="flex flex-wrap items-center justify-end gap-1.5">
+                <button type="submit" form="execution-logs-filter-form" class="qp-btn-primary">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    @L["Search"]
+                </button>
+                <a asp-controller="ExecutionLogs" asp-action="Index" class="qp-btn-secondary">
+                    <i class="fa-solid fa-eraser" aria-hidden="true"></i>
+                    @L["Clear"]
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @* Filters *@
+    <div class="qp-card shrink-0">
+        <div class="qp-card-header">
+            <h2 class="qp-section-title">
+                <i class="fa-solid fa-filter" aria-hidden="true"></i>
+                @L["Filter"]
+            </h2>
+        </div>
+        <div class="qp-card-body">
+            <form id="execution-logs-filter-form" method="get" asp-controller="ExecutionLogs" asp-action="Index" class="grid grid-cols-1 gap-2 md:grid-cols-6">
+                <div class="md:col-span-2">
+                    <label class="qp-label">@L["ExecutionLog_Username"]</label>
+                    <input class="qp-input" name="username" value="@Model.Username" />
+                </div>
+                <div class="md:col-span-2">
+                    <label class="qp-label">@L["ExecutionLog_Procedure"]</label>
+                    <select class="qp-input" name="procedureId" asp-items="Model.ProcedureOptions"></select>
+                </div>
+                <div>
+                    <label class="qp-label">@L["ExecutionLog_Status"]</label>
+                    <select class="qp-input" name="success">
+                        <option value="" selected="@(Model.Success is null)">—</option>
+                        <option value="true" selected="@(Model.Success == true)">@L["ExecutionLog_StatusSuccess"]</option>
+                        <option value="false" selected="@(Model.Success == false)">@L["ExecutionLog_StatusFailed"]</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="qp-label">@L["Pagination_PageSize"]</label>
+                    <select class="qp-input" name="pageSize">
+                        <option value="10" selected="@(Model.PageSize == 10)">10</option>
+                        <option value="20" selected="@(Model.PageSize == 20)">20</option>
+                        <option value="50" selected="@(Model.PageSize == 50)">50</option>
+                        <option value="100" selected="@(Model.PageSize == 100)">100</option>
+                    </select>
+                </div>
+                <div class="md:col-span-3">
+                    <label class="qp-label">@L["ExecutionLog_StartFrom"]</label>
+                    <input type="date" class="qp-input" name="startFrom" value="@(Model.StartFrom?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture))" />
+                </div>
+                <div class="md:col-span-3">
+                    <label class="qp-label">@L["ExecutionLog_StartTo"]</label>
+                    <input type="date" class="qp-input" name="startTo" value="@(Model.StartTo?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture))" />
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* Results — body (grid, no padding) + footer (pager) *@
+    <div class="qp-card qp-admin-results-card">
+        <div class="qp-card-header shrink-0">
+            <h2 class="qp-section-title">
+                <i class="fa-solid fa-table" aria-hidden="true"></i>
+                @L["Home_Results"]
+            </h2>
+        </div>
+        <div class="qp-card-body qp-admin-results-body">
+            <partial name="Partials/_SheetGrid" model="sheet" />
+        </div>
+        @if (Model.Pager.TotalCount > 0)
+        {
+            <footer class="qp-results-card-footer">
+                <partial name="Partials/_Pager" model="Model.Pager" />
+            </footer>
+        }
+    </div>
+</div>

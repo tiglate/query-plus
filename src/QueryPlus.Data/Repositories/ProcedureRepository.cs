@@ -10,6 +10,12 @@ public sealed class ProcedureRepository(ApplicationDbContext db) : IProcedureRep
     public Task<Procedure?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         => db.Procedures.FirstOrDefaultAsync(p => p.IdProcedure == id, cancellationToken);
 
+    public async Task<IReadOnlyList<Procedure>> GetAllAsync(CancellationToken cancellationToken = default)
+        => await db.Procedures
+            .AsNoTracking()
+            .OrderBy(p => p.Caption)
+            .ToListAsync(cancellationToken);
+
     public Task<Procedure?> GetByIdWithDetailsAsync(int id, CancellationToken cancellationToken = default)
         => db.Procedures
             .Include(p => p.Category)

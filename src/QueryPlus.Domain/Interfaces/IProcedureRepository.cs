@@ -7,6 +7,11 @@ public interface IProcedureRepository
     Task<Procedure?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// All procedures ordered by caption (dropdowns / lookups).
+    /// </summary>
+    Task<IReadOnlyList<Procedure>> GetAllAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Loads procedure with parameters, columns and category (for admin edit/view).
     /// </summary>
     Task<Procedure?> GetByIdWithDetailsAsync(int id, CancellationToken cancellationToken = default);
