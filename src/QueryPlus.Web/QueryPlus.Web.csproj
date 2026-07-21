@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="App_Data\exports\" />
+    <Folder Include="App_Data\" />
   </ItemGroup>
 
   <PropertyGroup>
