@@ -1,5 +1,6 @@
 import { container, type DependencyContainer } from "tsyringe";
 import { ConfirmSubmitService } from "@/components/confirm-submit/ConfirmSubmitService";
+import { FontSizeService } from "@/components/font-size/FontSizeService";
 import { LoadingBarService } from "@/components/loading-bar/LoadingBarService";
 import { NavDropdownService } from "@/components/nav-dropdown/NavDropdownService";
 import { ParameterComboService } from "@/components/parameter-combo/ParameterComboService";
@@ -51,6 +52,7 @@ export function configureContainer(overrides?: {
 function registerAppServices(c: DependencyContainer): void {
     c.registerSingleton(HtmxBridge);
     c.registerSingleton(ThemeService);
+    c.registerSingleton(FontSizeService);
     c.registerSingleton(LoadingBarService);
     c.registerSingleton(NavDropdownService);
     c.registerSingleton(ConfirmSubmitService);

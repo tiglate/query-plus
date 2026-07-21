@@ -32,6 +32,22 @@
             } catch (e) { /* private mode */ }
         })();
     </script>
+    @*
+      Apply font size before CSS paint to avoid a resize flash.
+      Steps + key must stay in sync with ClientApp fontSize.ts (qp-font-size-step).
+    *@
+    <script>
+        (function () {
+            try {
+                var key = "qp-font-size-step";
+                var steps = [12, 13, 14, 15, 16, 17, 18];
+                var raw = Number(localStorage.getItem(key));
+                var step = Number.isFinite(raw) ? Math.min(steps.length - 1, Math.max(0, Math.trunc(raw))) : 2;
+                document.documentElement.style.fontSize = steps[step] + "px";
+                document.documentElement.dataset.fontSizeStep = String(step);
+            } catch (e) { /* private mode */ }
+        })();
+    </script>
     @* ClientApp build (Vite): CSS includes Tailwind, Clusterize, Font Awesome, Inter (no CDNs). *@
     <link rel="stylesheet" href="~/dist/css/site.css" asp-append-version="true" />
     @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
@@ -102,6 +118,26 @@
                 </nav>
             </div>
             <div class="flex items-center gap-2">
+                @* Font size: - / + stepper. Wired by ClientApp FontSizeService. *@
+                <div class="flex items-center gap-0.5" data-font-size-control>
+                    <button type="button"
+                            class="qp-header-icon-btn"
+                            data-font-size-decrease
+                            title="@L["FontSize_Decrease"]"
+                            aria-label="@L["FontSize_Decrease"]">
+                        <i class="fa-solid fa-minus" aria-hidden="true"></i>
+                    </button>
+                    <i class="fa-solid fa-text-height text-white/80 px-0.5"
+                       aria-hidden="true"
+                       title="@L["FontSize"]"></i>
+                    <button type="button"
+                            class="qp-header-icon-btn"
+                            data-font-size-increase
+                            title="@L["FontSize_Increase"]"
+                            aria-label="@L["FontSize_Increase"]">
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                    </button>
+                </div>
                 @* Theme: Light / Dark / System (default). Wired by ClientApp ThemeService. *@
                 <div class="flex items-center gap-1.5 text-sm" data-theme-control>
                     <label class="sr-only" for="theme-preference">@L["Theme"]</label>

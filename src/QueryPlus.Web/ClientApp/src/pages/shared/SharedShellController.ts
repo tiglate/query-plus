@@ -1,5 +1,6 @@
 import { inject, injectable, singleton } from "tsyringe";
 import { ConfirmSubmitService } from "@/components/confirm-submit/ConfirmSubmitService";
+import { FontSizeService } from "@/components/font-size/FontSizeService";
 import { LoadingBarService } from "@/components/loading-bar/LoadingBarService";
 import { NavDropdownService } from "@/components/nav-dropdown/NavDropdownService";
 import { ThemeService } from "@/components/theme/ThemeService";
@@ -18,6 +19,7 @@ export class SharedShellController extends PageController {
         @inject(TOKENS.Document) private readonly doc: Document,
         @inject(HtmxBridge) private readonly htmx: HtmxBridge,
         @inject(ThemeService) private readonly theme: ThemeService,
+        @inject(FontSizeService) private readonly fontSize: FontSizeService,
         @inject(LoadingBarService) private readonly loadingBar: LoadingBarService,
         @inject(NavDropdownService) private readonly navDropdowns: NavDropdownService,
         @inject(ConfirmSubmitService)
@@ -31,6 +33,7 @@ export class SharedShellController extends PageController {
     mount(root: ParentNode = this.doc): void {
         this.htmx.wireCsrfFromMeta();
         this.theme.mount(root);
+        this.fontSize.mount(root);
         this.loadingBar.mount(root);
         this.navDropdowns.mountAll(root);
         this.confirmSubmit.mount(root);
@@ -39,6 +42,7 @@ export class SharedShellController extends PageController {
 
     unmount(): void {
         this.theme.dispose();
+        this.fontSize.dispose();
         this.loadingBar.dispose();
         this.navDropdowns.dispose();
         this.confirmSubmit.dispose();
