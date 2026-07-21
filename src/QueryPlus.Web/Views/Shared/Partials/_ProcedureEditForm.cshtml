@@ -8,6 +8,8 @@
 @if (Model.Id is > 0)
 {
     <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="CreatedAt" />
+    <input type="hidden" asp-for="UpdatedAt" />
 }
 
 @if (!ViewData.ModelState.IsValid)
@@ -251,3 +253,21 @@
         </div>
     </div>
 </div>
+
+@if (Model.Id is > 0)
+{
+    <div class="qp-card">
+        <div class="qp-card-header">
+            <h2 class="qp-section-title">
+                <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
+                @L["Audit"]
+            </h2>
+        </div>
+        <div class="qp-card-body">
+            <div class="grid max-w-3xl grid-cols-2 gap-4 text-sm">
+                <div><span class="text-slate-500">@L["CreatedAt"]</span><div>@(Model.CreatedAt?.ToLocalTime().ToString("g") ?? "—")</div></div>
+                <div><span class="text-slate-500">@L["UpdatedAt"]</span><div>@(Model.UpdatedAt?.ToLocalTime().ToString("g") ?? "—")</div></div>
+            </div>
+        </div>
+    </div>
+}
