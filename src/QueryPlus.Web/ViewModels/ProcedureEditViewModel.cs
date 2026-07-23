@@ -45,6 +45,8 @@ public sealed class ProcedureEditViewModel
 
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public string? CreatedBy { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public List<ParameterEditViewModel> Parameters { get; set; } = [];
     public List<ColumnEditViewModel> Columns { get; set; } = [];

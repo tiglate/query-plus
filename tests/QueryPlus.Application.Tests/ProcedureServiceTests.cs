@@ -3,7 +3,9 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using QueryPlus.Application.Abstractions;
+using QueryPlus.Application.DTOs.Common;
 using QueryPlus.Application.DTOs.Procedures;
+using QueryPlus.Application.Interfaces;
 using QueryPlus.Application.Mapping;
 using QueryPlus.Application.Services;
 using QueryPlus.Application.Validation;
@@ -19,6 +21,7 @@ public class ProcedureServiceTests
     private readonly ICategoryRepository _categories = Substitute.For<ICategoryRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUserContext _user = Substitute.For<ICurrentUserContext>();
+    private readonly IConfigurationAuditReader _auditReader = Substitute.For<IConfigurationAuditReader>();
     private readonly ProcedureService _sut;
 
     public ProcedureServiceTests()
@@ -27,12 +30,15 @@ public class ProcedureServiceTests
             cfg => cfg.AddProfile<QueryPlusMappingProfile>(),
             NullLoggerFactory.Instance).CreateMapper();
         _user.Roles.Returns(["user"]);
+        _auditReader.GetProcedureAuditDetailsAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new AuditDetailsDto { CreatedBy = "creator" });
         _sut = new ProcedureService(
             _procedures,
             _categories,
             _unitOfWork,
             mapper,
             _user,
+            _auditReader,
             new SaveProcedureDtoValidator());
     }
 
@@ -69,6 +75,8 @@ public class ProcedureServiceTests
     [Fact]
     public async Task GetByIdAsync_ReturnsDto_WhenFound()
     {
+        _auditReader.GetProcedureAuditDetailsAsync(1, Arg.Any<CancellationToken>())
+            .Returns(new AuditDetailsDto { CreatedBy = "creator", UpdatedBy = "editor" });
         _procedures.GetByIdWithDetailsAsync(1).Returns(new Procedure
         {
             IdProcedure = 1,
@@ -85,6 +93,8 @@ public class ProcedureServiceTests
         result.Should().NotBeNull();
         result!.Caption.Should().Be("Sample");
         result.CategoryDescription.Should().Be("Sales");
+        result.CreatedBy.Should().Be("creator");
+        result.UpdatedBy.Should().Be("editor");
     }
 
     [Fact]
@@ -124,6 +134,8 @@ public class ProcedureServiceTests
         var result = await _sut.CreateAsync(dto);
 
         result.Id.Should().Be(10);
+        result.CreatedBy.Should().Be("creator");
+        result.UpdatedBy.Should().BeNull();
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 

@@ -3,6 +3,8 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using QueryPlus.Application.DTOs.Categories;
+using QueryPlus.Application.DTOs.Common;
+using QueryPlus.Application.Interfaces;
 using QueryPlus.Application.Mapping;
 using QueryPlus.Application.Services;
 using QueryPlus.Application.Validation;
@@ -16,6 +18,7 @@ public class CategoryServiceTests
 {
     private readonly ICategoryRepository _categories = Substitute.For<ICategoryRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+    private readonly IConfigurationAuditReader _auditReader = Substitute.For<IConfigurationAuditReader>();
     private readonly CategoryService _sut;
 
     public CategoryServiceTests()
@@ -23,10 +26,13 @@ public class CategoryServiceTests
         var mapper = new MapperConfiguration(
             cfg => cfg.AddProfile<QueryPlusMappingProfile>(),
             NullLoggerFactory.Instance).CreateMapper();
+        _auditReader.GetCategoryAuditDetailsAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new AuditDetailsDto { CreatedBy = "creator" });
         _sut = new CategoryService(
             _categories,
             _unitOfWork,
             mapper,
+            _auditReader,
             new CreateCategoryDtoValidator(),
             new UpdateCategoryDtoValidator());
     }
@@ -39,6 +45,8 @@ public class CategoryServiceTests
         var result = await _sut.CreateAsync(new CreateCategoryDto { Description = "Finance" });
 
         result.Description.Should().Be("Finance");
+        result.CreatedBy.Should().Be("creator");
+        result.UpdatedBy.Should().BeNull();
         await _categories.Received(1).AddAsync(Arg.Any<Category>(), Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }

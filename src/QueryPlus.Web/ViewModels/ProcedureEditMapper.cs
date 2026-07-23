@@ -18,6 +18,8 @@ public static class ProcedureEditMapper
         Description = dto.Description,
         CreatedAt = dto.CreatedAt,
         UpdatedAt = dto.UpdatedAt,
+        CreatedBy = dto.CreatedBy,
+        UpdatedBy = dto.UpdatedBy,
         ReadOnly = readOnly,
         Parameters = dto.Parameters.Select(p => new ParameterEditViewModel
         {

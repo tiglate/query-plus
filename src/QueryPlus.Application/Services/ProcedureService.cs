@@ -18,6 +18,7 @@ public sealed class ProcedureService(
     IUnitOfWork unitOfWork,
     IMapper mapper,
     ICurrentUserContext currentUser,
+    IConfigurationAuditReader auditReader,
     IValidator<SaveProcedureDto> saveValidator)
     : IProcedureService
 {
@@ -57,7 +58,7 @@ public sealed class ProcedureService(
     public async Task<ProcedureDetailDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         var entity = await procedures.GetByIdWithDetailsAsync(id, cancellationToken);
-        return entity is null ? null : mapper.Map<ProcedureDetailDto>(entity);
+        return entity is null ? null : await MapDetailAsync(entity, cancellationToken);
     }
 
     public async Task<IReadOnlyList<ProcedureLookupDto>> ListAllAsync(
@@ -89,7 +90,7 @@ public sealed class ProcedureService(
 
         var created = await procedures.GetByIdWithDetailsAsync(entity.IdProcedure, cancellationToken)
             ?? entity;
-        return mapper.Map<ProcedureDetailDto>(created);
+        return await MapDetailAsync(created, cancellationToken);
     }
 
     public async Task<ProcedureDetailDto> UpdateAsync(
@@ -134,7 +135,7 @@ public sealed class ProcedureService(
 
         var updated = await procedures.GetByIdWithDetailsAsync(entity.IdProcedure, cancellationToken)
             ?? entity;
-        return mapper.Map<ProcedureDetailDto>(updated);
+        return await MapDetailAsync(updated, cancellationToken);
     }
 
     public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
@@ -144,6 +145,19 @@ public sealed class ProcedureService(
 
         procedures.Remove(entity);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task<ProcedureDetailDto> MapDetailAsync(
+        Procedure entity,
+        CancellationToken cancellationToken)
+    {
+        var dto = mapper.Map<ProcedureDetailDto>(entity);
+        var audit = await auditReader.GetProcedureAuditDetailsAsync(
+            entity.IdProcedure,
+            cancellationToken);
+        dto.CreatedBy = audit.CreatedBy;
+        dto.UpdatedBy = audit.UpdatedBy;
+        return dto;
     }
 
     private async Task EnsureCategoryExistsAsync(int categoryId, CancellationToken cancellationToken)
