@@ -78,14 +78,38 @@ public sealed class CategoriesControllerTests
             {
                 Id = 1,
                 Description = "Sales",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = "creator",
+                UpdatedBy = "editor"
             });
 
         var result = await _sut.Details(1);
 
         var view = result.Should().BeOfType<ViewResult>().Subject;
-        view.Model.Should().BeOfType<CategoryDetailDto>()
-            .Which.Description.Should().Be("Sales");
+        var model = view.Model.Should().BeOfType<CategoryDetailDto>().Subject;
+        model.Description.Should().Be("Sales");
+        model.CreatedBy.Should().Be("creator");
+        model.UpdatedBy.Should().Be("editor");
+    }
+
+    [Fact]
+    public async Task Edit_returns_audit_details()
+    {
+        _categories.GetByIdAsync(1, Arg.Any<CancellationToken>())
+            .Returns(new CategoryDetailDto
+            {
+                Id = 1,
+                Description = "Sales",
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = "creator",
+                UpdatedBy = "editor"
+            });
+
+        var result = await _sut.Edit(1);
+
+        var view = result.Should().BeOfType<ViewResult>().Subject;
+        view.ViewData["CreatedBy"].Should().Be("creator");
+        view.ViewData["UpdatedBy"].Should().Be("editor");
     }
 
     [Fact]

@@ -145,6 +145,8 @@ public sealed class CategoriesController(
 
         ViewBag.CreatedAt = entity.CreatedAt;
         ViewBag.UpdatedAt = entity.UpdatedAt;
+        ViewBag.CreatedBy = entity.CreatedBy;
+        ViewBag.UpdatedBy = entity.UpdatedBy;
         return View(new CategoryInputModel { Id = entity.Id, Description = entity.Description });
     }
 

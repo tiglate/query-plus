@@ -121,7 +121,9 @@ public sealed class ProceduresControllerTests
                 DatabaseName = "db",
                 ProcedureName = "dbo.usp_Sales",
                 RoleEntitlement = "user",
-                Enabled = true
+                Enabled = true,
+                CreatedBy = "creator",
+                UpdatedBy = "editor"
             });
 
         var result = await _sut.Details(5);
@@ -131,6 +133,33 @@ public sealed class ProceduresControllerTests
         model.Id.Should().Be(5);
         model.ReadOnly.Should().BeTrue();
         model.Caption.Should().Be("Sales Report");
+        model.CreatedBy.Should().Be("creator");
+        model.UpdatedBy.Should().Be("editor");
+    }
+
+    [Fact]
+    public async Task Edit_returns_audit_details()
+    {
+        _procedures.GetByIdAsync(5, Arg.Any<CancellationToken>())
+            .Returns(new ProcedureDetailDto
+            {
+                Id = 5,
+                CategoryId = 1,
+                Caption = "Sales Report",
+                DatabaseName = "db",
+                ProcedureName = "dbo.usp_Sales",
+                RoleEntitlement = "user",
+                CreatedBy = "creator",
+                UpdatedBy = "editor"
+            });
+
+        var result = await _sut.Edit(5);
+
+        var view = result.Should().BeOfType<ViewResult>().Subject;
+        var model = view.Model.Should().BeOfType<ProcedureEditViewModel>().Subject;
+        model.ReadOnly.Should().BeFalse();
+        model.CreatedBy.Should().Be("creator");
+        model.UpdatedBy.Should().Be("editor");
     }
 
     [Fact]

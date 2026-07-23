@@ -14,6 +14,7 @@ public sealed class CategoryService(
     ICategoryRepository categories,
     IUnitOfWork unitOfWork,
     IMapper mapper,
+    IConfigurationAuditReader auditReader,
     IValidator<CreateCategoryDto> createValidator,
     IValidator<UpdateCategoryDto> updateValidator)
     : ICategoryService
@@ -60,7 +61,7 @@ public sealed class CategoryService(
     public async Task<CategoryDetailDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         var entity = await categories.GetByIdAsync(id, cancellationToken);
-        return entity is null ? null : mapper.Map<CategoryDetailDto>(entity);
+        return entity is null ? null : await MapDetailAsync(entity, cancellationToken);
     }
 
     public async Task<CategoryDetailDto> CreateAsync(
@@ -79,7 +80,7 @@ public sealed class CategoryService(
         await categories.AddAsync(entity, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return mapper.Map<CategoryDetailDto>(entity);
+        return await MapDetailAsync(entity, cancellationToken);
     }
 
     public async Task<CategoryDetailDto> UpdateAsync(
@@ -101,7 +102,7 @@ public sealed class CategoryService(
         categories.Update(entity);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return mapper.Map<CategoryDetailDto>(entity);
+        return await MapDetailAsync(entity, cancellationToken);
     }
 
     public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
@@ -116,5 +117,18 @@ public sealed class CategoryService(
 
         categories.Remove(entity);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task<CategoryDetailDto> MapDetailAsync(
+        Category entity,
+        CancellationToken cancellationToken)
+    {
+        var dto = mapper.Map<CategoryDetailDto>(entity);
+        var audit = await auditReader.GetCategoryAuditDetailsAsync(
+            entity.IdCategory,
+            cancellationToken);
+        dto.CreatedBy = audit.CreatedBy;
+        dto.UpdatedBy = audit.UpdatedBy;
+        return dto;
     }
 }

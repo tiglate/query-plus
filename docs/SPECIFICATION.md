@@ -70,7 +70,7 @@ The system replaces manual query execution by the Production team, reducing risk
 - Search screen with filters, page size, and results grid (ID, Description, Created At, Updated At)
 - Card layout: results body (edge-to-edge grid) + footer pager
 - Add / Edit / Details / Delete (confirmation required)
-- Edit/Details show audit timestamps
+- Edit/Details show audit timestamps and the users who created and last updated the record
 
 ### 2.5 Procedures Management
 
@@ -106,6 +106,7 @@ The system replaces manual query execution by the Production team, reducing risk
 
 - **Sync metadata** — load parameters/columns from SQL Server system views
 - Atomic save of main record + details
+- Details and Edit screens show audit timestamps and the users who created and last updated the record
 - Details screen is read-only
 
 ### 2.6 Server-side pagination (heavy procedures)
@@ -129,7 +130,7 @@ The system replaces manual query execution by the Production team, reducing risk
 ### 2.8 Auditing & Logging
 
 - **Execution log**: username, IP, start/end, procedure, parameter values (JSON), row count, success, error message
-- **Configuration audit**: `*_aud` tables for Categories, Procedures, Parameters, and Columns (revision pattern)
+- **Configuration audit**: `*_aud` tables for Categories, Procedures, Parameters, and Columns (revision pattern); revision usernames identify each record's creator and latest updater
 - Configurable log levels
 - Email notification on errors (deduplication) — planned / future
 

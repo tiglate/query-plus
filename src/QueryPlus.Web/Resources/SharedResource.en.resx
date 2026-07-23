@@ -52,7 +52,9 @@
   <data name="Id" xml:space="preserve"><value>ID</value></data>
   <data name="Description" xml:space="preserve"><value>Description</value></data>
   <data name="CreatedAt" xml:space="preserve"><value>Created at</value></data>
+  <data name="CreatedBy" xml:space="preserve"><value>Created by</value></data>
   <data name="UpdatedAt" xml:space="preserve"><value>Updated at</value></data>
+  <data name="UpdatedBy" xml:space="preserve"><value>Updated by</value></data>
   <data name="Audit" xml:space="preserve"><value>Audit</value></data>
   <data name="NoRecords" xml:space="preserve"><value>No records found.</value></data>
   <data name="Categories_Title" xml:space="preserve"><value>Categories</value></data>
