@@ -66,8 +66,11 @@ builder.Services.AddControllers(options => options.Filters.AddService<AutoValida
 var app = builder.Build();
 await app.SeedDemoDataAsync();
 app.UseExceptionHandler();
-if (!app.Environment.IsDevelopment()) app.UseHsts();
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+    app.UseHttpsRedirection();
+}
 app.UseStaticFiles();
 app.UseRouting();
 app.UseCors(CorsPolicyName);
