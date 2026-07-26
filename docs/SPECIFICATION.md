@@ -27,7 +27,8 @@ The system replaces manual query execution by the Production team, reducing risk
 
 - Integration with Keycloak using OpenID Connect (authorization code flow).
 - Cookie session after login (`QueryPlus.Auth`); logout is antiforgery-protected.
-- All application endpoints require authentication by default (`[AllowAnonymous]` only where needed).
+- All application endpoints require authentication by default (`[AllowAnonymous]` only where needed). Unauthenticated callers receive `401 Unauthorized` JSON, which the SPA intercepts to redirect to `/login`.
+- State-changing API endpoints require an antiforgery token; the SPA fetches it from `GET /api/csrf` and echoes it via the `X-CSRF-TOKEN` header.
 - Each Procedure is linked to one or more Roles/Entitlements (claims).
 - Menu items and procedure lists are filtered according to user roles.
 
@@ -50,18 +51,18 @@ The system replaces manual query execution by the Production team, reducing risk
 - Toolbar: **Execute**, **Clear**, **Export to Excel**
 - Outlook-style procedure list grouped by category (caption + description)
 - Parameter panel: dynamically generated inputs from catalog metadata
-- Results panel: virtualized grid (Clusterize); optional maximize
+- Results panel: virtualized grid (TanStack Virtual); optional maximize
 - Server-side pager when the procedure supports pagination
 - Client-side column reorder / resize on the current page of results
 
 **Parameter Input Rules:**
 
-- Free Text → text input  
-- Numeric → number input  
-- Date / Time / DateTime → appropriate HTML controls  
-- Boolean → checkbox  
-- Combo → select with predefined options  
-- Required parameters validated client- and server-side  
+- Free Text → text input
+- Numeric → number input
+- Date / Time / DateTime → appropriate HTML controls
+- Boolean → checkbox
+- Combo → select with predefined options
+- Required parameters validated client- and server-side
 
 **Reserved pagination parameters** (`@PageNumber`, `@PageSize`, `@TotalRecords`) are never shown as user fields.
 
@@ -124,7 +125,7 @@ The system replaces manual query execution by the Production team, reducing risk
 
 - Export is queued to a background worker after a successful execute with data.
 - Eligibility is tied to the last successful execute (procedure + parameter values; TTL applies).
-- Progress/status polling; download link when ready (`/exports/download/{jobId}`).
+- Progress/status polling; download link when ready (`/api/exports/{jobId}/download`).
 - For paginated procedures, export re-executes with `@PageNumber = 1` and `@PageSize = 999,999,999` so the full dataset is exported (not only the current grid page).
 
 ### 2.8 Auditing & Logging
@@ -149,8 +150,8 @@ The system replaces manual query execution by the Production team, reducing risk
 
 ### 3.1 Stack
 
-- Backend: .NET 10, ASP.NET Core **MVC (Controllers + Views)** + HTMX
-- Frontend assets: TypeScript ClientApp (Vite/pnpm), Tailwind CSS 4, Clusterize, Font Awesome, Inter (no CDNs in production layout)
+- Backend: .NET 10, ASP.NET Core **Web API (controllers, JSON)** with OIDC cookie auth + ProblemDetails
+- Frontend: **React 19 + TypeScript SPA** (Vite/pnpm), Tailwind CSS 4, shadcn/ui (Radix primitives), TanStack Query, TanStack Virtual, Inter (no CDNs in production layout)
 - Data: EF Core (CRUD + Migrations), ADO.NET/Dapper for dynamic SP result sets
 - Auth: Keycloak (OpenID Connect)
 - Database: Microsoft SQL Server
@@ -161,13 +162,13 @@ The system replaces manual query execution by the Production team, reducing risk
 
 Clean / layered architecture:
 
-- Domain  
-- Application (services, DTOs, validators)  
-- Infrastructure (composition for external concerns)  
-- Data (EF Core, Dapper executor, seed)  
-- Web (MVC Controllers + Views, ClientApp, OIDC adapters)
+- Domain
+- Application (services, DTOs, FluentValidation validators, `SqlIdentifier`, `ParameterSecurity`, `ProcedurePagination`)
+- Infrastructure (composition for external concerns)
+- Data (EF Core, Dapper executor, seed)
+- Api (Web API controllers, OIDC adapters, static SPA host)
 
-Web host composition is a thin `Program.cs` plus `DependencyInjection/`, `Hosting/`, and `Auth/` modules. UI screens live under `Controllers/` and `Views/`.
+The API host composition is a thin `Program.cs` plus `DependencyInjection/`, `Hosting/`, and `Auth/` modules. Controllers live under `Api/`, organized by feature (Auth, Categories, Procedures, Execute, Exports, ExecutionLogs, Health). The React SPA under `client/queryplus-react/` is built into `src/QueryPlus.Api/wwwroot/` and served as static assets by the API in production (SPA fallback for client-side routes).
 
 ### 3.3 Database
 
@@ -177,9 +178,9 @@ Refer to `docs/database/schema.sql` for the reference schema (INT keys, `tb_` pr
 
 - Secure parameterized execution only (no free-form SQL from the UI)
 - Server-side pagination where procedures opt in
-- No heavy SPA frameworks; progressive enhancement with HTMX
+- Modern SPA UX (React 19 + Radix/shadcn) on top of a JSON Web API
 - Strong desktop UX for dense data grids
-- Automated tests (application unit tests + web unit/integration tests; ClientApp Vitest)
+- Automated tests (application unit tests + API unit/integration tests; SPA Vitest)
 - Easy local development with containers
 
 ## 5. Assumptions

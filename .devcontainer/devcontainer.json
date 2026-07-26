@@ -23,12 +23,14 @@
       }
     }
   },
-  "forwardPorts": [5000, 1433, 8080],
+"forwardPorts": [5000, 5132, 5173, 1433, 8080],
   "portsAttributes": {
-    "5000": { "label": "QueryPlus Web", "onAutoForward": "notify" },
+    "5000": { "label": "QueryPlus API (Docker)", "onAutoForward": "notify" },
+    "5132": { "label": "QueryPlus API (dotnet run)", "onAutoForward": "notify" },
+    "5173": { "label": "Vite dev server", "onAutoForward": "notify" },
     "1433": { "label": "SQL Server", "onAutoForward": "silent" },
     "8080": { "label": "Keycloak", "onAutoForward": "silent" }
   },
-  "postCreateCommand": "dotnet restore && cd src/QueryPlus.Web && npm install || true",
+  "postCreateCommand": "dotnet restore && (cd client/queryplus-react && pnpm install --frozen-lockfile) || true",
   "remoteUser": "vscode"
 }

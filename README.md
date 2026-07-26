@@ -2,7 +2,7 @@
 
 Governed execution of SQL Server stored procedures for business users — with catalog management, RBAC, audit trail, and Excel export.
 
-Built with **.NET 10**, **ASP.NET Core MVC**, **HTMX**, **Tailwind CSS**, **EF Core**, **Dapper**, and **Keycloak** (OpenID Connect).
+Built with **.NET 10**, **ASP.NET Core Web API (controllers)**, **React 19 + TypeScript (Vite SPA)**, **EF Core**, **Dapper**, **Tailwind 4**, and **Keycloak** (OpenID Connect).
 
 **Default language:** Brazilian Portuguese (`pt-BR`), with English (`en`).
 
@@ -10,7 +10,7 @@ Built with **.NET 10**, **ASP.NET Core MVC**, **HTMX**, **Tailwind CSS**, **EF C
 
 - 🏠 **Home** — pick a catalogued procedure, set parameters, execute, page large results server-side, export to Excel
 - 🗂️ **Admin** — manage categories and procedures (parameters, columns, sync metadata from SQL Server)
-- 🔐 **Security** — OIDC via Keycloak; procedure-level role entitlements; reserved pagination args never exposed to end users
+- 🔐 **Security** — OIDC via Keycloak (cookie session + antiforgery); procedure-level role entitlements; reserved pagination args never exposed to end users
 - 📋 **Ops** — execution log, configuration audit tables, demo data seeded on startup
 
 ## 📦 Solution structure
@@ -18,20 +18,23 @@ Built with **.NET 10**, **ASP.NET Core MVC**, **HTMX**, **Tailwind CSS**, **EF C
 ```
 QueryPlus.sln
 src/
-  QueryPlus.Web              # MVC Controllers + Views + ClientApp (TS/Tailwind) + OIDC
-  QueryPlus.Application      # Application services & interfaces
-  QueryPlus.Domain           # Entities, repository contracts (INT PKs)
-  QueryPlus.Infrastructure   # Composition root for external concerns
-  QueryPlus.Data             # EF Core CRUD + Dapper stored procedure execution
+  QueryPlus.Api               # ASP.NET Core Web API (controllers) + OIDC + static SPA host
+  QueryPlus.Application       # Application services, DTOs, FluentValidation validators
+  QueryPlus.Domain            # Entities, repository contracts (INT PKs)
+  QueryPlus.Infrastructure    # Composition root for external concerns
+  QueryPlus.Data              # EF Core CRUD + Dapper stored procedure execution
 tests/
   QueryPlus.Application.Tests
-  QueryPlus.Web.Tests
+  QueryPlus.Data.Tests
+  QueryPlus.Api.Tests         # controller unit + HTTP integration via WebApplicationFactory
+client/
+  queryplus-react/            # React 19 + Vite + TS SPA (Tailwind 4, TanStack Query, Radix/shadcn)
 docker/
-  keycloak/realm-export.json # Dev realm (users: demo/demo, admin/admin)
-.devcontainer/               # VS Code / Codespaces Dev Containers
+  keycloak/realm-export.json  # Dev realm (users: demo/demo, admin/admin)
+.devcontainer/                # VS Code / Codespaces Dev Containers
 docs/
   SPECIFICATION.md
-  database/                  # schema + demo SQL mirrors
+  database/                   # schema + demo SQL mirrors
 ```
 
 ### Layering
@@ -39,19 +42,20 @@ docs/
 | Layer | Responsibility |
 |-------|----------------|
 | **Domain** | Entities (`int` PKs), repository/UoW interfaces |
-| **Application** | Use cases, service interfaces (e.g. `IStoredProcedureExecutor`) |
-| **Data** | EF Core `DbContext`/repositories (CRUD), Dapper executor (`DataTable`) |
+| **Application** | Use cases, service interfaces, DTOs, FluentValidation validators (`SqlIdentifier`, `ParameterSecurity`, `ProcedurePagination`) |
+| **Data** | EF Core `DbContext`/repositories (CRUD + migrations), Dapper executor (`DataTable`), `DemoDataSeeder`, `AuditSaveChangesInterceptor` |
 | **Infrastructure** | Wires Data + future integrations into DI |
-| **Web** | MVC UI, auth, localization, HTTP endpoints, ClientApp assets |
+| **Api** | Web API controllers, OIDC auth, ProblemDetails, SPA static host, DI composition |
 
-- **EF Core** — catalog CRUD and migrations  
+- **EF Core** — catalog CRUD and migrations
 - **Dapper / ADO.NET** — dynamic stored procedure results as `DataTable`
+- **React SPA** — `client/queryplus-react/`, Vite dev on `:5173` (proxies `/api` and `/login` to the API), production build emits to `src/QueryPlus.Api/wwwroot/` and is served by the API as static files
 
 ## ✅ Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [Docker](https://www.docker.com/) (SQL Server + Keycloak)
-- [Node.js 22+](https://nodejs.org/) + [pnpm](https://pnpm.io/) 10+ for ClientApp (or [Vite+](https://viteplus.dev/) `vp`) — first build and any frontend work
+- [Node.js 22+](https://nodejs.org/) + [pnpm](https://pnpm.io/) 10+ for the React SPA — first build and any frontend work
 
 ## 🚀 Quick start (local)
 
@@ -94,78 +98,74 @@ Migrations also run automatically via `DemoDataSeeder` on app startup. To apply 
 dotnet tool install --global dotnet-ef   # once
 dotnet ef database update \
   --project src/QueryPlus.Data \
-  --startup-project src/QueryPlus.Web
+  --startup-project src/QueryPlus.Api
 ```
 
-### 3. Build the ClientApp (first time / after frontend changes)
+### 3. Build the React SPA (first time / after frontend changes)
 
-Frontend TypeScript, Tailwind 4, HTMX, Clusterize, Font Awesome, and Inter live under  
-`src/QueryPlus.Web/ClientApp/` and build into `wwwroot/dist/` (gitignored).
+The React SPA lives under `client/queryplus-react/` and builds into `src/QueryPlus.Api/wwwroot/` (gitignored) so `dotnet publish` and `dotnet run` can serve it as static content.
 
 ```bash
-cd src/QueryPlus.Web
+cd client/queryplus-react
 pnpm install          # or: vp install
-pnpm run build        # → wwwroot/dist/{js,css,fonts}
+pnpm run build        # → src/QueryPlus.Api/wwwroot/{assets,index.html}
 ```
 
 #### When do I need `pnpm run build`?
 
-| Situation | Rebuild ClientApp? |
-|-----------|--------------------|
-| First clone / empty `wwwroot/dist` | **Yes** — or `dotnet build` / `dotnet run` (auto-builds when `dist/js/app.js` is missing) |
-| You changed files under `ClientApp/` | **Yes** — `dotnet run` alone will **not** rebuild an existing `dist` |
-| Only .NET / Razor / C# changes | No — `dotnet run` is enough |
+| Situation | Rebuild SPA? |
+|-----------|---------------|
+| First clone / empty `src/QueryPlus.Api/wwwroot/index.html` | **Yes** — or `dotnet build` / `dotnet run` (auto-builds when `wwwroot/index.html` is missing) |
+| You changed files under `client/queryplus-react/` | **Yes** — `dotnet run` alone will **not** rebuild an existing bundle |
+| Only .NET / C# changes | No — `dotnet run` is enough |
 | `dotnet publish` or Docker image build | Automatic |
 
-💡 **Tip:** after TS/CSS edits, run `pnpm run build` again (or use watch mode below).
+💡 **Tip:** after React/CSS edits, run `pnpm run build` again (or use watch mode below).
 
 #### Day-to-day frontend development
 
 ```bash
-# Terminal 1 — watch ClientApp → wwwroot/dist
-cd src/QueryPlus.Web
+# Terminal 1 — Vite dev server on http://localhost:5173 (proxies /api + /login to the API)
+cd client/queryplus-react
 pnpm run dev          # or: vp dev
 
-# Terminal 2 — ASP.NET
-dotnet run --project src/QueryPlus.Web
+# Terminal 2 — ASP.NET Core API on http://localhost:5132
+dotnet run --project src/QueryPlus.Api
 ```
 
 ```bash
-cd src/QueryPlus.Web
+cd client/queryplus-react
 
-vp install && vp build && vp test && vp dev   # Vite+
-# or
 pnpm install && pnpm run build && pnpm test && pnpm run dev
 ```
 
-Skip the MSBuild ClientApp step when needed:
+Skip the MSBuild SPA step when needed:
 
 ```bash
 dotnet publish ... /p:SkipClientAppBuild=true
 ```
 
-Edit styles under `ClientApp/src/styles/` (not under `wwwroot`).  
-Layout loads only `~/dist/js/app.js` and `~/dist/css/site.css` (no CDNs).
+Vite is configured with `server.port = 5173`, `strictPort`, and a dev proxy `/api` → `http://localhost:5132` (override with `VITE_API_PROXY`). The production bundle is emitted as a single non-split entry at `assets/queryplus.js`.
 
-### 4. Run the web app
+### 4. Run the API
 
 ```bash
-dotnet run --project src/QueryPlus.Web
+dotnet run --project src/QueryPlus.Api
 ```
 
-Open the URL printed by Kestrel (typically `https://localhost:7xxx` or `http://localhost:5xxx`).
+Open the URL printed by Kestrel — `http://localhost:5132` for the `http` launch profile (or `https://localhost:7192` for the `https` profile). The same origin serves the JSON API (`/api/...`), the Keycloak login/logout endpoints (`/login`, `/logout`, `/signout-callback`), and the built SPA (`/`).
 
-Configure Keycloak client redirect URIs to match that URL if needed (`docker/keycloak/realm-export.json`).
+Configure Keycloak client redirect URIs to match that origin if needed (`docker/keycloak/realm-export.json`).
 
 ## 🧪 Build & test
 
 ```bash
 dotnet restore
-dotnet build QueryPlus.sln    # builds ClientApp only if dist/js/app.js is missing
+dotnet build QueryPlus.sln    # builds SPA only if src/QueryPlus.Api/wwwroot/index.html is missing
 dotnet test QueryPlus.sln
 
-# ClientApp unit tests (Vitest + jsdom)
-cd src/QueryPlus.Web && pnpm test
+# SPA unit tests (Vitest + jsdom)
+cd client/queryplus-react && pnpm test
 ```
 
 ## 🐳 Docker (full stack)
@@ -174,17 +174,17 @@ cd src/QueryPlus.Web && pnpm test
 docker compose --profile full up --build
 ```
 
-- App: http://localhost:5000  
+- API + SPA: http://localhost:5000
 - Uses `appsettings.Docker.json` / environment variables for SQL Server and Keycloak.
 
 ## 🧰 Dev Containers
 
-1. Open the repo in VS Code / Cursor.  
-2. **Dev Containers: Reopen in Container**.  
+1. Open the repo in VS Code / Cursor.
+2. **Dev Containers: Reopen in Container**.
 3. SQL Server and Keycloak start via Compose; .NET 10 is available in the `app` service.
 
 ```bash
-dotnet run --project src/QueryPlus.Web --urls http://0.0.0.0:5000
+dotnet run --project src/QueryPlus.Api --urls http://0.0.0.0:5000
 ```
 
 ## ⚙️ Configuration
@@ -209,7 +209,8 @@ Localization: `?culture=pt-BR` or `?culture=en` (also cookie / `Accept-Language`
 
 - OpenID Connect authorization code flow against Keycloak.
 - Cookie session after login (`QueryPlus.Auth`).
-- `/Account/Login` challenges OIDC; `/Account/Logout` signs out cookie + OIDC (antiforgery protected).
+- `/login` challenges OIDC; `/logout` and `/signout-callback` complete front- and back-channel sign-out (antiforgery protected for `POST /logout`).
+- The SPA talks to the API **same-origin** (production) or via the Vite dev proxy (development). The API requires an antiforgery token + `X-CSRF-TOKEN` header on state-changing requests (Bootstrap pattern: `GET /api/csrf` then echo via header). All API endpoints except `/api/auth/*`, `/api/health`, `/api/csrf` and `/login` require authentication; missing/invalid auth returns `401 Unauthorized` JSON (React intercepts and redirects to `/login`).
 
 ### Dev Containers / Docker networking
 
@@ -239,8 +240,8 @@ All domain entities use **`int`** identity primary keys.
 
 On application start, `DemoDataSeeder`:
 
-1. Applies EF Core migrations  
-2. Installs demo tables + stored procedures from `src/QueryPlus.Data/Seed/demo-objects.sql`  
+1. Applies EF Core migrations
+2. Installs demo tables + stored procedures from `src/QueryPlus.Data/Seed/demo-objects.sql`
 3. Registers categories/procedures/parameters/columns from `demo-catalog.json` (idempotent)
 
 ### Highlights
@@ -258,7 +259,7 @@ SQL scripts are also mirrored under `docs/database/`.
 
 ## 📚 Documentation
 
-- [Software specification](docs/SPECIFICATION.md)  
+- [Software specification](docs/SPECIFICATION.md)
 - [Database schema](docs/database/schema.sql)
 
 ## 📄 License

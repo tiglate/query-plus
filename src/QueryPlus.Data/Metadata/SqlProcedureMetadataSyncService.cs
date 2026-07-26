@@ -54,7 +54,11 @@ public sealed class SqlProcedureMetadataSyncService(IConfiguration configuration
     {
         // Qualified object name for OBJECT_ID in the target database context.
         var sql = $"""
-            SELECT p.name AS param_name, t.name AS type_name
+            SELECT p.name AS param_name,
+                   t.name AS type_name,
+                   p.has_default_value,
+                   p.default_value,
+                   p.is_nullable
             FROM {SqlIdentifier.Quote(databaseName)}.sys.parameters p
             INNER JOIN {SqlIdentifier.Quote(databaseName)}.sys.types t ON p.user_type_id = t.user_type_id
             WHERE p.object_id = OBJECT_ID(N'{EscapeSqlLiteral(databaseName + "." + schema + "." + procedureName)}')
@@ -70,6 +74,7 @@ public sealed class SqlProcedureMetadataSyncService(IConfiguration configuration
         {
             var paramName = reader.GetString(0);
             var typeName = reader.GetString(1);
+            var hasDefault = reader.GetBoolean(2);
             // Never catalog reserved pagination parameters as user-facing fields.
             if (ProcedurePagination.IsReservedParameterName(paramName))
             {
@@ -81,12 +86,54 @@ public sealed class SqlProcedureMetadataSyncService(IConfiguration configuration
                 Caption = paramName.TrimStart('@'),
                 Name = paramName.StartsWith('@') ? paramName : "@" + paramName,
                 ParameterType = MapSqlType(typeName),
-                DefaultValue = null,
+                DefaultValue = hasDefault ? DecodeDefault(reader, typeName) : null,
                 ComboValues = null
             });
         }
 
         return list;
+    }
+
+    /// <summary>
+    /// Decodes the sql_variant default value into a JSON-safe string.
+    /// Numeric defaults are stored as raw bytes (hex); string defaults include surrounding quotes.
+    /// </summary>
+    private static string? DecodeDefault(SqlDataReader reader, string typeName)
+    {
+        try
+        {
+            var raw = reader.GetSqlValue(3);
+            if (raw is null || raw is DBNull)
+            {
+                return null;
+            }
+
+            return typeName.ToLowerInvariant() switch
+            {
+                "bit" => Convert.ToInt64(raw) != 0 ? "true" : "false",
+                "tinyint" => Convert.ToString(Convert.ToInt32(raw), System.Globalization.CultureInfo.InvariantCulture),
+                "smallint" => Convert.ToString(Convert.ToInt16(raw), System.Globalization.CultureInfo.InvariantCulture),
+                "int" => Convert.ToString(Convert.ToInt32(raw), System.Globalization.CultureInfo.InvariantCulture),
+                "bigint" => Convert.ToString(Convert.ToInt64(raw), System.Globalization.CultureInfo.InvariantCulture),
+                "decimal" or "numeric" or "money" or "smallmoney" or "float" or "real" => Convert.ToString(raw, System.Globalization.CultureInfo.InvariantCulture),
+                "varchar" or "nvarchar" or "char" or "nchar" or "text" or "ntext" => TrimQuotes(raw.ToString() ?? string.Empty),
+                "datetime" or "datetime2" or "date" or "time" or "smalldatetime" or "datetimeoffset" => Convert.ToString(raw, System.Globalization.CultureInfo.InvariantCulture),
+                _ => raw.ToString()
+            };
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static string TrimQuotes(string value)
+    {
+        if (value.Length >= 2 && value[0] == '\'' && value[^1] == '\'')
+        {
+            return value[1..^1];
+        }
+        return value;
     }
 
     private static async Task<IReadOnlyList<SaveProcedureColumnDto>> LoadColumnsAsync(

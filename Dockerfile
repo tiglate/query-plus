@@ -2,7 +2,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Node + pnpm for ClientApp (Vite+ / Tailwind 4 → wwwroot/dist)
+# Node + pnpm for the React SPA (Vite + Tailwind 4 → wwwroot)
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl ca-certificates \
     && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
@@ -16,13 +16,16 @@ COPY src/QueryPlus.Domain/QueryPlus.Domain.csproj src/QueryPlus.Domain/
 COPY src/QueryPlus.Application/QueryPlus.Application.csproj src/QueryPlus.Application/
 COPY src/QueryPlus.Data/QueryPlus.Data.csproj src/QueryPlus.Data/
 COPY src/QueryPlus.Infrastructure/QueryPlus.Infrastructure.csproj src/QueryPlus.Infrastructure/
-COPY src/QueryPlus.Web/QueryPlus.Web.csproj src/QueryPlus.Web/
+COPY src/QueryPlus.Api/QueryPlus.Api.csproj src/QueryPlus.Api/
+COPY client/queryplus-react/package.json client/queryplus-react/
+COPY client/queryplus-react/pnpm-lock.yaml client/queryplus-react/
 
-RUN dotnet restore src/QueryPlus.Web/QueryPlus.Web.csproj
+RUN dotnet restore src/QueryPlus.Api/QueryPlus.Api.csproj
 
 COPY src/ src/
+COPY client/queryplus-react/ client/queryplus-react/
 # MSBuild BuildClientApp target runs pnpm install + pnpm run build before publish.
-RUN dotnet publish src/QueryPlus.Web/QueryPlus.Web.csproj -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish src/QueryPlus.Api/QueryPlus.Api.csproj -c Release -o /app/publish /p:UseAppHost=false
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
@@ -32,4 +35,4 @@ ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Docker
 
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "QueryPlus.Web.dll"]
+ENTRYPOINT ["dotnet", "QueryPlus.Api.dll"]
