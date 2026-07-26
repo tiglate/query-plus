@@ -1,12 +1,9 @@
-using AutoMapper;
 using FluentAssertions;
-using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using QueryPlus.Application.Abstractions;
 using QueryPlus.Application.DTOs.Common;
 using QueryPlus.Application.DTOs.Procedures;
 using QueryPlus.Application.Interfaces;
-using QueryPlus.Application.Mapping;
 using QueryPlus.Application.Services;
 using QueryPlus.Application.Validation;
 using QueryPlus.Domain.Entities;
@@ -26,9 +23,6 @@ public class ProcedureServiceTests
 
     public ProcedureServiceTests()
     {
-        var mapper = new MapperConfiguration(
-            cfg => cfg.AddProfile<QueryPlusMappingProfile>(),
-            NullLoggerFactory.Instance).CreateMapper();
         _user.Roles.Returns(["user"]);
         _auditReader.GetProcedureAuditDetailsAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new AuditDetailsDto { CreatedBy = "creator" });
@@ -36,7 +30,6 @@ public class ProcedureServiceTests
             _procedures,
             _categories,
             _unitOfWork,
-            mapper,
             _user,
             _auditReader,
             new SaveProcedureDtoValidator());

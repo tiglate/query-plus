@@ -1,4 +1,3 @@
-using AutoMapper;
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using QueryPlus.Application.Abstractions;
@@ -6,6 +5,7 @@ using QueryPlus.Application.Common;
 using QueryPlus.Application.DTOs.Common;
 using QueryPlus.Application.DTOs.Execution;
 using QueryPlus.Application.Interfaces;
+using QueryPlus.Application.Mapping;
 using QueryPlus.Application.Validation;
 using QueryPlus.Domain.Entities;
 using QueryPlus.Domain.Exceptions;
@@ -19,7 +19,6 @@ public sealed class ExecutionService(
     IUnitOfWork unitOfWork,
     IStoredProcedureExecutor executor,
     ICurrentUserContext currentUser,
-    IMapper mapper,
     IValidator<ExecuteProcedureRequest> requestValidator,
     ILogger<ExecutionService> logger)
     : IExecutionService
@@ -137,7 +136,7 @@ public sealed class ExecutionService(
                 PageNumber = pageNumber,
                 PageSize = pageSize,
                 Data = null,
-                Columns = mapper.Map<IReadOnlyList<GridColumnDto>>(
+                Columns = ObjectMapper.MapGridColumn(
                     procedure.Columns.Where(c => c.Visible).OrderBy(c => c.Caption).ToList())
             };
         }
@@ -149,7 +148,7 @@ public sealed class ExecutionService(
         CancellationToken cancellationToken = default)
     {
         var logs = await executions.GetByProcedureAsync(procedureId, take, cancellationToken);
-        return mapper.Map<IReadOnlyList<ExecutionLogDto>>(logs);
+        return ObjectMapper.MapLog(logs);
     }
 
     public async Task<PagedResult<ExecutionLogListItemDto>> SearchAsync(
@@ -184,7 +183,7 @@ public sealed class ExecutionService(
 
         return new PagedResult<ExecutionLogListItemDto>
         {
-            Items = mapper.Map<IReadOnlyList<ExecutionLogListItemDto>>(items),
+            Items = ObjectMapper.MapLogListItem(items),
             TotalCount = totalCount,
             Page = page,
             PageSize = pageSize

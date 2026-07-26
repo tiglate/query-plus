@@ -1,11 +1,8 @@
-using AutoMapper;
 using FluentAssertions;
-using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using QueryPlus.Application.DTOs.Categories;
 using QueryPlus.Application.DTOs.Common;
 using QueryPlus.Application.Interfaces;
-using QueryPlus.Application.Mapping;
 using QueryPlus.Application.Services;
 using QueryPlus.Application.Validation;
 using QueryPlus.Domain.Entities;
@@ -23,15 +20,11 @@ public class CategoryServiceTests
 
     public CategoryServiceTests()
     {
-        var mapper = new MapperConfiguration(
-            cfg => cfg.AddProfile<QueryPlusMappingProfile>(),
-            NullLoggerFactory.Instance).CreateMapper();
         _auditReader.GetCategoryAuditDetailsAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new AuditDetailsDto { CreatedBy = "creator" });
         _sut = new CategoryService(
             _categories,
             _unitOfWork,
-            mapper,
             _auditReader,
             new CreateCategoryDtoValidator(),
             new UpdateCategoryDtoValidator());

@@ -1,8 +1,8 @@
-using AutoMapper;
 using FluentValidation;
 using QueryPlus.Application.DTOs.Categories;
 using QueryPlus.Application.DTOs.Common;
 using QueryPlus.Application.Interfaces;
+using QueryPlus.Application.Mapping;
 using QueryPlus.Application.Validation;
 using QueryPlus.Domain.Entities;
 using QueryPlus.Domain.Exceptions;
@@ -13,7 +13,6 @@ namespace QueryPlus.Application.Services;
 public sealed class CategoryService(
     ICategoryRepository categories,
     IUnitOfWork unitOfWork,
-    IMapper mapper,
     IConfigurationAuditReader auditReader,
     IValidator<CreateCategoryDto> createValidator,
     IValidator<UpdateCategoryDto> updateValidator)
@@ -44,7 +43,7 @@ public sealed class CategoryService(
 
         return new PagedResult<CategoryListItemDto>
         {
-            Items = mapper.Map<IReadOnlyList<CategoryListItemDto>>(items),
+            Items = ObjectMapper.Map(items),
             TotalCount = totalCount,
             Page = page,
             PageSize = pageSize
@@ -55,7 +54,7 @@ public sealed class CategoryService(
         CancellationToken cancellationToken = default)
     {
         var items = await categories.GetAllAsync(cancellationToken);
-        return mapper.Map<IReadOnlyList<CategoryListItemDto>>(items);
+        return ObjectMapper.Map(items);
     }
 
     public async Task<CategoryDetailDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
@@ -123,7 +122,7 @@ public sealed class CategoryService(
         Category entity,
         CancellationToken cancellationToken)
     {
-        var dto = mapper.Map<CategoryDetailDto>(entity);
+        var dto = ObjectMapper.MapDetail(entity);
         var audit = await auditReader.GetCategoryAuditDetailsAsync(
             entity.IdCategory,
             cancellationToken);

@@ -1,4 +1,3 @@
-using AutoMapper;
 using FluentValidation;
 using QueryPlus.Application.Abstractions;
 using QueryPlus.Application.DTOs.Common;
@@ -16,7 +15,6 @@ public sealed class ProcedureService(
     IProcedureRepository procedures,
     ICategoryRepository categories,
     IUnitOfWork unitOfWork,
-    IMapper mapper,
     ICurrentUserContext currentUser,
     IConfigurationAuditReader auditReader,
     IValidator<SaveProcedureDto> saveValidator)
@@ -48,7 +46,7 @@ public sealed class ProcedureService(
 
         return new PagedResult<ProcedureListItemDto>
         {
-            Items = mapper.Map<IReadOnlyList<ProcedureListItemDto>>(items),
+            Items = ObjectMapper.Map(items),
             TotalCount = totalCount,
             Page = page,
             PageSize = pageSize
@@ -65,7 +63,7 @@ public sealed class ProcedureService(
         CancellationToken cancellationToken = default)
     {
         var items = await procedures.GetAllAsync(cancellationToken);
-        return mapper.Map<IReadOnlyList<ProcedureLookupDto>>(items);
+        return ObjectMapper.MapLookup(items);
     }
 
     public async Task<IReadOnlyList<ProcedureLookupDto>> GetAccessibleForCurrentUserAsync(
@@ -73,7 +71,7 @@ public sealed class ProcedureService(
     {
         var roles = currentUser.Roles;
         var items = await procedures.GetAccessibleForExecutionAsync(roles, cancellationToken);
-        return mapper.Map<IReadOnlyList<ProcedureLookupDto>>(items);
+        return ObjectMapper.MapLookup(items);
     }
 
     public async Task<ProcedureDetailDto> CreateAsync(
@@ -151,7 +149,7 @@ public sealed class ProcedureService(
         Procedure entity,
         CancellationToken cancellationToken)
     {
-        var dto = mapper.Map<ProcedureDetailDto>(entity);
+        var dto = ObjectMapper.MapDetail(entity);
         var audit = await auditReader.GetProcedureAuditDetailsAsync(
             entity.IdProcedure,
             cancellationToken);

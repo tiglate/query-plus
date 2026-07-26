@@ -1,10 +1,8 @@
-using AutoMapper;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using QueryPlus.Application.Abstractions;
 using QueryPlus.Application.DTOs.Execution;
-using QueryPlus.Application.Mapping;
 using QueryPlus.Application.Services;
 using QueryPlus.Application.Validation;
 using QueryPlus.Domain.Entities;
@@ -23,16 +21,12 @@ public class ExecutionServiceTests
 
     public ExecutionServiceTests()
     {
-        var mapper = new MapperConfiguration(
-            cfg => cfg.AddProfile<QueryPlusMappingProfile>(),
-            NullLoggerFactory.Instance).CreateMapper();
         _sut = new ExecutionService(
             _procedures,
             _executions,
             _unitOfWork,
             _executor,
             _user,
-            mapper,
             new ExecuteProcedureRequestValidator(),
             NullLogger<ExecutionService>.Instance);
     }
