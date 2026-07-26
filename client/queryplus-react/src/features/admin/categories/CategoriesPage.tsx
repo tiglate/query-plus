@@ -29,12 +29,12 @@ function CategoryDialog({
     mode,
     open,
     onOpenChange,
-}: {
+}: Readonly<{
     id: number | null;
     mode: "create" | "view" | "edit";
     open: boolean;
     onOpenChange: (open: boolean) => void;
-}) {
+}>) {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
     const detail = useQuery(categoryQuery(id ?? 0));
@@ -57,13 +57,16 @@ function CategoryDialog({
         },
     });
     const readOnly = mode === "view";
-    const title = t(
-        mode === "create"
-            ? "Categories_New"
-            : mode === "edit"
-              ? "Categories_Edit"
-              : "Categories_View",
-    );
+    let titleKey = "Categories_View";
+    switch (mode) {
+        case "create":
+            titleKey = "Categories_New";
+            break;
+        case "edit":
+            titleKey = "Categories_Edit";
+            break;
+    }
+    const title = t(titleKey);
     return (
         <Dialog.Root open={open} onOpenChange={onOpenChange}>
             <Dialog.Portal>

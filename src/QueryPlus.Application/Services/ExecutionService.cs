@@ -35,7 +35,7 @@ public sealed class ExecutionService(
         }
 
         var procedure = await procedures.GetEnabledByIdWithDetailsAsync(request.ProcedureId, cancellationToken)
-            ?? throw new EntityNotFoundException(nameof(Procedure), request.ProcedureId);
+                        ?? throw new EntityNotFoundException(nameof(Procedure), request.ProcedureId);
 
         EnsureUserMayExecute(procedure);
 
@@ -136,7 +136,7 @@ public sealed class ExecutionService(
                 PageNumber = pageNumber,
                 PageSize = pageSize,
                 Data = null,
-                Columns = ObjectMapper.MapGridColumn(
+                Columns = ProcedureColumnMapper.ToGridColumnDtos(
                     procedure.Columns.Where(c => c.Visible).OrderBy(c => c.Caption).ToList())
             };
         }
@@ -148,7 +148,7 @@ public sealed class ExecutionService(
         CancellationToken cancellationToken = default)
     {
         var logs = await executions.GetByProcedureAsync(procedureId, take, cancellationToken);
-        return ObjectMapper.MapLog(logs);
+        return ExecutionLogMapper.ToDtos(logs);
     }
 
     public async Task<PagedResult<ExecutionLogListItemDto>> SearchAsync(
@@ -183,7 +183,7 @@ public sealed class ExecutionService(
 
         return new PagedResult<ExecutionLogListItemDto>
         {
-            Items = ObjectMapper.MapLogListItem(items),
+            Items = ExecutionLogMapper.ToListItemDtos(items),
             TotalCount = totalCount,
             Page = page,
             PageSize = pageSize

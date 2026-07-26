@@ -16,7 +16,7 @@ export function ConfirmDialog({
     description,
     onOpenChange,
     onConfirm,
-}: ConfirmDialogProps) {
+}: Readonly<ConfirmDialogProps>) {
     const { t } = useTranslation();
     return (
         <AlertDialog.Root open={open} onOpenChange={onOpenChange}>

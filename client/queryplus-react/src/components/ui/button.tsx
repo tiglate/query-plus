@@ -33,7 +33,7 @@ export function Button({
     type = "button",
     asChild,
     ...props
-}: ButtonProps) {
+}: Readonly<ButtonProps>) {
     const Component = asChild ? Slot : "button";
     return (
         <Component className={cn(variants({ variant, size }), className)} type={type} {...props} />

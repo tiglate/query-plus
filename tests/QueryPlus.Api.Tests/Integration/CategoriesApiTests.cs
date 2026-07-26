@@ -9,19 +9,13 @@ using QueryPlus.Application.DTOs.Common;
 
 namespace QueryPlus.Api.Tests.Integration;
 
-public sealed class CategoriesApiTests : IClassFixture<QueryPlusApiApplicationFactory>
+public sealed class CategoriesApiTests(QueryPlusApiApplicationFactory factory)
+    : IClassFixture<QueryPlusApiApplicationFactory>
 {
-    private readonly QueryPlusApiApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    public CategoriesApiTests(QueryPlusApiApplicationFactory factory)
+    private readonly HttpClient _client = factory.CreateClient(new WebApplicationFactoryClientOptions
     {
-        _factory = factory;
-        _client = factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            AllowAutoRedirect = false
-        });
-    }
+        AllowAutoRedirect = false
+    });
 
     private async Task<HttpRequestMessage> AuthedJsonAsync(HttpMethod method, string url, HttpContent content)
     {
@@ -34,7 +28,7 @@ public sealed class CategoriesApiTests : IClassFixture<QueryPlusApiApplicationFa
     [Fact]
     public async Task Get_returns_paged_list()
     {
-        _factory.Categories.SearchAsync(Arg.Any<CategoryFilterDto>(), Arg.Any<CancellationToken>())
+        factory.Categories.SearchAsync(Arg.Any<CategoryFilterDto>(), Arg.Any<CancellationToken>())
             .Returns(new PagedResult<CategoryListItemDto>
             {
                 Items =
@@ -52,9 +46,9 @@ public sealed class CategoriesApiTests : IClassFixture<QueryPlusApiApplicationFa
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var json = await response.Content.ReadFromJsonAsync<PagedResult<CategoryListItemDto>>();
         json.Should().NotBeNull();
-        json!.Items.Should().HaveCount(2);
+        json.Items.Should().HaveCount(2);
         json.TotalCount.Should().Be(2);
-        await _factory.Categories.Received(1).SearchAsync(
+        await factory.Categories.Received(1).SearchAsync(
             Arg.Is<CategoryFilterDto>(f => f.Page == 1 && f.PageSize == 20),
             Arg.Any<CancellationToken>());
     }
@@ -62,7 +56,7 @@ public sealed class CategoriesApiTests : IClassFixture<QueryPlusApiApplicationFa
     [Fact]
     public async Task Get_lookup_returns_all()
     {
-        _factory.Categories.ListAllAsync(Arg.Any<CancellationToken>())
+        factory.Categories.ListAllAsync(Arg.Any<CancellationToken>())
             .Returns([
                 new CategoryListItemDto { Id = 1, Description = "Sales", CreatedAt = DateTime.UtcNow }
             ]);
@@ -77,7 +71,7 @@ public sealed class CategoriesApiTests : IClassFixture<QueryPlusApiApplicationFa
     [Fact]
     public async Task Get_by_id_returns_detail()
     {
-        _factory.Categories.GetByIdAsync(7, Arg.Any<CancellationToken>())
+        factory.Categories.GetByIdAsync(7, Arg.Any<CancellationToken>())
             .Returns(new CategoryDetailDto { Id = 7, Description = "Sales", CreatedAt = DateTime.UtcNow });
 
         var response = await _client.GetAsync("/api/categories/7");
@@ -91,7 +85,7 @@ public sealed class CategoriesApiTests : IClassFixture<QueryPlusApiApplicationFa
     [Fact]
     public async Task Get_by_id_missing_returns_404()
     {
-        _factory.Categories.GetByIdAsync(999, Arg.Any<CancellationToken>())
+        factory.Categories.GetByIdAsync(999, Arg.Any<CancellationToken>())
             .Returns((CategoryDetailDto?)null);
 
         var response = await _client.GetAsync("/api/categories/999");
@@ -102,7 +96,7 @@ public sealed class CategoriesApiTests : IClassFixture<QueryPlusApiApplicationFa
     [Fact]
     public async Task Create_returns_201_with_location_and_body()
     {
-        _factory.Categories.CreateAsync(Arg.Any<CreateCategoryDto>(), Arg.Any<CancellationToken>())
+        factory.Categories.CreateAsync(Arg.Any<CreateCategoryDto>(), Arg.Any<CancellationToken>())
             .Returns(new CategoryDetailDto { Id = 42, Description = "New", CreatedAt = DateTime.UtcNow });
 
         using var request = await AuthedJsonAsync(HttpMethod.Post, "/api/categories",
@@ -115,7 +109,7 @@ public sealed class CategoriesApiTests : IClassFixture<QueryPlusApiApplicationFa
         var json = await response.Content.ReadFromJsonAsync<CategoryDetailDto>();
         json!.Id.Should().Be(42);
         json.Description.Should().Be("New");
-        await _factory.Categories.Received(1).CreateAsync(
+        await factory.Categories.Received(1).CreateAsync(
             Arg.Is<CreateCategoryDto>(c => c.Description == "New"),
             Arg.Any<CancellationToken>());
     }
@@ -123,9 +117,9 @@ public sealed class CategoriesApiTests : IClassFixture<QueryPlusApiApplicationFa
     [Fact]
     public async Task Update_returns_200_with_body()
     {
-        _factory.Categories.GetByIdAsync(7, Arg.Any<CancellationToken>())
+        factory.Categories.GetByIdAsync(7, Arg.Any<CancellationToken>())
             .Returns(new CategoryDetailDto { Id = 7, Description = "Sales", CreatedAt = DateTime.UtcNow });
-        _factory.Categories.UpdateAsync(Arg.Any<UpdateCategoryDto>(), Arg.Any<CancellationToken>())
+        factory.Categories.UpdateAsync(Arg.Any<UpdateCategoryDto>(), Arg.Any<CancellationToken>())
             .Returns(new CategoryDetailDto { Id = 7, Description = "SalesX", CreatedAt = DateTime.UtcNow });
 
         using var request = await AuthedJsonAsync(HttpMethod.Put, "/api/categories/7",
@@ -136,7 +130,7 @@ public sealed class CategoriesApiTests : IClassFixture<QueryPlusApiApplicationFa
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var json = await response.Content.ReadFromJsonAsync<CategoryDetailDto>();
         json!.Description.Should().Be("SalesX");
-        await _factory.Categories.Received(1).UpdateAsync(
+        await factory.Categories.Received(1).UpdateAsync(
             Arg.Is<UpdateCategoryDto>(u => u.Id == 7 && u.Description == "SalesX"),
             Arg.Any<CancellationToken>());
     }
@@ -144,7 +138,7 @@ public sealed class CategoriesApiTests : IClassFixture<QueryPlusApiApplicationFa
     [Fact]
     public async Task Update_missing_returns_404()
     {
-        _factory.Categories.GetByIdAsync(99, Arg.Any<CancellationToken>())
+        factory.Categories.GetByIdAsync(99, Arg.Any<CancellationToken>())
             .Returns((CategoryDetailDto?)null);
 
         using var request = await AuthedJsonAsync(HttpMethod.Put, "/api/categories/99",
@@ -153,13 +147,14 @@ public sealed class CategoriesApiTests : IClassFixture<QueryPlusApiApplicationFa
         var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-        await _factory.Categories.DidNotReceive().UpdateAsync(Arg.Any<UpdateCategoryDto>(), Arg.Any<CancellationToken>());
+        await factory.Categories.DidNotReceive()
+            .UpdateAsync(Arg.Any<UpdateCategoryDto>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Delete_returns_204()
     {
-        _factory.Categories.GetByIdAsync(7, Arg.Any<CancellationToken>())
+        factory.Categories.GetByIdAsync(7, Arg.Any<CancellationToken>())
             .Returns(new CategoryDetailDto { Id = 7, Description = "Sales", CreatedAt = DateTime.UtcNow });
 
         using var request = await AuthedJsonAsync(HttpMethod.Delete, "/api/categories/7", new StringContent(""));
@@ -167,13 +162,13 @@ public sealed class CategoriesApiTests : IClassFixture<QueryPlusApiApplicationFa
         var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        await _factory.Categories.Received(1).DeleteAsync(7, Arg.Any<CancellationToken>());
+        await factory.Categories.Received(1).DeleteAsync(7, Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Delete_missing_returns_404()
     {
-        _factory.Categories.GetByIdAsync(99, Arg.Any<CancellationToken>())
+        factory.Categories.GetByIdAsync(99, Arg.Any<CancellationToken>())
             .Returns((CategoryDetailDto?)null);
 
         using var request = await AuthedJsonAsync(HttpMethod.Delete, "/api/categories/99", new StringContent(""));
@@ -181,6 +176,6 @@ public sealed class CategoriesApiTests : IClassFixture<QueryPlusApiApplicationFa
         var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-        await _factory.Categories.DidNotReceive().DeleteAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await factory.Categories.DidNotReceive().DeleteAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
     }
 }

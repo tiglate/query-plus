@@ -5,19 +5,13 @@ using QueryPlus.Api.Tests.Infrastructure;
 
 namespace QueryPlus.Api.Tests.Integration;
 
-public sealed class ReactLogoutTransportTests : IClassFixture<QueryPlusApiApplicationFactory>
+public sealed class ReactLogoutTransportTests(QueryPlusApiApplicationFactory factory)
+    : IClassFixture<QueryPlusApiApplicationFactory>
 {
-    private readonly QueryPlusApiApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    public ReactLogoutTransportTests(QueryPlusApiApplicationFactory factory)
+    private readonly HttpClient _client = factory.CreateClient(new WebApplicationFactoryClientOptions
     {
-        _factory = factory;
-        _client = factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            AllowAutoRedirect = false
-        });
-    }
+        AllowAutoRedirect = false
+    });
 
     [Fact]
     public async Task Logout_with_form_urlencoded_antiforgery_enters_sign_out_redirect()

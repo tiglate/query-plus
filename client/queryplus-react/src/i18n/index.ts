@@ -51,7 +51,6 @@ void i18n
         supportedLngs: ["pt-BR", "en"],
         nonExplicitSupportedLngs: false,
         interpolation: { escapeValue: false },
-        showSupportNotice: false,
         detection: { order: ["localStorage", "navigator"], caches: ["localStorage"] },
         react: { useSuspense: false },
     });

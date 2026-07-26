@@ -14,10 +14,13 @@ public class ProcedureParameter : IHasTimestamps, IAuditedEntity
     public required string Name { get; set; }
     public ParameterType ParameterType { get; set; }
     public string? DefaultValue { get; set; }
+
     /// <summary>JSON array of combo options.</summary>
     public string? ComboValues { get; set; }
+
     /// <summary>When true, execution requires a non-empty value (or a configured default).</summary>
     public bool IsRequired { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 

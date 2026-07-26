@@ -11,19 +11,13 @@ using QueryPlus.Domain.Enums;
 
 namespace QueryPlus.Api.Tests.Integration;
 
-public sealed class ProceduresApiTests : IClassFixture<QueryPlusApiApplicationFactory>
+public sealed class ProceduresApiTests(QueryPlusApiApplicationFactory factory)
+    : IClassFixture<QueryPlusApiApplicationFactory>
 {
-    private readonly QueryPlusApiApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    public ProceduresApiTests(QueryPlusApiApplicationFactory factory)
+    private readonly HttpClient _client = factory.CreateClient(new WebApplicationFactoryClientOptions
     {
-        _factory = factory;
-        _client = factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            AllowAutoRedirect = false
-        });
-    }
+        AllowAutoRedirect = false
+    });
 
     private async Task<HttpRequestMessage> AuthedJsonAsync(HttpMethod method, string url, HttpContent content)
     {
@@ -44,19 +38,25 @@ public sealed class ProceduresApiTests : IClassFixture<QueryPlusApiApplicationFa
         RoleEntitlement = "user",
         Parameters =
         [
-            new ProcedureParameterDto { Id = 1, Caption = "Start", Name = "@Start", ParameterType = ParameterType.Date, IsRequired = false }
+            new ProcedureParameterDto
+                { Id = 1, Caption = "Start", Name = "@Start", ParameterType = ParameterType.Date, IsRequired = false }
         ],
         Columns =
         [
-            new ProcedureColumnDto { Id = 1, TechnicalName = "Id", Caption = "Id", Alignment = ColumnAlignment.Left, Visible = true },
-            new ProcedureColumnDto { Id = 2, TechnicalName = "HiddenCol", Caption = "Hidden", Alignment = ColumnAlignment.Left, Visible = false }
+            new ProcedureColumnDto
+                { Id = 1, TechnicalName = "Id", Caption = "Id", Alignment = ColumnAlignment.Left, Visible = true },
+            new ProcedureColumnDto
+            {
+                Id = 2, TechnicalName = "HiddenCol", Caption = "Hidden", Alignment = ColumnAlignment.Left,
+                Visible = false
+            }
         ]
     };
 
     [Fact]
     public async Task Accessible_returns_user_visible_procedures()
     {
-        _factory.Procedures.GetAccessibleForCurrentUserAsync(Arg.Any<CancellationToken>())
+        factory.Procedures.GetAccessibleForCurrentUserAsync(Arg.Any<CancellationToken>())
             .Returns([
                 new ProcedureLookupDto { Id = 1, CategoryId = 1, Caption = "Demo", RoleEntitlement = "user" }
             ]);
@@ -71,10 +71,17 @@ public sealed class ProceduresApiTests : IClassFixture<QueryPlusApiApplicationFa
     [Fact]
     public async Task Search_returns_paged_results()
     {
-        _factory.Procedures.SearchAsync(Arg.Any<ProcedureFilterDto>(), Arg.Any<CancellationToken>())
+        factory.Procedures.SearchAsync(Arg.Any<ProcedureFilterDto>(), Arg.Any<CancellationToken>())
             .Returns(new PagedResult<ProcedureListItemDto>
             {
-                Items = [new ProcedureListItemDto { Id = 1, CategoryId = 1, Caption = "Demo", DatabaseName = "db", ProcedureName = "dbo.usp_Demo", RoleEntitlement = "user" }],
+                Items =
+                [
+                    new ProcedureListItemDto
+                    {
+                        Id = 1, CategoryId = 1, Caption = "Demo", DatabaseName = "db", ProcedureName = "dbo.usp_Demo",
+                        RoleEntitlement = "user"
+                    }
+                ],
                 TotalCount = 1,
                 Page = 1,
                 PageSize = 20
@@ -85,7 +92,7 @@ public sealed class ProceduresApiTests : IClassFixture<QueryPlusApiApplicationFa
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var json = await response.Content.ReadFromJsonAsync<PagedResult<ProcedureListItemDto>>();
         json!.Items.Should().ContainSingle();
-        await _factory.Procedures.Received(1).SearchAsync(
+        await factory.Procedures.Received(1).SearchAsync(
             Arg.Is<ProcedureFilterDto>(f => f.Caption == "Demo" && f.Enabled == true && f.Page == 1),
             Arg.Any<CancellationToken>());
     }
@@ -93,7 +100,7 @@ public sealed class ProceduresApiTests : IClassFixture<QueryPlusApiApplicationFa
     [Fact]
     public async Task Lookup_returns_all()
     {
-        _factory.Procedures.ListAllAsync(Arg.Any<CancellationToken>())
+        factory.Procedures.ListAllAsync(Arg.Any<CancellationToken>())
             .Returns([new ProcedureLookupDto { Id = 1, CategoryId = 1, Caption = "Demo", RoleEntitlement = "user" }]);
 
         var response = await _client.GetAsync("/api/procedures/lookup");
@@ -106,7 +113,7 @@ public sealed class ProceduresApiTests : IClassFixture<QueryPlusApiApplicationFa
     [Fact]
     public async Task Get_by_id_returns_detail()
     {
-        _factory.Procedures.GetByIdAsync(7, Arg.Any<CancellationToken>())
+        factory.Procedures.GetByIdAsync(7, Arg.Any<CancellationToken>())
             .Returns(SampleDetail(7));
 
         var response = await _client.GetAsync("/api/procedures/7");
@@ -120,7 +127,7 @@ public sealed class ProceduresApiTests : IClassFixture<QueryPlusApiApplicationFa
     [Fact]
     public async Task Get_by_id_missing_returns_404()
     {
-        _factory.Procedures.GetByIdAsync(99, Arg.Any<CancellationToken>())
+        factory.Procedures.GetByIdAsync(99, Arg.Any<CancellationToken>())
             .Returns((ProcedureDetailDto?)null);
 
         var response = await _client.GetAsync("/api/procedures/99");
@@ -131,7 +138,7 @@ public sealed class ProceduresApiTests : IClassFixture<QueryPlusApiApplicationFa
     [Fact]
     public async Task Get_parameters_returns_list()
     {
-        _factory.Procedures.GetByIdAsync(7, Arg.Any<CancellationToken>())
+        factory.Procedures.GetByIdAsync(7, Arg.Any<CancellationToken>())
             .Returns(SampleDetail(7));
 
         var response = await _client.GetAsync("/api/procedures/7/parameters");
@@ -144,7 +151,7 @@ public sealed class ProceduresApiTests : IClassFixture<QueryPlusApiApplicationFa
     [Fact]
     public async Task Get_parameters_missing_returns_404()
     {
-        _factory.Procedures.GetByIdAsync(99, Arg.Any<CancellationToken>())
+        factory.Procedures.GetByIdAsync(99, Arg.Any<CancellationToken>())
             .Returns((ProcedureDetailDto?)null);
 
         var response = await _client.GetAsync("/api/procedures/99/parameters");
@@ -155,7 +162,7 @@ public sealed class ProceduresApiTests : IClassFixture<QueryPlusApiApplicationFa
     [Fact]
     public async Task Create_returns_201_with_location()
     {
-        _factory.Procedures.CreateAsync(Arg.Any<SaveProcedureDto>(), Arg.Any<CancellationToken>())
+        factory.Procedures.CreateAsync(Arg.Any<SaveProcedureDto>(), Arg.Any<CancellationToken>())
             .Returns(SampleDetail(42));
 
         var dto = new
@@ -180,7 +187,7 @@ public sealed class ProceduresApiTests : IClassFixture<QueryPlusApiApplicationFa
         response.Headers.Location.Should().NotBeNull();
         var json = await response.Content.ReadFromJsonAsync<ProcedureDetailDto>();
         json!.Id.Should().Be(42);
-        await _factory.Procedures.Received(1).CreateAsync(
+        await factory.Procedures.Received(1).CreateAsync(
             Arg.Is<SaveProcedureDto>(s => s.Caption == "Demo" && s.DatabaseName == "db"),
             Arg.Any<CancellationToken>());
     }
@@ -188,9 +195,9 @@ public sealed class ProceduresApiTests : IClassFixture<QueryPlusApiApplicationFa
     [Fact]
     public async Task Update_returns_200_with_body()
     {
-        _factory.Procedures.GetByIdAsync(7, Arg.Any<CancellationToken>())
+        factory.Procedures.GetByIdAsync(7, Arg.Any<CancellationToken>())
             .Returns(SampleDetail(7));
-        _factory.Procedures.UpdateAsync(Arg.Any<SaveProcedureDto>(), Arg.Any<CancellationToken>())
+        factory.Procedures.UpdateAsync(Arg.Any<SaveProcedureDto>(), Arg.Any<CancellationToken>())
             .Returns(SampleDetail(7));
 
         var dto = new
@@ -212,7 +219,7 @@ public sealed class ProceduresApiTests : IClassFixture<QueryPlusApiApplicationFa
         var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        await _factory.Procedures.Received(1).UpdateAsync(
+        await factory.Procedures.Received(1).UpdateAsync(
             Arg.Is<SaveProcedureDto>(s => s.Id == 7),
             Arg.Any<CancellationToken>());
     }
@@ -220,7 +227,7 @@ public sealed class ProceduresApiTests : IClassFixture<QueryPlusApiApplicationFa
     [Fact]
     public async Task Update_missing_returns_404()
     {
-        _factory.Procedures.GetByIdAsync(99, Arg.Any<CancellationToken>())
+        factory.Procedures.GetByIdAsync(99, Arg.Any<CancellationToken>())
             .Returns((ProcedureDetailDto?)null);
 
         var dto = new
@@ -247,7 +254,7 @@ public sealed class ProceduresApiTests : IClassFixture<QueryPlusApiApplicationFa
     [Fact]
     public async Task Delete_returns_204()
     {
-        _factory.Procedures.GetByIdAsync(7, Arg.Any<CancellationToken>())
+        factory.Procedures.GetByIdAsync(7, Arg.Any<CancellationToken>())
             .Returns(SampleDetail(7));
 
         using var request = await AuthedJsonAsync(HttpMethod.Delete, "/api/procedures/7", new StringContent(""));
@@ -255,15 +262,15 @@ public sealed class ProceduresApiTests : IClassFixture<QueryPlusApiApplicationFa
         var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        await _factory.Procedures.Received(1).DeleteAsync(7, Arg.Any<CancellationToken>());
+        await factory.Procedures.Received(1).DeleteAsync(7, Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Sync_metadata_returns_snapshot_for_existing_procedure()
     {
-        _factory.Procedures.GetByIdAsync(7, Arg.Any<CancellationToken>())
+        factory.Procedures.GetByIdAsync(7, Arg.Any<CancellationToken>())
             .Returns(SampleDetail(7));
-        _factory.MetadataSync.FetchAsync("dbExisting", "dbo.usp_Existing", Arg.Any<CancellationToken>())
+        factory.MetadataSync.FetchAsync("dbExisting", "dbo.usp_Existing", Arg.Any<CancellationToken>())
             .Returns(new ProcedureMetadataSnapshot
             {
                 Parameters = [new SaveProcedureParameterDto { Caption = "Start", Name = "@Start" }],
@@ -279,13 +286,14 @@ public sealed class ProceduresApiTests : IClassFixture<QueryPlusApiApplicationFa
         var json = await response.Content.ReadFromJsonAsync<ProcedureMetadataSnapshot>();
         json!.Parameters.Should().ContainSingle();
         json.Columns.Should().ContainSingle();
-        await _factory.MetadataSync.Received(1).FetchAsync("dbExisting", "dbo.usp_Existing", Arg.Any<CancellationToken>());
+        await factory.MetadataSync.Received(1)
+            .FetchAsync("dbExisting", "dbo.usp_Existing", Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Sync_metadata_with_id_zero_works_without_existing_procedure()
     {
-        _factory.MetadataSync.FetchAsync("dbNew", "dbo.usp_New", Arg.Any<CancellationToken>())
+        factory.MetadataSync.FetchAsync("dbNew", "dbo.usp_New", Arg.Any<CancellationToken>())
             .Returns(new ProcedureMetadataSnapshot());
 
         using var request = await AuthedJsonAsync(HttpMethod.Post, "/api/procedures/0/sync-metadata",
@@ -294,13 +302,13 @@ public sealed class ProceduresApiTests : IClassFixture<QueryPlusApiApplicationFa
         var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        await _factory.MetadataSync.Received(1).FetchAsync("dbNew", "dbo.usp_New", Arg.Any<CancellationToken>());
+        await factory.MetadataSync.Received(1).FetchAsync("dbNew", "dbo.usp_New", Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Sync_metadata_with_id_nonzero_missing_returns_404()
     {
-        _factory.Procedures.GetByIdAsync(99, Arg.Any<CancellationToken>())
+        factory.Procedures.GetByIdAsync(99, Arg.Any<CancellationToken>())
             .Returns((ProcedureDetailDto?)null);
 
         using var request = await AuthedJsonAsync(HttpMethod.Post, "/api/procedures/99/sync-metadata",
@@ -314,7 +322,7 @@ public sealed class ProceduresApiTests : IClassFixture<QueryPlusApiApplicationFa
     [Fact]
     public async Task Sync_metadata_with_missing_names_returns_400()
     {
-        _factory.Procedures.GetByIdAsync(0, Arg.Any<CancellationToken>())
+        factory.Procedures.GetByIdAsync(0, Arg.Any<CancellationToken>())
             .Returns((ProcedureDetailDto?)null);
 
         using var request = await AuthedJsonAsync(HttpMethod.Post, "/api/procedures/0/sync-metadata",

@@ -10,7 +10,7 @@ interface PagerProps {
     onPage: (page: number) => void;
 }
 
-export function Pager({ page, pageSize, total, onPage }: PagerProps) {
+export function Pager({ page, pageSize, total, onPage }: Readonly<PagerProps>) {
     const { t } = useTranslation();
     const pages = Math.max(1, Math.ceil(total / pageSize));
     const start = Math.max(1, page - 2);

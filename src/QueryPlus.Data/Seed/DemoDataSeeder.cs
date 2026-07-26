@@ -25,7 +25,8 @@ public sealed class DemoDataSeeder(
         await db.Database.MigrateAsync(cancellationToken);
 
         var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
+                               ?? throw new InvalidOperationException(
+                                   "Connection string 'DefaultConnection' is not configured.");
 
         var databaseName = new SqlConnectionStringBuilder(connectionString).InitialCatalog;
         if (string.IsNullOrWhiteSpace(databaseName))
@@ -179,7 +180,7 @@ public sealed class DemoDataSeeder(
             var paramType = ParseParameterType(p.Type);
             // Prefer explicit flag; otherwise treat missing default as required (except boolean).
             var isRequired = p.Required
-                ?? (paramType != ParameterType.Boolean && string.IsNullOrWhiteSpace(p.Default));
+                             ?? (paramType != ParameterType.Boolean && string.IsNullOrWhiteSpace(p.Default));
 
             procedure.Parameters.Add(new ProcedureParameter
             {
@@ -218,7 +219,8 @@ public sealed class DemoDataSeeder(
             Path.Combine(Directory.GetCurrentDirectory(), "Seed", fileName),
             Path.Combine(Directory.GetCurrentDirectory(), "src", "QueryPlus.Data", "Seed", fileName),
             Path.Combine(Directory.GetCurrentDirectory(), "..", "QueryPlus.Data", "Seed", fileName),
-            Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "src", "QueryPlus.Data", "Seed", fileName)
+            Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "src", "QueryPlus.Data", "Seed",
+                fileName)
         };
 
         return candidates.FirstOrDefault(File.Exists)

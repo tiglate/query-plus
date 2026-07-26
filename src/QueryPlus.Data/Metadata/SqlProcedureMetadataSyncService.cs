@@ -11,7 +11,8 @@ namespace QueryPlus.Data.Metadata;
 public sealed class SqlProcedureMetadataSyncService(IConfiguration configuration) : IProcedureMetadataSyncService
 {
     private readonly string _connectionString = configuration.GetConnectionString("DefaultConnection")
-                                                ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
+                                                ?? throw new InvalidOperationException(
+                                                    "Connection string 'DefaultConnection' is not configured.");
 
     public async Task<ProcedureMetadataSnapshot> FetchAsync(
         string databaseName,
@@ -54,17 +55,17 @@ public sealed class SqlProcedureMetadataSyncService(IConfiguration configuration
     {
         // Qualified object name for OBJECT_ID in the target database context.
         var sql = $"""
-            SELECT p.name AS param_name,
-                   t.name AS type_name,
-                   p.has_default_value,
-                   p.default_value,
-                   p.is_nullable
-            FROM {SqlIdentifier.Quote(databaseName)}.sys.parameters p
-            INNER JOIN {SqlIdentifier.Quote(databaseName)}.sys.types t ON p.user_type_id = t.user_type_id
-            WHERE p.object_id = OBJECT_ID(N'{EscapeSqlLiteral(databaseName + "." + schema + "." + procedureName)}')
-              AND p.parameter_id > 0
-            ORDER BY p.parameter_id;
-            """;
+                   SELECT p.name AS param_name,
+                          t.name AS type_name,
+                          p.has_default_value,
+                          p.default_value,
+                          p.is_nullable
+                   FROM {SqlIdentifier.Quote(databaseName)}.sys.parameters p
+                   INNER JOIN {SqlIdentifier.Quote(databaseName)}.sys.types t ON p.user_type_id = t.user_type_id
+                   WHERE p.object_id = OBJECT_ID(N'{EscapeSqlLiteral(databaseName + "." + schema + "." + procedureName)}')
+                     AND p.parameter_id > 0
+                   ORDER BY p.parameter_id;
+                   """;
 
         await using var cmd = new SqlCommand(sql, connection);
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
@@ -115,9 +116,12 @@ public sealed class SqlProcedureMetadataSyncService(IConfiguration configuration
                 "smallint" => Convert.ToString(Convert.ToInt16(raw), System.Globalization.CultureInfo.InvariantCulture),
                 "int" => Convert.ToString(Convert.ToInt32(raw), System.Globalization.CultureInfo.InvariantCulture),
                 "bigint" => Convert.ToString(Convert.ToInt64(raw), System.Globalization.CultureInfo.InvariantCulture),
-                "decimal" or "numeric" or "money" or "smallmoney" or "float" or "real" => Convert.ToString(raw, System.Globalization.CultureInfo.InvariantCulture),
-                "varchar" or "nvarchar" or "char" or "nchar" or "text" or "ntext" => TrimQuotes(raw.ToString() ?? string.Empty),
-                "datetime" or "datetime2" or "date" or "time" or "smalldatetime" or "datetimeoffset" => Convert.ToString(raw, System.Globalization.CultureInfo.InvariantCulture),
+                "decimal" or "numeric" or "money" or "smallmoney" or "float" or "real" => Convert.ToString(raw,
+                    System.Globalization.CultureInfo.InvariantCulture),
+                "varchar" or "nvarchar" or "char" or "nchar" or "text" or "ntext" => TrimQuotes(raw.ToString() ??
+                    string.Empty),
+                "datetime" or "datetime2" or "date" or "time" or "smalldatetime" or "datetimeoffset" =>
+                    Convert.ToString(raw, System.Globalization.CultureInfo.InvariantCulture),
                 _ => raw.ToString()
             };
         }
@@ -133,6 +137,7 @@ public sealed class SqlProcedureMetadataSyncService(IConfiguration configuration
         {
             return value[1..^1];
         }
+
         return value;
     }
 

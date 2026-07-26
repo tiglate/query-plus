@@ -43,7 +43,7 @@ public sealed class CategoryService(
 
         return new PagedResult<CategoryListItemDto>
         {
-            Items = ObjectMapper.Map(items),
+            Items = CategoryMapper.ToListItemDtos(items),
             TotalCount = totalCount,
             Page = page,
             PageSize = pageSize
@@ -54,7 +54,7 @@ public sealed class CategoryService(
         CancellationToken cancellationToken = default)
     {
         var items = await categories.GetAllAsync(cancellationToken);
-        return ObjectMapper.Map(items);
+        return CategoryMapper.ToListItemDtos(items);
     }
 
     public async Task<CategoryDetailDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
@@ -72,7 +72,8 @@ public sealed class CategoryService(
         var description = dto.Description.Trim();
         if (await categories.ExistsByDescriptionAsync(description, cancellationToken: cancellationToken))
         {
-            throw new Common.ValidationException(nameof(dto.Description), "A category with this description already exists.");
+            throw new Common.ValidationException(nameof(dto.Description),
+                "A category with this description already exists.");
         }
 
         var entity = new Category { Description = description };
@@ -89,12 +90,13 @@ public sealed class CategoryService(
         await ValidationHelper.ValidateAndThrowAsync(updateValidator, dto, cancellationToken);
 
         var entity = await categories.GetByIdAsync(dto.Id, cancellationToken)
-            ?? throw new EntityNotFoundException(nameof(Category), dto.Id);
+                     ?? throw new EntityNotFoundException(nameof(Category), dto.Id);
 
         var description = dto.Description.Trim();
         if (await categories.ExistsByDescriptionAsync(description, dto.Id, cancellationToken))
         {
-            throw new Common.ValidationException(nameof(dto.Description), "A category with this description already exists.");
+            throw new Common.ValidationException(nameof(dto.Description),
+                "A category with this description already exists.");
         }
 
         entity.Description = description;
@@ -107,7 +109,7 @@ public sealed class CategoryService(
     public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
         var entity = await categories.GetByIdAsync(id, cancellationToken)
-            ?? throw new EntityNotFoundException(nameof(Category), id);
+                     ?? throw new EntityNotFoundException(nameof(Category), id);
 
         if (await categories.HasProceduresAsync(id, cancellationToken))
         {
@@ -122,7 +124,7 @@ public sealed class CategoryService(
         Category entity,
         CancellationToken cancellationToken)
     {
-        var dto = ObjectMapper.MapDetail(entity);
+        var dto = CategoryMapper.ToDetailDto(entity);
         var audit = await auditReader.GetCategoryAuditDetailsAsync(
             entity.IdCategory,
             cancellationToken);

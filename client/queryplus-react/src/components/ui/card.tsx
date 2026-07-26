@@ -1,7 +1,7 @@
 import type { HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+export function Card({ className, ...props }: Readonly<HTMLAttributes<HTMLDivElement>>) {
     return (
         <section
             className={cn(
@@ -13,7 +13,7 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
     );
 }
 
-export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+export function CardHeader({ className, ...props }: Readonly<HTMLAttributes<HTMLDivElement>>) {
     return (
         <div
             className={cn(
@@ -25,6 +25,6 @@ export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElemen
     );
 }
 
-export function CardBody({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+export function CardBody({ className, ...props }: Readonly<HTMLAttributes<HTMLDivElement>>) {
     return <div className={cn("p-4", className)} {...props} />;
 }

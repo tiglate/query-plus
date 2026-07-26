@@ -29,7 +29,6 @@ export default defineConfig(({ mode }) => {
                 output: {
                     entryFileNames: "assets/queryplus.js",
                     assetFileNames: "assets/[name][extname]",
-                    inlineDynamicImports: true,
                 },
             },
         },

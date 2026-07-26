@@ -1,7 +1,7 @@
 import type { SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
+export function Select({ className, ...props }: Readonly<SelectHTMLAttributes<HTMLSelectElement>>) {
     return (
         <select
             className={cn(
@@ -13,7 +13,10 @@ export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectE
     );
 }
 
-export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export function Textarea({
+    className,
+    ...props
+}: Readonly<TextareaHTMLAttributes<HTMLTextAreaElement>>) {
     return (
         <textarea
             className={cn(

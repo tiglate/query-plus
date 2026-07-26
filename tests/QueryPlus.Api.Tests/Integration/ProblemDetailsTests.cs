@@ -6,31 +6,28 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using NSubstitute;
 using QueryPlus.Api.Tests.Infrastructure;
 using QueryPlus.Application.Common;
-using QueryPlus.Domain.Exceptions;
+using QueryPlus.Application.DTOs.Categories;
+using QueryPlus.Application.DTOs.Execution;
+using QueryPlus.Domain.Entities;
 
 namespace QueryPlus.Api.Tests.Integration;
 
-public sealed class ProblemDetailsTests : IClassFixture<QueryPlusApiApplicationFactory>
+public sealed class ProblemDetailsTests(QueryPlusApiApplicationFactory factory)
+    : IClassFixture<QueryPlusApiApplicationFactory>
 {
-    private readonly QueryPlusApiApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    public ProblemDetailsTests(QueryPlusApiApplicationFactory factory)
+    private readonly HttpClient _client = factory.CreateClient(new WebApplicationFactoryClientOptions
     {
-        _factory = factory;
-        _client = factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            AllowAutoRedirect = false
-        });
-    }
+        AllowAutoRedirect = false
+    });
 
     [Fact]
     public async Task Validation_exception_returns_rfc7807_validation_problem()
     {
-        _factory.Execution.ExecuteAsync(Arg.Any<QueryPlus.Application.DTOs.Execution.ExecuteProcedureRequest>(), Arg.Any<CancellationToken>())
-            .Returns<QueryPlus.Application.DTOs.Execution.ExecutionResultDto>(_ => throw new ValidationException(new Dictionary<string, string[]> { ["Param"] = ["required"] }));
+        factory.Execution.ExecuteAsync(Arg.Any<ExecuteProcedureRequest>(), Arg.Any<CancellationToken>())
+            .Returns<ExecutionResultDto>(_ =>
+                throw new ValidationException(new Dictionary<string, string[]> { ["Param"] = ["required"] }));
 
-        var procedure = new QueryPlus.Domain.Entities.Procedure
+        var procedure = new Procedure
         {
             IdProcedure = 7,
             IdCategory = 1,
@@ -42,7 +39,7 @@ public sealed class ProblemDetailsTests : IClassFixture<QueryPlusApiApplicationF
             Parameters = [],
             Columns = []
         };
-        _factory.ProcedureRepository.GetEnabledByIdWithDetailsAsync(7, Arg.Any<CancellationToken>()).Returns(procedure);
+        factory.ProcedureRepository.GetEnabledByIdWithDetailsAsync(7, Arg.Any<CancellationToken>()).Returns(procedure);
 
         var token = await AntiforgeryApiHelper.GetTokenAsync(_client);
         using var request = new HttpRequestMessage(HttpMethod.Post, "/api/execute")
@@ -62,8 +59,8 @@ public sealed class ProblemDetailsTests : IClassFixture<QueryPlusApiApplicationF
     [Fact]
     public async Task Unhandled_exception_returns_generic_500_problem()
     {
-        _factory.Categories.GetByIdAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns<QueryPlus.Application.DTOs.Categories.CategoryDetailDto?>(_ => throw new InvalidOperationException("kaboom"));
+        factory.Categories.GetByIdAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns<CategoryDetailDto?>(_ => throw new InvalidOperationException("kaboom"));
 
         var token = await AntiforgeryApiHelper.GetTokenAsync(_client);
         var response = await _client.GetAsync("/api/categories/1");

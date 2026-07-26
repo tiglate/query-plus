@@ -50,8 +50,9 @@ const procedureSchema = z
             if (parameter.parameterType !== 6) return;
             try {
                 const parsed: unknown = JSON.parse(parameter.comboValues || "[]");
-                if (!Array.isArray(parsed) || parsed.some((item) => typeof item !== "string"))
-                    throw new Error();
+                if (!Array.isArray(parsed) || parsed.some((item) => typeof item !== "string")) {
+                    throw new Error("Invalid comboValues");
+                }
             } catch {
                 context.addIssue({
                     code: "custom",
@@ -168,7 +169,7 @@ export function ProcedureEditorPage() {
             }),
         onSuccess: async (saved) => {
             await queryClient.invalidateQueries({ queryKey: ["procedures"] });
-            void navigate(`/admin/procedures/${saved.id}`);
+            navigate(`/admin/procedures/${saved.id}`);
         },
     });
     const sync = useMutation({
@@ -188,8 +189,14 @@ export function ProcedureEditorPage() {
     });
     const parameterTypes = ["FreeText", "Numeric", "Date", "Time", "DateTime", "Boolean", "Combo"];
     const alignments = ["Left", "Center", "Right"];
-    const pageTitle = t(readOnly ? "Procedures_View" : id ? "Procedures_Edit" : "Procedures_New");
-
+    let pageTitle;
+    if (readOnly) {
+        pageTitle = t("Procedures_View");
+    } else if (id) {
+        pageTitle = t("Procedures_Edit");
+    } else {
+        pageTitle = t("Procedures_New");
+    }
     return (
         <form
             className="space-y-4 p-4"

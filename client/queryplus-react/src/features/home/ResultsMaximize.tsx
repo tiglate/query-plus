@@ -32,10 +32,7 @@ export function useResultsMaximize() {
 export function MaximizeButton({
     maximized,
     onToggle,
-}: {
-    maximized: boolean;
-    onToggle: () => void;
-}) {
+}: Readonly<{ maximized: boolean; onToggle: () => void }>) {
     const { t } = useTranslation();
     const label = t(maximized ? "Home_RestoreGrid" : "Home_MaximizeGrid");
     return (

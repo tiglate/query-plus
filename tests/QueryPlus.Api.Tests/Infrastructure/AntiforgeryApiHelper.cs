@@ -19,6 +19,7 @@ public static class AntiforgeryApiHelper
         {
             throw new InvalidOperationException("CSRF response did not contain 'token'.");
         }
+
         return tokenElement.GetString()
                ?? throw new InvalidOperationException("CSRF token was null.");
     }

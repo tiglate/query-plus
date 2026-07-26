@@ -5,19 +5,13 @@ using QueryPlus.Api.Tests.Infrastructure;
 
 namespace QueryPlus.Api.Tests.Integration;
 
-public sealed class AnonymousProtectionTests : IClassFixture<AnonymousQueryPlusApiApplicationFactory>
+public sealed class AnonymousProtectionTests(AnonymousQueryPlusApiApplicationFactory factory)
+    : IClassFixture<AnonymousQueryPlusApiApplicationFactory>
 {
-    private readonly AnonymousQueryPlusApiApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    public AnonymousProtectionTests(AnonymousQueryPlusApiApplicationFactory factory)
+    private readonly HttpClient _client = factory.CreateClient(new WebApplicationFactoryClientOptions
     {
-        _factory = factory;
-        _client = factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            AllowAutoRedirect = false
-        });
-    }
+        AllowAutoRedirect = false
+    });
 
     [Fact]
     public async Task Anonymous_health_remains_anonymous()

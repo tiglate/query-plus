@@ -18,7 +18,7 @@ export function applyTheme(theme: Theme): void {
 
 export function changeFontSize(delta: number): number {
     const stored = document.documentElement.dataset.fontSizeStep;
-    const parsed = stored === null || stored === undefined ? NaN : Number(stored);
+    const parsed = stored === null || stored === undefined ? Number.NaN : Number(stored);
     const current = Number.isFinite(parsed) ? parsed : DEFAULT_FONT_STEP;
     const step = Math.min(FONT_STEPS.length - 1, Math.max(0, Math.round(current) + delta));
     document.documentElement.style.fontSize = `${FONT_STEPS[step]}px`;

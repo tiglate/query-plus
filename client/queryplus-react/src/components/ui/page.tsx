@@ -18,7 +18,7 @@ interface SectionProps extends PropsWithChildren {
     actions?: ReactNode;
 }
 
-export function PageHeader({ title, icon, actions }: PageHeaderProps) {
+export function PageHeader({ title, icon, actions }: Readonly<PageHeaderProps>) {
     return (
         <Card>
             <CardHeader>
@@ -32,7 +32,7 @@ export function PageHeader({ title, icon, actions }: PageHeaderProps) {
     );
 }
 
-export function Field({ label, required, error, children }: FieldProps) {
+export function Field({ label, required, error, children }: Readonly<FieldProps>) {
     return (
         <label className="block min-w-0 text-small-label font-medium text-slate-700 dark:text-slate-200">
             <span className={required ? "after:ml-1 after:text-red-600 after:content-['*']" : ""}>
@@ -48,7 +48,7 @@ export function Field({ label, required, error, children }: FieldProps) {
     );
 }
 
-export function Section({ title, actions, children }: SectionProps) {
+export function Section({ title, actions, children }: Readonly<SectionProps>) {
     return (
         <Card>
             <CardHeader>

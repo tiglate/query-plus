@@ -32,7 +32,8 @@ public sealed class QueryPlusApiApplicationFactory : WebApplicationFactory<Progr
             "ConnectionStrings:DefaultConnection",
             "Server=127.0.0.1,1;Database=QueryPlus_Test;User Id=sa;Password=invalid;Connect Timeout=1;TrustServerCertificate=True");
         builder.UseSetting("Keycloak:Authority", "http://localhost:8080/realms/queryplus");
-        builder.UseSetting("Keycloak:MetadataAddress", "http://127.0.0.1:1/realms/queryplus/.well-known/openid-configuration");
+        builder.UseSetting("Keycloak:MetadataAddress",
+            "http://127.0.0.1:1/realms/queryplus/.well-known/openid-configuration");
         builder.UseSetting("Keycloak:ClientId", "test-client");
         builder.UseSetting("Keycloak:ClientSecret", "test-secret");
         builder.UseSetting("Keycloak:RequireHttpsMetadata", "false");
@@ -110,10 +111,12 @@ public sealed class QueryPlusApiApplicationFactory : WebApplicationFactory<Progr
     }
 }
 
-internal sealed class StaticConfigurationManager<T> : IConfigurationManager<T> where T : class
+internal sealed class StaticConfigurationManager<T>(T configuration) : IConfigurationManager<T>
+    where T : class
 {
-    private readonly T _configuration;
-    public StaticConfigurationManager(T configuration) => _configuration = configuration;
-    public Task<T> GetConfigurationAsync(CancellationToken cancel) => Task.FromResult(_configuration);
-    public void RequestRefresh() { }
+    public Task<T> GetConfigurationAsync(CancellationToken cancel) => Task.FromResult(configuration);
+
+    public void RequestRefresh()
+    {
+    }
 }

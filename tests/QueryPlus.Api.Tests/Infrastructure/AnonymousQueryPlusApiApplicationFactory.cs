@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using NSubstitute;
 using QueryPlus.Application.Interfaces;
@@ -32,7 +31,8 @@ public sealed class AnonymousQueryPlusApiApplicationFactory : WebApplicationFact
             "ConnectionStrings:DefaultConnection",
             "Server=127.0.0.1,1;Database=QueryPlus_Test;User Id=sa;Password=invalid;Connect Timeout=1;TrustServerCertificate=True");
         builder.UseSetting("Keycloak:Authority", "http://localhost:8080/realms/queryplus");
-        builder.UseSetting("Keycloak:MetadataAddress", "http://127.0.0.1:1/realms/queryplus/.well-known/openid-configuration");
+        builder.UseSetting("Keycloak:MetadataAddress",
+            "http://127.0.0.1:1/realms/queryplus/.well-known/openid-configuration");
         builder.UseSetting("Keycloak:ClientId", "test-client");
         builder.UseSetting("Keycloak:ClientSecret", "test-secret");
         builder.UseSetting("Keycloak:RequireHttpsMetadata", "false");

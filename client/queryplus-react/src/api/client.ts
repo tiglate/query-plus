@@ -33,20 +33,21 @@ async function parseResponse(response: Response): Promise<unknown> {
 }
 
 export async function getCsrfToken(): Promise<string> {
-    if (csrfToken) return csrfToken;
-    if (!csrfPromise) {
-        csrfPromise = fetch("/api/auth/csrf", { credentials: "include" })
-            .then(async (response) => {
-                if (!response.ok)
-                    throw new ApiError(response.status, "Unable to obtain CSRF token");
-                const body = (await response.json()) as { token: string };
-                csrfToken = body.token;
-                return body.token;
-            })
-            .finally(() => {
-                csrfPromise = null;
-            });
+    if (csrfToken) {
+        return csrfToken;
     }
+    csrfPromise ??= fetch("/api/auth/csrf", { credentials: "include" })
+        .then(async (response) => {
+            if (!response.ok) {
+                throw new ApiError(response.status, "Unable to obtain CSRF token");
+            }
+            const body = (await response.json()) as { token: string };
+            csrfToken = body.token;
+            return body.token;
+        })
+        .finally(() => {
+            csrfPromise = null;
+        });
     return csrfPromise;
 }
 

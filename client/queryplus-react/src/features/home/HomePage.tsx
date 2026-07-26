@@ -79,11 +79,11 @@ function ParameterControl({
     parameter,
     register,
     error,
-}: {
+}: Readonly<{
     parameter: ProcedureParameter;
     register: ReturnType<typeof useForm<ParameterFormValues>>["register"];
     error?: string;
-}) {
+}>) {
     const required = parameter.isRequired && parameter.parameterType !== 5;
     const name = parameter.name;
     const common = register(name, { required });
@@ -139,11 +139,11 @@ function ProcedureList({
     procedures,
     selectedId,
     onSelect,
-}: {
+}: Readonly<{
     procedures: ProcedureLookup[];
     selectedId: number | null;
     onSelect: (procedure: ProcedureLookup) => void;
-}) {
+}>) {
     const { t } = useTranslation();
     const groups = useMemo(() => {
         const map = new Map<string, ProcedureLookup[]>();

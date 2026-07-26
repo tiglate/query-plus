@@ -5,26 +5,22 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
+using QueryPlus.Api.Services;
 using QueryPlus.Api.Tests.Infrastructure;
 using QueryPlus.Application.DTOs.Execution;
 using QueryPlus.Domain.Entities;
 using QueryPlus.Domain.Enums;
+using QueryPlus.Domain.Exceptions;
 
 namespace QueryPlus.Api.Tests.Integration;
 
-public sealed class ExecuteApiTests : IClassFixture<QueryPlusApiApplicationFactory>
+public sealed class ExecuteApiTests(QueryPlusApiApplicationFactory factory)
+    : IClassFixture<QueryPlusApiApplicationFactory>
 {
-    private readonly QueryPlusApiApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    public ExecuteApiTests(QueryPlusApiApplicationFactory factory)
+    private readonly HttpClient _client = factory.CreateClient(new WebApplicationFactoryClientOptions
     {
-        _factory = factory;
-        _client = factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            AllowAutoRedirect = false
-        });
-    }
+        AllowAutoRedirect = false
+    });
 
     private async Task<HttpRequestMessage> AuthedJsonAsync(HttpMethod method, string url, HttpContent content)
     {
@@ -46,12 +42,24 @@ public sealed class ExecuteApiTests : IClassFixture<QueryPlusApiApplicationFacto
         SupportsPagination = false,
         Parameters =
         [
-            new ProcedureParameter { IdProcedureParameter = 1, IdProcedure = id, Caption = "Start", Name = "@Start", ParameterType = ParameterType.Date, IsRequired = false }
+            new ProcedureParameter
+            {
+                IdProcedureParameter = 1, IdProcedure = id, Caption = "Start", Name = "@Start",
+                ParameterType = ParameterType.Date, IsRequired = false
+            }
         ],
         Columns =
         [
-            new ProcedureColumn { IdProcedureColumn = 1, IdProcedure = id, TechnicalName = "Id", Caption = "Id", Alignment = ColumnAlignment.Left, Visible = true },
-            new ProcedureColumn { IdProcedureColumn = 2, IdProcedure = id, TechnicalName = "HiddenCol", Caption = "Hidden", Alignment = ColumnAlignment.Left, Visible = false }
+            new ProcedureColumn
+            {
+                IdProcedureColumn = 1, IdProcedure = id, TechnicalName = "Id", Caption = "Id",
+                Alignment = ColumnAlignment.Left, Visible = true
+            },
+            new ProcedureColumn
+            {
+                IdProcedureColumn = 2, IdProcedure = id, TechnicalName = "HiddenCol", Caption = "Hidden",
+                Alignment = ColumnAlignment.Left, Visible = false
+            }
         ]
     };
 
@@ -80,7 +88,8 @@ public sealed class ExecuteApiTests : IClassFixture<QueryPlusApiApplicationFacto
         var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        await _factory.ProcedureRepository.DidNotReceive().GetEnabledByIdWithDetailsAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await factory.ProcedureRepository.DidNotReceive()
+            .GetEnabledByIdWithDetailsAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -97,7 +106,7 @@ public sealed class ExecuteApiTests : IClassFixture<QueryPlusApiApplicationFacto
     [Fact]
     public async Task Procedure_not_found_returns_404_and_clears_eligibility()
     {
-        _factory.ProcedureRepository.GetEnabledByIdWithDetailsAsync(99, Arg.Any<CancellationToken>())
+        factory.ProcedureRepository.GetEnabledByIdWithDetailsAsync(99, Arg.Any<CancellationToken>())
             .Returns((Procedure?)null);
 
         using var request = await AuthedJsonAsync(HttpMethod.Post, "/api/execute",
@@ -123,11 +132,15 @@ public sealed class ExecuteApiTests : IClassFixture<QueryPlusApiApplicationFacto
             SupportsPagination = false,
             Parameters =
             [
-                new ProcedureParameter { IdProcedureParameter = 1, IdProcedure = 11, Caption = "Start", Name = "@Start", ParameterType = ParameterType.Date, IsRequired = true }
+                new ProcedureParameter
+                {
+                    IdProcedureParameter = 1, IdProcedure = 11, Caption = "Start", Name = "@Start",
+                    ParameterType = ParameterType.Date, IsRequired = true
+                }
             ],
             Columns = []
         };
-        _factory.ProcedureRepository.GetEnabledByIdWithDetailsAsync(11, Arg.Any<CancellationToken>())
+        factory.ProcedureRepository.GetEnabledByIdWithDetailsAsync(11, Arg.Any<CancellationToken>())
             .Returns(procedure);
 
         using var request = await AuthedJsonAsync(HttpMethod.Post, "/api/execute",
@@ -136,7 +149,7 @@ public sealed class ExecuteApiTests : IClassFixture<QueryPlusApiApplicationFacto
         var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        _factory.Execution.DidNotReceive().ExecuteAsync(
+        await factory.Execution.DidNotReceive().ExecuteAsync(
             Arg.Is<ExecuteProcedureRequest>(r => r.ProcedureId == 11),
             Arg.Any<CancellationToken>());
     }
@@ -145,9 +158,9 @@ public sealed class ExecuteApiTests : IClassFixture<QueryPlusApiApplicationFacto
     public async Task Successful_execute_returns_visible_columns_and_row_array()
     {
         var procedure = SampleProcedure(12);
-        _factory.ProcedureRepository.GetEnabledByIdWithDetailsAsync(12, Arg.Any<CancellationToken>())
+        factory.ProcedureRepository.GetEnabledByIdWithDetailsAsync(12, Arg.Any<CancellationToken>())
             .Returns(procedure);
-        _factory.Execution.ExecuteAsync(Arg.Any<ExecuteProcedureRequest>(), Arg.Any<CancellationToken>())
+        factory.Execution.ExecuteAsync(Arg.Any<ExecuteProcedureRequest>(), Arg.Any<CancellationToken>())
             .Returns(new ExecutionResultDto
             {
                 Success = true,
@@ -156,8 +169,13 @@ public sealed class ExecuteApiTests : IClassFixture<QueryPlusApiApplicationFacto
                 RowCount = 1,
                 Columns =
                 [
-                    new GridColumnDto { TechnicalName = "Id", Caption = "Id", Alignment = ColumnAlignment.Left, Visible = true },
-                    new GridColumnDto { TechnicalName = "HiddenCol", Caption = "Hidden", Alignment = ColumnAlignment.Left, Visible = false }
+                    new GridColumnDto
+                        { TechnicalName = "Id", Caption = "Id", Alignment = ColumnAlignment.Left, Visible = true },
+                    new GridColumnDto
+                    {
+                        TechnicalName = "HiddenCol", Caption = "Hidden", Alignment = ColumnAlignment.Left,
+                        Visible = false
+                    }
                 ],
                 Data = BuildDataTable()
             });
@@ -174,7 +192,7 @@ public sealed class ExecuteApiTests : IClassFixture<QueryPlusApiApplicationFacto
         raw.Should().Contain("\"Id\"");
         raw.Should().NotContain("\"HiddenCol\"");
         raw.Should().Contain("\"rows\":[[1");
-        _factory.Execution.Received(1).ExecuteAsync(
+        await factory.Execution.Received(1).ExecuteAsync(
             Arg.Is<ExecuteProcedureRequest>(r => r.ProcedureId == 12),
             Arg.Any<CancellationToken>());
     }
@@ -183,9 +201,9 @@ public sealed class ExecuteApiTests : IClassFixture<QueryPlusApiApplicationFacto
     public async Task Successful_execute_marks_eligible_for_export()
     {
         var procedure = SampleProcedure(13);
-        _factory.ProcedureRepository.GetEnabledByIdWithDetailsAsync(13, Arg.Any<CancellationToken>())
+        factory.ProcedureRepository.GetEnabledByIdWithDetailsAsync(13, Arg.Any<CancellationToken>())
             .Returns(procedure);
-        _factory.Execution.ExecuteAsync(Arg.Any<ExecuteProcedureRequest>(), Arg.Any<CancellationToken>())
+        factory.Execution.ExecuteAsync(Arg.Any<ExecuteProcedureRequest>(), Arg.Any<CancellationToken>())
             .Returns(new ExecutionResultDto
             {
                 Success = true,
@@ -201,7 +219,7 @@ public sealed class ExecuteApiTests : IClassFixture<QueryPlusApiApplicationFacto
         var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var eligibility = _factory.Services.GetRequiredService<QueryPlus.Api.Services.ExportEligibilityService>();
+        var eligibility = factory.Services.GetRequiredService<ExportEligibilityService>();
         eligibility.TryValidate("test-user", 13, new Dictionary<string, string?>(), out _).Should().BeTrue();
     }
 
@@ -209,9 +227,9 @@ public sealed class ExecuteApiTests : IClassFixture<QueryPlusApiApplicationFacto
     public async Task Zero_rows_does_not_mark_eligible()
     {
         var procedure = SampleProcedure(14);
-        _factory.ProcedureRepository.GetEnabledByIdWithDetailsAsync(14, Arg.Any<CancellationToken>())
+        factory.ProcedureRepository.GetEnabledByIdWithDetailsAsync(14, Arg.Any<CancellationToken>())
             .Returns(procedure);
-        _factory.Execution.ExecuteAsync(Arg.Any<ExecuteProcedureRequest>(), Arg.Any<CancellationToken>())
+        factory.Execution.ExecuteAsync(Arg.Any<ExecuteProcedureRequest>(), Arg.Any<CancellationToken>())
             .Returns(new ExecutionResultDto
             {
                 Success = true,
@@ -227,7 +245,7 @@ public sealed class ExecuteApiTests : IClassFixture<QueryPlusApiApplicationFacto
         var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var eligibility = _factory.Services.GetRequiredService<QueryPlus.Api.Services.ExportEligibilityService>();
+        var eligibility = factory.Services.GetRequiredService<ExportEligibilityService>();
         eligibility.TryValidate("test-user", 14, new Dictionary<string, string?>(), out _).Should().BeFalse();
     }
 
@@ -235,9 +253,9 @@ public sealed class ExecuteApiTests : IClassFixture<QueryPlusApiApplicationFacto
     public async Task Failed_execute_clears_eligibility()
     {
         var procedure = SampleProcedure(15);
-        _factory.ProcedureRepository.GetEnabledByIdWithDetailsAsync(15, Arg.Any<CancellationToken>())
+        factory.ProcedureRepository.GetEnabledByIdWithDetailsAsync(15, Arg.Any<CancellationToken>())
             .Returns(procedure);
-        _factory.Execution.ExecuteAsync(Arg.Any<ExecuteProcedureRequest>(), Arg.Any<CancellationToken>())
+        factory.Execution.ExecuteAsync(Arg.Any<ExecuteProcedureRequest>(), Arg.Any<CancellationToken>())
             .Returns(new ExecutionResultDto { Success = false, ProcedureId = 15, ErrorMessage = "boom" });
 
         using var request = await AuthedJsonAsync(HttpMethod.Post, "/api/execute",
@@ -246,7 +264,7 @@ public sealed class ExecuteApiTests : IClassFixture<QueryPlusApiApplicationFacto
         var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var eligibility = _factory.Services.GetRequiredService<QueryPlus.Api.Services.ExportEligibilityService>();
+        var eligibility = factory.Services.GetRequiredService<ExportEligibilityService>();
         eligibility.TryValidate("test-user", 15, new Dictionary<string, string?>(), out _).Should().BeFalse();
     }
 
@@ -254,10 +272,10 @@ public sealed class ExecuteApiTests : IClassFixture<QueryPlusApiApplicationFacto
     public async Task Forbidden_exception_maps_to_403()
     {
         var procedure = SampleProcedure(16);
-        _factory.ProcedureRepository.GetEnabledByIdWithDetailsAsync(16, Arg.Any<CancellationToken>())
+        factory.ProcedureRepository.GetEnabledByIdWithDetailsAsync(16, Arg.Any<CancellationToken>())
             .Returns(procedure);
-        _factory.Execution.ExecuteAsync(Arg.Any<ExecuteProcedureRequest>(), Arg.Any<CancellationToken>())
-            .Returns<ExecutionResultDto>(_ => throw new QueryPlus.Domain.Exceptions.ForbiddenOperationException("nope"));
+        factory.Execution.ExecuteAsync(Arg.Any<ExecuteProcedureRequest>(), Arg.Any<CancellationToken>())
+            .Returns<ExecutionResultDto>(_ => throw new ForbiddenOperationException("nope"));
 
         using var request = await AuthedJsonAsync(HttpMethod.Post, "/api/execute",
             JsonContent.Create(new { procedureId = 16, parameterValues = new Dictionary<string, string?>() }));
@@ -271,10 +289,10 @@ public sealed class ExecuteApiTests : IClassFixture<QueryPlusApiApplicationFacto
     public async Task Not_found_exception_maps_to_404()
     {
         var procedure = SampleProcedure(17);
-        _factory.ProcedureRepository.GetEnabledByIdWithDetailsAsync(17, Arg.Any<CancellationToken>())
+        factory.ProcedureRepository.GetEnabledByIdWithDetailsAsync(17, Arg.Any<CancellationToken>())
             .Returns(procedure);
-        _factory.Execution.ExecuteAsync(Arg.Any<ExecuteProcedureRequest>(), Arg.Any<CancellationToken>())
-            .Returns<ExecutionResultDto>(_ => throw new QueryPlus.Domain.Exceptions.EntityNotFoundException("Procedure", 17));
+        factory.Execution.ExecuteAsync(Arg.Any<ExecuteProcedureRequest>(), Arg.Any<CancellationToken>())
+            .Returns<ExecutionResultDto>(_ => throw new EntityNotFoundException("Procedure", 17));
 
         using var request = await AuthedJsonAsync(HttpMethod.Post, "/api/execute",
             JsonContent.Create(new { procedureId = 17, parameterValues = new Dictionary<string, string?>() }));

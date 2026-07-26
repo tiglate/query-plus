@@ -10,42 +10,41 @@ using QueryPlus.Application.DTOs.Procedures;
 
 namespace QueryPlus.Api.Tests.Integration;
 
-public sealed class ExecutionLogsApiTests : IClassFixture<QueryPlusApiApplicationFactory>
+public sealed class ExecutionLogsApiTests(QueryPlusApiApplicationFactory factory)
+    : IClassFixture<QueryPlusApiApplicationFactory>
 {
-    private readonly QueryPlusApiApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    public ExecutionLogsApiTests(QueryPlusApiApplicationFactory factory)
+    private readonly HttpClient _client = factory.CreateClient(new WebApplicationFactoryClientOptions
     {
-        _factory = factory;
-        _client = factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            AllowAutoRedirect = false
-        });
-    }
+        AllowAutoRedirect = false
+    });
 
     [Fact]
     public async Task Search_returns_paged_results_with_all_filters()
     {
-        _factory.Execution.SearchAsync(Arg.Any<ExecutionLogFilterDto>(), Arg.Any<CancellationToken>())
+        factory.Execution.SearchAsync(Arg.Any<ExecutionLogFilterDto>(), Arg.Any<CancellationToken>())
             .Returns(new PagedResult<ExecutionLogListItemDto>
             {
-                Items = [new ExecutionLogListItemDto
-                {
-                    Id = 1, ProcedureId = 7, ProcedureCaption = "Demo", Username = "u",
-                    ExecutionStart = DateTime.UtcNow, Success = true
-                }],
+                Items =
+                [
+                    new ExecutionLogListItemDto
+                    {
+                        Id = 1, ProcedureId = 7, ProcedureCaption = "Demo", Username = "u",
+                        ExecutionStart = DateTime.UtcNow, Success = true
+                    }
+                ],
                 TotalCount = 1,
                 Page = 1,
                 PageSize = 20
             });
 
-        var response = await _client.GetAsync("/api/execution-logs?username=u&procedureId=7&success=true&startFrom=2024-01-01&startTo=2024-12-31&pageNumber=1&pageSize=20");
+        var response =
+            await _client.GetAsync(
+                "/api/execution-logs?username=u&procedureId=7&success=true&startFrom=2024-01-01&startTo=2024-12-31&pageNumber=1&pageSize=20");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var json = await response.Content.ReadFromJsonAsync<PagedResult<ExecutionLogListItemDto>>();
         json!.Items.Should().ContainSingle();
-        await _factory.Execution.Received(1).SearchAsync(
+        await factory.Execution.Received(1).SearchAsync(
             Arg.Is<ExecutionLogFilterDto>(f =>
                 f.Username == "u" &&
                 f.ProcedureId == 7 &&
@@ -60,7 +59,7 @@ public sealed class ExecutionLogsApiTests : IClassFixture<QueryPlusApiApplicatio
     [Fact]
     public async Task Procedure_lookup_returns_list()
     {
-        _factory.Procedures.ListAllAsync(Arg.Any<CancellationToken>())
+        factory.Procedures.ListAllAsync(Arg.Any<CancellationToken>())
             .Returns([new ProcedureLookupDto { Id = 7, CategoryId = 1, Caption = "Demo", RoleEntitlement = "user" }]);
 
         var response = await _client.GetAsync("/api/execution-logs/procedures");
@@ -73,13 +72,13 @@ public sealed class ExecutionLogsApiTests : IClassFixture<QueryPlusApiApplicatio
     [Fact]
     public async Task Recent_logs_endpoint_resolves_via_service_helper()
     {
-        _factory.Execution.GetRecentByProcedureAsync(7, 10, Arg.Any<CancellationToken>())
+        factory.Execution.GetRecentByProcedureAsync(7, 10, Arg.Any<CancellationToken>())
             .ReturnsForAnyArgs(new List<ExecutionLogDto>
             {
                 new() { Id = 1, ProcedureId = 7, Username = "u", ExecutionStart = DateTime.UtcNow, Success = true }
             });
 
-        var result = await _factory.Execution.GetRecentByProcedureAsync(7, 10);
+        var result = await factory.Execution.GetRecentByProcedureAsync(7, 10);
 
         result.Should().ContainSingle();
     }

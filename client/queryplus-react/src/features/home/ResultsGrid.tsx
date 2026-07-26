@@ -38,11 +38,11 @@ function clamp(value: number): number {
 }
 
 function currentRowHeight(): number {
-    const size = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    const size = Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
     return Math.round((Number.isFinite(size) ? size : 17) * 2);
 }
 
-export function ResultsGrid({ columns: sourceColumns, rows, meta }: ResultsGridProps) {
+export function ResultsGrid({ columns: sourceColumns, rows, meta }: Readonly<ResultsGridProps>) {
     const visible = useMemo(
         () =>
             sourceColumns
@@ -119,9 +119,9 @@ export function ResultsGrid({ columns: sourceColumns, rows, meta }: ResultsGridP
             const stride = total > SAMPLE_SIZE ? Math.floor(total / SAMPLE_SIZE) : 1;
             const bodyCeiling = MAX_COLUMN_WIDTH - CELL_PADDING_PX;
             const next: Record<number, number> = {};
-            for (let v = 0; v < visible.length; v += 1) {
+            for (const element of visible) {
                 if (cancelled) return;
-                const entry = visible[v];
+                const entry = element;
                 if (!entry) continue;
                 const { column, sourceIndex } = entry;
                 if (userSizedRef.current.has(sourceIndex)) continue;

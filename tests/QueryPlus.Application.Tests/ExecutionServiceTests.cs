@@ -82,7 +82,8 @@ public class ExecutionServiceTests
     public async Task SearchAsync_ConvertsLocalDateRange_ToUtcBounds()
     {
         ExecutionLogSearchCriteria? captured = null;
-        _executions.SearchAsync(Arg.Do<ExecutionLogSearchCriteria>(c => captured = c), 1, 20, Arg.Any<CancellationToken>())
+        _executions.SearchAsync(Arg.Do<ExecutionLogSearchCriteria>(c => captured = c), 1, 20,
+                Arg.Any<CancellationToken>())
             .Returns(([], 0));
 
         var from = new DateTime(2026, 7, 1);

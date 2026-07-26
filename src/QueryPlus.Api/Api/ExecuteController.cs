@@ -88,7 +88,8 @@ public sealed class ExecuteController(
         }
     }
 
-    private static Dictionary<string, string?> Normalize(IDictionary<string, string?>? source, out List<string> reserved)
+    private static Dictionary<string, string?> Normalize(IDictionary<string, string?>? source,
+        out List<string> reserved)
     {
         reserved = [];
         var result = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);

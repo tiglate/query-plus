@@ -4,25 +4,20 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
+using QueryPlus.Api.Services;
 using QueryPlus.Api.Tests.Infrastructure;
 using QueryPlus.Application.DTOs.Procedures;
 using QueryPlus.Application.Interfaces;
 
 namespace QueryPlus.Api.Tests.Integration;
 
-public sealed class ExportsApiTests : IClassFixture<QueryPlusApiApplicationFactory>
+public sealed class ExportsApiTests(QueryPlusApiApplicationFactory factory)
+    : IClassFixture<QueryPlusApiApplicationFactory>
 {
-    private readonly QueryPlusApiApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    public ExportsApiTests(QueryPlusApiApplicationFactory factory)
+    private readonly HttpClient _client = factory.CreateClient(new WebApplicationFactoryClientOptions
     {
-        _factory = factory;
-        _client = factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            AllowAutoRedirect = false
-        });
-    }
+        AllowAutoRedirect = false
+    });
 
     private async Task<HttpRequestMessage> AuthedJsonAsync(HttpMethod method, string url, HttpContent content)
     {
@@ -52,7 +47,8 @@ public sealed class ExportsApiTests : IClassFixture<QueryPlusApiApplicationFacto
         var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        _factory.Exports.DidNotReceive().QueueExport(Arg.Any<int>(), Arg.Any<Dictionary<string, string?>>(), Arg.Any<string>());
+        factory.Exports.DidNotReceive()
+            .QueueExport(Arg.Any<int>(), Arg.Any<Dictionary<string, string?>>(), Arg.Any<string>());
     }
 
     [Fact]
@@ -73,11 +69,11 @@ public sealed class ExportsApiTests : IClassFixture<QueryPlusApiApplicationFacto
     [Fact]
     public async Task Queue_after_eligible_execute_returns_202_with_job_id()
     {
-        var eligibility = _factory.Services.GetRequiredService<QueryPlus.Api.Services.ExportEligibilityService>();
+        var eligibility = factory.Services.GetRequiredService<ExportEligibilityService>();
         eligibility.MarkEligible("test-user", 7, new Dictionary<string, string?>(), 5);
-        _factory.Procedures.GetByIdAsync(7, Arg.Any<CancellationToken>()).Returns(EnabledDetail(7));
+        factory.Procedures.GetByIdAsync(7, Arg.Any<CancellationToken>()).Returns(EnabledDetail(7));
         var jobId = Guid.NewGuid();
-        _factory.Exports.QueueExport(7, Arg.Any<IDictionary<string, string?>>(), "test-user").Returns(jobId);
+        factory.Exports.QueueExport(7, Arg.Any<IDictionary<string, string?>>(), "test-user").Returns(jobId);
 
         using var request = await AuthedJsonAsync(HttpMethod.Post, "/api/exports",
             JsonContent.Create(new { procedureId = 7, parameterValues = new Dictionary<string, string?>() }));
@@ -86,15 +82,15 @@ public sealed class ExportsApiTests : IClassFixture<QueryPlusApiApplicationFacto
 
         response.StatusCode.Should().Be(HttpStatusCode.Accepted);
         response.Headers.Location.Should().NotBeNull();
-        _factory.Exports.Received(1).QueueExport(7, Arg.Any<IDictionary<string, string?>>(), "test-user");
+        factory.Exports.Received(1).QueueExport(7, Arg.Any<IDictionary<string, string?>>(), "test-user");
     }
 
     [Fact]
     public async Task Queue_for_disabled_procedure_returns_404()
     {
-        var eligibility = _factory.Services.GetRequiredService<QueryPlus.Api.Services.ExportEligibilityService>();
+        var eligibility = factory.Services.GetRequiredService<ExportEligibilityService>();
         eligibility.MarkEligible("test-user", 7, new Dictionary<string, string?>(), 5);
-        _factory.Procedures.GetByIdAsync(7, Arg.Any<CancellationToken>()).Returns(new ProcedureDetailDto
+        factory.Procedures.GetByIdAsync(7, Arg.Any<CancellationToken>()).Returns(new ProcedureDetailDto
         {
             Id = 7,
             CategoryId = 1,
@@ -117,7 +113,7 @@ public sealed class ExportsApiTests : IClassFixture<QueryPlusApiApplicationFacto
     public async Task Status_for_owned_job_returns_200()
     {
         var jobId = Guid.NewGuid();
-        _factory.Exports.GetJob(jobId).Returns(new ExportJobDto
+        factory.Exports.GetJob(jobId).Returns(new ExportJobDto
         {
             Id = jobId,
             Status = ExportJobStatus.Completed,
@@ -139,7 +135,7 @@ public sealed class ExportsApiTests : IClassFixture<QueryPlusApiApplicationFacto
     public async Task Status_for_missing_job_returns_404()
     {
         var jobId = Guid.NewGuid();
-        _factory.Exports.GetJob(jobId).Returns((ExportJobDto?)null);
+        factory.Exports.GetJob(jobId).Returns((ExportJobDto?)null);
 
         var response = await _client.GetAsync($"/api/exports/{jobId}");
 
@@ -150,7 +146,7 @@ public sealed class ExportsApiTests : IClassFixture<QueryPlusApiApplicationFacto
     public async Task Status_for_other_user_job_returns_404()
     {
         var jobId = Guid.NewGuid();
-        _factory.Exports.GetJob(jobId).Returns(new ExportJobDto
+        factory.Exports.GetJob(jobId).Returns(new ExportJobDto
         {
             Id = jobId,
             Status = ExportJobStatus.Completed,
@@ -166,14 +162,14 @@ public sealed class ExportsApiTests : IClassFixture<QueryPlusApiApplicationFacto
     public async Task Download_when_file_path_missing_returns_404()
     {
         var jobId = Guid.NewGuid();
-        _factory.Exports.GetJob(jobId).Returns(new ExportJobDto
+        factory.Exports.GetJob(jobId).Returns(new ExportJobDto
         {
             Id = jobId,
             Status = ExportJobStatus.Completed,
             Username = "test-user",
             FileName = "demo.xlsx"
         });
-        _factory.Exports.GetFilePath(jobId).Returns((string?)null);
+        factory.Exports.GetFilePath(jobId).Returns((string?)null);
 
         var response = await _client.GetAsync($"/api/exports/{jobId}/download");
 

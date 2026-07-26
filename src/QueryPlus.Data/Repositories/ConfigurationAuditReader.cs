@@ -15,7 +15,8 @@ public sealed class ConfigurationAuditReader(ApplicationDbContext db) : IConfigu
         var revisions = await db.CategoryAudits
             .AsNoTracking()
             .Where(a => a.IdCategory == categoryId)
-            .Select(a => new AuditRevision(a.IdRevisionType, a.Revision.Username, a.Revision.RevisionTimestamp, a.IdRevision))
+            .Select(a =>
+                new AuditRevision(a.IdRevisionType, a.Revision.Username, a.Revision.RevisionTimestamp, a.IdRevision))
             .ToListAsync(cancellationToken);
 
         return BuildDetails(revisions);
@@ -28,7 +29,8 @@ public sealed class ConfigurationAuditReader(ApplicationDbContext db) : IConfigu
         var revisions = await db.ProcedureAudits
             .AsNoTracking()
             .Where(a => a.IdProcedure == procedureId)
-            .Select(a => new AuditRevision(a.IdRevisionType, a.Revision.Username, a.Revision.RevisionTimestamp, a.IdRevision))
+            .Select(a =>
+                new AuditRevision(a.IdRevisionType, a.Revision.Username, a.Revision.RevisionTimestamp, a.IdRevision))
             .ToListAsync(cancellationToken);
 
         return BuildDetails(revisions);

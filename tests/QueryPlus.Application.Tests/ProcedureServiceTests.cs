@@ -96,7 +96,8 @@ public class ProcedureServiceTests
         _categories.GetByIdAsync(1).Returns(new Category { IdCategory = 1, Description = "Cat" });
         _procedures.ExistsByCaptionAsync(Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<CancellationToken>())
             .Returns(false);
-        _procedures.ExistsByDatabaseAndNameAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<CancellationToken>())
+        _procedures.ExistsByDatabaseAndNameAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int?>(),
+                Arg.Any<CancellationToken>())
             .Returns(false);
         _procedures.When(x => x.AddAsync(Arg.Any<Procedure>(), Arg.Any<CancellationToken>()))
             .Do(ci =>

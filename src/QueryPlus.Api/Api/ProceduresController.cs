@@ -21,7 +21,7 @@ public sealed class ProceduresController(IProcedureService procedures, IProcedur
         bool? enabled, string? databaseName, string? procedureName, int pageNumber = 1,
         int pageSize = PagedResult<ProcedureListItemDto>.DefaultPageSize,
         CancellationToken cancellationToken = default) => procedures.SearchAsync(
-        new()
+        new ProcedureFilterDto
         {
             CategoryId = categoryId, Caption = caption, RoleEntitlement = roleEntitlement, Enabled = enabled,
             DatabaseName = databaseName, ProcedureName = procedureName, Page = pageNumber, PageSize = pageSize

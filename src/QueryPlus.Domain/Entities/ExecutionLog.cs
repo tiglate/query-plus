@@ -13,8 +13,10 @@ public class ExecutionLog
     public DateTime? ExecutionEnd { get; set; }
     public bool Success { get; set; } = true;
     public string? ErrorMessage { get; set; }
+
     /// <summary>JSON of parameter values used in the run.</summary>
     public string? ParameterValues { get; set; }
+
     public int? RowCount { get; set; }
 
     public Procedure Procedure { get; set; } = null!;

@@ -7,19 +7,15 @@ using QueryPlus.Api.Tests.Infrastructure;
 
 namespace QueryPlus.Api.Tests.Integration;
 
-public sealed class AuthAndDefaultDenyTests : IClassFixture<QueryPlusApiApplicationFactory>
+public sealed class AuthAndDefaultDenyTests(QueryPlusApiApplicationFactory factory)
+    : IClassFixture<QueryPlusApiApplicationFactory>
 {
-    private readonly QueryPlusApiApplicationFactory _factory;
-    private readonly HttpClient _client;
+    private readonly QueryPlusApiApplicationFactory _factory = factory;
 
-    public AuthAndDefaultDenyTests(QueryPlusApiApplicationFactory factory)
+    private readonly HttpClient _client = factory.CreateClient(new WebApplicationFactoryClientOptions
     {
-        _factory = factory;
-        _client = factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            AllowAutoRedirect = false
-        });
-    }
+        AllowAutoRedirect = false
+    });
 
     [Fact]
     public async Task Anonymous_health_returns_ok()
@@ -40,7 +36,9 @@ public sealed class AuthAndDefaultDenyTests : IClassFixture<QueryPlusApiApplicat
         var json = await response.Content.ReadFromJsonAsync<JsonElement>();
         json.GetProperty("token").GetString().Should().NotBeNullOrWhiteSpace();
         response.Headers.Should().Contain(h => h.Key == "Set-Cookie"
-            && h.Value.Any(v => v.StartsWith($"{AntiforgeryApiHelper.CsrfCookieName}=", StringComparison.OrdinalIgnoreCase)));
+                                               && h.Value.Any(v =>
+                                                   v.StartsWith($"{AntiforgeryApiHelper.CsrfCookieName}=",
+                                                       StringComparison.OrdinalIgnoreCase)));
     }
 
     [Fact]
