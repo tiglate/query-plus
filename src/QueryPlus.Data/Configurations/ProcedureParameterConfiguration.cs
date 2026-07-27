@@ -56,6 +56,11 @@ public class ProcedureParameterConfiguration : IEntityTypeConfiguration<Procedur
             .IsRequired()
             .HasDefaultValue(false);
 
+        builder.Property(e => e.IsSensitive)
+            .HasColumnName("is_sensitive")
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.Property(e => e.CreatedAt)
             .HasColumnName("created_at")
             .HasColumnType("datetime2")

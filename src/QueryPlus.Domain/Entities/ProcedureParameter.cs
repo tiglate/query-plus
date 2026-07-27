@@ -21,6 +21,9 @@ public class ProcedureParameter : IHasTimestamps, IAuditedEntity
     /// <summary>When true, execution requires a non-empty value (or a configured default).</summary>
     public bool IsRequired { get; set; }
 
+    /// <summary>When true, parameter values are redacted/masked in execution audit logs.</summary>
+    public bool IsSensitive { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 

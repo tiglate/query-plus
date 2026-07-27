@@ -11,4 +11,5 @@ public sealed class SaveProcedureParameterDto
     public string? DefaultValue { get; init; }
     public string? ComboValues { get; init; }
     public bool IsRequired { get; init; }
+    public bool IsSensitive { get; init; }
 }

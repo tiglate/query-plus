@@ -20,6 +20,7 @@ public static class ProcedureParameterMapper
         DefaultValue = entity.DefaultValue,
         ComboValues = entity.ComboValues,
         IsRequired = entity.IsRequired,
+        IsSensitive = entity.IsSensitive,
     };
 
     public static IReadOnlyList<ProcedureParameterDto> ToDtos(IEnumerable<ProcedureParameter> entities) =>

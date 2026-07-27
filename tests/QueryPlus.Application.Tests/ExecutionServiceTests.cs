@@ -97,4 +97,51 @@ public class ExecutionServiceTests
         // Upper bound is exclusive and covers the whole "to" calendar day.
         captured.StartTo.Should().Be(DateTime.SpecifyKind(to.AddDays(1), DateTimeKind.Local).ToUniversalTime());
     }
+
+    [Fact]
+    public async Task ExecuteAsync_RedactsSensitiveParameters_InExecutionLog()
+    {
+        var procedure = new Procedure
+        {
+            IdProcedure = 10,
+            IdCategory = 1,
+            Caption = "Auth Proc",
+            DatabaseName = "DB",
+            ProcedureName = "sp_auth",
+            Enabled = true,
+            RoleEntitlement = "",
+            Parameters = new List<ProcedureParameter>
+            {
+                new() { IdProcedureParameter = 1, Name = "@Username", Caption = "User", ParameterType = Domain.Enums.ParameterType.FreeText, IsSensitive = false },
+                new() { IdProcedureParameter = 2, Name = "@Password", Caption = "Pass", ParameterType = Domain.Enums.ParameterType.FreeText, IsSensitive = true }
+            }
+        };
+
+        _user.IsAuthenticated.Returns(true);
+        _user.Username.Returns("admin");
+        _procedures.GetEnabledByIdWithDetailsAsync(10, Arg.Any<CancellationToken>()).Returns(procedure);
+
+        ExecutionLog? savedLog = null;
+        await _executions.AddAsync(Arg.Do<ExecutionLog>(l => savedLog = l), Arg.Any<CancellationToken>());
+
+        _executor.ExecuteAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, object?>>(), Arg.Any<IReadOnlyCollection<string>?>(), Arg.Any<CancellationToken>())
+            .Returns(new StoredProcedureExecutionResult { Data = new System.Data.DataTable() });
+
+        var request = new ExecuteProcedureRequest
+        {
+            ProcedureId = 10,
+            ParameterValues = new Dictionary<string, string?>
+            {
+                ["@Username"] = "john_doe",
+                ["@Password"] = "SuperSecret123!"
+            }
+        };
+
+        await _sut.ExecuteAsync(request);
+
+        savedLog.Should().NotBeNull();
+        savedLog!.ParameterValues.Should().Contain("\"@Username\":\"john[_]doe\"");
+        savedLog.ParameterValues.Should().Contain("\"@Password\":\"***\"");
+        savedLog.ParameterValues.Should().NotContain("SuperSecret123!");
+    }
 }

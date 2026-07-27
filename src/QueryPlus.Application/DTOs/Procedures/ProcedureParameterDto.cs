@@ -18,6 +18,7 @@ public sealed class ProcedureParameterDto
     public string? ComboValues { get; init; }
 
     public bool IsRequired { get; init; }
+    public bool IsSensitive { get; init; }
 
     /// <summary>
     /// Parsed, trimmed entries from <see cref="ComboValues"/>. Returns an empty

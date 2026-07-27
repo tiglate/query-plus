@@ -47,14 +47,23 @@ public sealed class ExecutionService(
             request.PageNumber,
             request.PageSize);
 
+        var sensitiveNames = procedure.Parameters
+            .Where(p => p.IsSensitive)
+            .Select(p => SqlIdentifier.NormalizeParameterName(p.Name))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var loggedParameters = resolved.BoundUserParameters
+            .ToDictionary(
+                kv => kv.Key,
+                kv => sensitiveNames.Contains(kv.Key) ? "***" : kv.Value?.ToString());
+
         var log = new ExecutionLog
         {
             IdProcedure = procedure.IdProcedure,
             Username = currentUser.Username,
             IpAddress = currentUser.IpAddress,
             ExecutionStart = DateTime.UtcNow,
-            ParameterValues = JsonHelpers.Serialize(
-                resolved.BoundUserParameters.ToDictionary(kv => kv.Key, kv => kv.Value?.ToString())),
+            ParameterValues = JsonHelpers.Serialize(loggedParameters),
             Success = false
         };
 

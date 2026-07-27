@@ -28,20 +28,24 @@ builder.Services.AddAntiforgery(options =>
 });
 builder.Services.AddCors(options =>
 {
-    var allowedOrigins = (configuration: builder.Configuration, environment: builder.Environment) switch
-    {
-        { configuration: { } cfg } => cfg.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [],
-        _ => []
-    };
+    var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
     if (allowedOrigins.Length == 0)
     {
-        allowedOrigins =
-        [
-            "http://localhost:5132",
-            "https://localhost:7192",
-            "http://localhost:5173",
-            "http://localhost:5000"
-        ];
+        if (builder.Environment.IsDevelopment())
+        {
+            allowedOrigins =
+            [
+                "http://localhost:5132",
+                "https://localhost:7192",
+                "http://localhost:5173",
+                "http://localhost:5000"
+            ];
+        }
+        else
+        {
+            throw new InvalidOperationException(
+                "CORS origins ('Cors:AllowedOrigins') must be explicitly configured in non-Development environments.");
+        }
     }
 
     options.AddPolicy(CorsPolicyName, policy =>
@@ -78,13 +82,25 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapGet("/login",
     [AllowAnonymous](HttpContext context, string? returnUrl) => Results.Challenge(
-        new AuthenticationProperties { RedirectUri = IsLocal(returnUrl) ? returnUrl : "/" },
+        new AuthenticationProperties { RedirectUri = IsLocalUrl(returnUrl) ? returnUrl : "/" },
         [OpenIdConnectDefaults.AuthenticationScheme]));
 app.MapControllers();
 app.MapFallbackToFile("index.html").AllowAnonymous();
 app.Run();
 
-static bool IsLocal(string? url) => !string.IsNullOrWhiteSpace(url) && url.StartsWith('/') && !url.StartsWith("//") &&
-                                    !url.StartsWith("/\\");
+static bool IsLocalUrl(string? url)
+{
+    if (string.IsNullOrWhiteSpace(url))
+    {
+        return false;
+    }
+
+    if (url[0] != '/' || (url.Length > 1 && (url[1] == '/' || url[1] == '\\')))
+    {
+        return false;
+    }
+
+    return Uri.TryCreate(url, UriKind.Relative, out _);
+}
 
 public partial class Program;
