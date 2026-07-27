@@ -89,4 +89,25 @@ public class CategoryRepositoryTests : IDisposable
 
         hasProcs.Should().BeTrue();
     }
+
+    [Fact]
+    public async Task Update_And_Remove_Category()
+    {
+        var cat = new Category { Description = "To Update" };
+        await _sut.AddAsync(cat);
+        await _db.SaveChangesAsync();
+
+        cat.Description = "Updated";
+        _sut.Update(cat);
+        await _db.SaveChangesAsync();
+
+        var updated = await _sut.GetByIdAsync(cat.IdCategory);
+        updated!.Description.Should().Be("Updated");
+
+        _sut.Remove(cat);
+        await _db.SaveChangesAsync();
+
+        var removed = await _sut.GetByIdAsync(cat.IdCategory);
+        removed.Should().BeNull();
+    }
 }

@@ -21,8 +21,11 @@ public sealed class DemoDataSeeder(
 {
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Applying database migrations…");
-        await db.Database.MigrateAsync(cancellationToken);
+        if (db.Database.IsRelational())
+        {
+            logger.LogInformation("Applying database migrations…");
+            await db.Database.MigrateAsync(cancellationToken);
+        }
 
         var connectionString = configuration.GetConnectionString("DefaultConnection")
                                ?? throw new InvalidOperationException(
@@ -34,7 +37,15 @@ public sealed class DemoDataSeeder(
             databaseName = "QueryPlus";
         }
 
-        await InstallSqlObjectsAsync(connectionString, cancellationToken);
+        try
+        {
+            await InstallSqlObjectsAsync(connectionString, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Could not install demo SQL objects (database may be unreachable or non-SQL Server).");
+        }
+
         await SeedCatalogAsync(databaseName, cancellationToken);
 
         logger.LogInformation("Demo data seed completed for database {Database}.", databaseName);
