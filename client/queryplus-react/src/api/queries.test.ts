@@ -20,13 +20,15 @@ vi.mock("./client", () => ({
     apiFetch: vi.fn().mockResolvedValue({ success: true }),
 }));
 
+const mockQueryContext = {} as any;
+
 test("authQuery invokes apiFetch correctly", async () => {
-    await authQuery.queryFn();
+    await authQuery.queryFn!(mockQueryContext);
     expect(apiFetch).toHaveBeenCalledWith("/api/auth/user");
 });
 
 test("accessibleProceduresQuery invokes apiFetch correctly", async () => {
-    await accessibleProceduresQuery.queryFn();
+    await accessibleProceduresQuery.queryFn!(mockQueryContext);
     expect(apiFetch).toHaveBeenCalledWith("/api/procedures/accessible");
 });
 
@@ -35,36 +37,42 @@ test("procedureQuery generates valid query options", async () => {
     expect(opts.queryKey).toEqual(["procedures", 5]);
     expect(opts.enabled).toBe(true);
 
-    await opts.queryFn();
+    await opts.queryFn!(mockQueryContext);
     expect(apiFetch).toHaveBeenCalledWith("/api/procedures/5");
 });
 
 test("procedureParametersQuery generates valid options", async () => {
     const opts = procedureParametersQuery(10);
-    await opts.queryFn();
+    await opts.queryFn!(mockQueryContext);
     expect(apiFetch).toHaveBeenCalledWith("/api/procedures/10/parameters");
 });
 
 test("categoryLookupQuery and procedureLookupQuery invoke apiFetch", async () => {
-    await categoryLookupQuery.queryFn();
+    await categoryLookupQuery.queryFn!(mockQueryContext);
     expect(apiFetch).toHaveBeenCalledWith("/api/categories/lookup");
 
-    await procedureLookupQuery.queryFn();
+    await procedureLookupQuery.queryFn!(mockQueryContext);
     expect(apiFetch).toHaveBeenCalledWith("/api/procedures/lookup");
 });
 
 test("categoryQuery generates valid query options", async () => {
     const opts = categoryQuery(2);
-    await opts.queryFn();
+    await opts.queryFn!(mockQueryContext);
     expect(apiFetch).toHaveBeenCalledWith("/api/categories/2");
 });
 
 test("execute, queueExport, and exportStatus call apiFetch", async () => {
-    await execute({ procedureId: 1, parameters: {} });
-    expect(apiFetch).toHaveBeenCalledWith("/api/execute", expect.objectContaining({ method: "POST" }));
+    await execute({ procedureId: 1, parameterValues: {}, pageNumber: 1, pageSize: 50 });
+    expect(apiFetch).toHaveBeenCalledWith(
+        "/api/execute",
+        expect.objectContaining({ method: "POST" }),
+    );
 
-    await queueExport({ procedureId: 1, parameters: {} });
-    expect(apiFetch).toHaveBeenCalledWith("/api/exports", expect.objectContaining({ method: "POST" }));
+    await queueExport({ procedureId: 1, parameterValues: {} });
+    expect(apiFetch).toHaveBeenCalledWith(
+        "/api/exports",
+        expect.objectContaining({ method: "POST" }),
+    );
 
     await exportStatus("job-123");
     expect(apiFetch).toHaveBeenCalledWith("/api/exports/job-123");

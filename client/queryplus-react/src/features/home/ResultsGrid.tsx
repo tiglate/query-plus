@@ -3,38 +3,13 @@ import { ArrowDown, ArrowUp, ChevronsUpDown, GripVertical } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { GridCell, GridColumn } from "@/api/types";
 import { cn } from "@/lib/utils";
+import { sortRows, type SortState } from "./utils/grid-sort";
+import { useColumnWidths, type VisibleColumn } from "./hooks/useColumnWidths";
 
 interface ResultsGridProps {
     columns: GridColumn[];
     rows: GridCell[][];
     meta?: string;
-}
-
-const MIN_COLUMN_WIDTH = 80;
-const MAX_COLUMN_WIDTH = 480;
-const CELL_PADDING_PX = 16;
-const SAMPLE_SIZE = 200;
-const APPROX_CHAR_WIDTH = 7.5;
-
-function compare(a: GridCell, b: GridCell): number {
-    if (a === b) return 0;
-    if (a === null) return -1;
-    if (b === null) return 1;
-    if (typeof a === "number" && typeof b === "number") return a - b;
-    return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
-}
-
-function cellText(value: GridCell | undefined): string {
-    if (value === null || value === undefined) return "";
-    return String(value);
-}
-
-function approxWidth(text: string): number {
-    return text.length * APPROX_CHAR_WIDTH;
-}
-
-function clamp(value: number): number {
-    return Math.max(MIN_COLUMN_WIDTH, Math.min(MAX_COLUMN_WIDTH, value));
 }
 
 function currentRowHeight(): number {
@@ -43,35 +18,39 @@ function currentRowHeight(): number {
 }
 
 export function ResultsGrid({ columns: sourceColumns, rows, meta }: Readonly<ResultsGridProps>) {
-    const visible = useMemo(
+    const visible: VisibleColumn[] = useMemo(
         () =>
             sourceColumns
                 .map((column, sourceIndex) => ({ column, sourceIndex }))
                 .filter((x) => x.column.visible),
         [sourceColumns],
     );
+
     const [order, setOrder] = useState<number[]>([]);
-    const [userWidths, setUserWidths] = useState<Record<number, number>>({});
-    const userSizedRef = useRef<Set<number>>(new Set());
-    const [autoWidths, setAutoWidths] = useState<Record<number, number>>({});
-    const [sort, setSort] = useState<{ index: number; asc: boolean } | null>(null);
+    const [sort, setSort] = useState<SortState | null>(null);
+
     const parentRef = useRef<HTMLDivElement>(null);
     const measurerHeaderRef = useRef<HTMLDivElement>(null);
     const measurerBodyRef = useRef<HTMLSpanElement>(null);
     const dragRef = useRef<number | null>(null);
     const rowHeightRef = useRef(currentRowHeight());
     const [rowHeight, setRowHeight] = useState(rowHeightRef.current);
+
+    const { getColumnWidth, handleResizeStart } = useColumnWidths(
+        visible,
+        rows,
+        measurerHeaderRef,
+        measurerBodyRef,
+    );
+
     const effectiveOrder =
         order.length === visible.length ? order : visible.map((_, index) => index);
     const ordered = effectiveOrder
         .map((index) => visible[index])
-        .filter((value) => value !== undefined);
-    const sortedRows = useMemo(() => {
-        if (!sort) return rows;
-        return [...rows].sort(
-            (a, b) => compare(a[sort.index] ?? null, b[sort.index] ?? null) * (sort.asc ? 1 : -1),
-        );
-    }, [rows, sort]);
+        .filter((value): value is VisibleColumn => value !== undefined);
+
+    const sortedRows = useMemo(() => sortRows(rows, sort), [rows, sort]);
+
     const virtualizer = useVirtualizer({
         count: sortedRows.length,
         getScrollElement: () => parentRef.current,
@@ -89,103 +68,7 @@ export function ResultsGrid({ columns: sourceColumns, rows, meta }: Readonly<Res
         return () => window.removeEventListener("qp-font-size-change", handler);
     }, [virtualizer]);
 
-    useEffect(() => {
-        userSizedRef.current = new Set();
-        setUserWidths({});
-    }, [sourceColumns]);
-    useEffect(() => {
-        if (visible.length === 0) return;
-        let cancelled = false;
-        let raf = 0;
-        const run = () => {
-            if (cancelled) return;
-            const headerNode = measurerHeaderRef.current;
-            const bodyNode = measurerBodyRef.current;
-            const headerTextSlot =
-                headerNode?.querySelector<HTMLSpanElement>("[data-measurer-text]");
-            const measureHeader = (text: string): number => {
-                if (!headerNode || !headerTextSlot) return approxWidth(text);
-                headerTextSlot.textContent = text;
-                const width = headerNode.offsetWidth;
-                return width > 0 ? width : approxWidth(text);
-            };
-            const measureBody = (text: string): number => {
-                if (!bodyNode) return approxWidth(text);
-                bodyNode.textContent = text;
-                const width = bodyNode.offsetWidth;
-                return width > 0 ? width : approxWidth(text);
-            };
-            const total = rows.length;
-            const stride = total > SAMPLE_SIZE ? Math.floor(total / SAMPLE_SIZE) : 1;
-            const bodyCeiling = MAX_COLUMN_WIDTH - CELL_PADDING_PX;
-            const next: Record<number, number> = {};
-            for (const element of visible) {
-                if (cancelled) return;
-                const entry = element;
-                if (!entry) continue;
-                const { column, sourceIndex } = entry;
-                if (userSizedRef.current.has(sourceIndex)) continue;
-                const headerText = column.caption || column.technicalName;
-                const headerWidth = measureHeader(headerText);
-                let maxBodyWidth = 0;
-                if (total > 0) {
-                    for (let i = 0; i < total; i += stride) {
-                        const text = cellText(rows[i]?.[sourceIndex]);
-                        const w = measureBody(text);
-                        if (w > maxBodyWidth) {
-                            maxBodyWidth = w;
-                            if (maxBodyWidth >= bodyCeiling) break;
-                        }
-                    }
-                    if (stride > 1) {
-                        const lastText = cellText(rows[total - 1]?.[sourceIndex]);
-                        const w = measureBody(lastText);
-                        if (w > maxBodyWidth) maxBodyWidth = w;
-                    }
-                }
-                next[sourceIndex] = clamp(Math.max(headerWidth, maxBodyWidth + CELL_PADDING_PX));
-            }
-            if (cancelled) return;
-            setAutoWidths((current) => {
-                let same = true;
-                for (const { sourceIndex } of visible) {
-                    if ((current[sourceIndex] ?? -1) !== next[sourceIndex]) {
-                        same = false;
-                        break;
-                    }
-                }
-                return same ? current : next;
-            });
-        };
-        raf = requestAnimationFrame(run);
-        return () => {
-            cancelled = true;
-            if (raf) cancelAnimationFrame(raf);
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- measurement depends only on column shape; pagination must not retrigger expensive DOM reads
-    }, [visible]);
-
-    const columnWidth = (sourceIndex: number): number => {
-        if (userSizedRef.current.has(sourceIndex)) {
-            return userWidths[sourceIndex] ?? MIN_COLUMN_WIDTH;
-        }
-        return autoWidths[sourceIndex] ?? MIN_COLUMN_WIDTH;
-    };
-
-    const template = ordered.map((item) => `${columnWidth(item.sourceIndex)}px`).join(" ");
-
-    const resize = (sourceIndex: number, startX: number, startWidth: number) => {
-        const move = (event: MouseEvent) => {
-            const width = clamp(startWidth + event.clientX - startX);
-            setUserWidths((current) => ({ ...current, [sourceIndex]: width }));
-        };
-        const up = () => {
-            document.removeEventListener("mousemove", move);
-            document.removeEventListener("mouseup", up);
-        };
-        document.addEventListener("mousemove", move);
-        document.addEventListener("mouseup", up);
-    };
+    const template = ordered.map((item) => `${getColumnWidth(item.sourceIndex)}px`).join(" ");
 
     return (
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -217,7 +100,7 @@ export function ResultsGrid({ columns: sourceColumns, rows, meta }: Readonly<Res
                         {ordered.map(({ sourceIndex }) => (
                             <col
                                 key={sourceIndex}
-                                style={{ width: `${columnWidth(sourceIndex)}px` }}
+                                style={{ width: `${getColumnWidth(sourceIndex)}px` }}
                             />
                         ))}
                     </colgroup>
@@ -284,11 +167,10 @@ export function ResultsGrid({ columns: sourceColumns, rows, meta }: Readonly<Res
                                             onMouseDown={(event) => {
                                                 event.preventDefault();
                                                 event.stopPropagation();
-                                                userSizedRef.current.add(sourceIndex);
-                                                resize(
+                                                handleResizeStart(
                                                     sourceIndex,
                                                     event.clientX,
-                                                    columnWidth(sourceIndex),
+                                                    getColumnWidth(sourceIndex),
                                                 );
                                             }}
                                             onClick={(event) => event.stopPropagation()}

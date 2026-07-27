@@ -6,25 +6,26 @@ import { vi } from "vitest";
 vi.mock("@/api/queries", () => ({
     categoriesSearch: vi.fn().mockResolvedValue({
         items: [
-            { id: 1, description: "Finance", createdAt: "2026-01-01T00:00:00Z", updatedAt: null }
+            { id: 1, description: "Finance", createdAt: "2026-01-01T00:00:00Z", updatedAt: null },
         ],
         totalCount: 1,
         page: 1,
-        pageSize: 20
+        pageSize: 20,
     }),
     categoryQuery: vi.fn((id: number) => ({
         queryKey: ["category", id],
-        queryFn: () => Promise.resolve({ id: 1, description: "Finance", createdAt: "2026-01-01T00:00:00Z" })
-    }))
+        queryFn: () =>
+            Promise.resolve({ id: 1, description: "Finance", createdAt: "2026-01-01T00:00:00Z" }),
+    })),
 }));
 
 vi.mock("@/api/client", () => ({
-    apiFetch: vi.fn()
+    apiFetch: vi.fn(),
 }));
 
 function renderWithClient(component: React.ReactNode) {
     const queryClient = new QueryClient({
-        defaultOptions: { queries: { retry: false } }
+        defaultOptions: { queries: { retry: false } },
     });
     return render(<QueryClientProvider client={queryClient}>{component}</QueryClientProvider>);
 }

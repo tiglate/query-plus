@@ -3,8 +3,14 @@ import type { GridColumn } from "@/api/types";
 import { ResultsGrid } from "./ResultsGrid";
 
 const sampleColumns: GridColumn[] = [
-    { technicalName: "id", caption: "ID", alignment: 1, visible: true },
-    { technicalName: "name", caption: "Customer Name", alignment: 0, visible: true },
+    { technicalName: "id", caption: "ID", alignment: 1, formatMask: null, visible: true },
+    {
+        technicalName: "name",
+        caption: "Customer Name",
+        alignment: 0,
+        formatMask: null,
+        visible: true,
+    },
 ];
 
 const sampleRows = [

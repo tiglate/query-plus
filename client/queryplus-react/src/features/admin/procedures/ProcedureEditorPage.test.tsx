@@ -1,14 +1,18 @@
 import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ProcedureEditorPage, procedureFormToApi, type ProcedureFormValues } from "./ProcedureEditorPage";
+import {
+    ProcedureEditorPage,
+    procedureFormToApi,
+    type ProcedureFormValues,
+} from "./ProcedureEditorPage";
 import { vi } from "vitest";
 
-vi.mock(import("react-router-dom"), async (importOriginal) => {
-    const actual = await importOriginal();
+vi.mock("react-router-dom", async () => {
+    const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
     return {
         ...actual,
         useParams: () => ({ id: "1" }),
-        useSearchParams: () => [new URLSearchParams()],
+        useSearchParams: () => [new URLSearchParams(), vi.fn()] as any,
         useNavigate: () => vi.fn(),
     };
 });
@@ -16,36 +20,37 @@ vi.mock(import("react-router-dom"), async (importOriginal) => {
 vi.mock("@/api/queries", () => ({
     categoryLookupQuery: {
         queryKey: ["categories", "lookup"],
-        queryFn: () => Promise.resolve([{ id: 1, description: "General" }])
+        queryFn: () => Promise.resolve([{ id: 1, description: "General" }]),
     },
     procedureQuery: vi.fn((id: number) => ({
         queryKey: ["procedure", id],
-        queryFn: () => Promise.resolve({
-            id: 1,
-            categoryId: 1,
-            caption: "Sales Report",
-            databaseName: "SalesDB",
-            procedureName: "dbo.sp_sales",
-            enabled: true,
-            supportsPagination: true,
-            roleEntitlement: "user",
-            description: "Sales procedure",
-            parameters: [],
-            columns: []
-        })
-    }))
+        queryFn: () =>
+            Promise.resolve({
+                id: 1,
+                categoryId: 1,
+                caption: "Sales Report",
+                databaseName: "SalesDB",
+                procedureName: "dbo.sp_sales",
+                enabled: true,
+                supportsPagination: true,
+                roleEntitlement: "user",
+                description: "Sales procedure",
+                parameters: [],
+                columns: [],
+            }),
+    })),
 }));
 
 import { MemoryRouter } from "react-router-dom";
 
 function renderWithClient(component: React.ReactNode) {
     const queryClient = new QueryClient({
-        defaultOptions: { queries: { retry: false } }
+        defaultOptions: { queries: { retry: false } },
     });
     return render(
         <QueryClientProvider client={queryClient}>
             <MemoryRouter initialEntries={["/admin/procedures/1"]}>{component}</MemoryRouter>
-        </QueryClientProvider>
+        </QueryClientProvider>,
     );
 }
 
