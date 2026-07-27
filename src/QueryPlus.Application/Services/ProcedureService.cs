@@ -107,14 +107,9 @@ public sealed class ProcedureService(
         var entity = await procedures.GetByIdWithDetailsAsync(dto.Id.Value, cancellationToken)
                      ?? throw new EntityNotFoundException(nameof(Procedure), dto.Id.Value);
 
-        // Track removals for EF (collection remove alone may not mark deleted dependents
-        // depending on cascade config — explicit remove for safety).
-        var removedParameters = entity.Parameters
-            .Where(p => dto.Parameters.All(d => d.Id != p.IdProcedureParameter))
-            .ToList();
-        var removedColumns = entity.Columns
-            .Where(c => dto.Columns.All(d => d.Id != c.IdProcedureColumn))
-            .ToList();
+        // Track removals via domain aggregate helper methods.
+        var removedParameters = entity.GetRemovedParameters(dto.Parameters.Select(p => p.Id ?? 0));
+        var removedColumns = entity.GetRemovedColumns(dto.Columns.Select(c => c.Id ?? 0));
 
         ProcedureGraphMapper.ApplyUpdate(entity, dto);
 

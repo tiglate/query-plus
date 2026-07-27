@@ -28,6 +28,8 @@ public class ExecutionServiceTests
             _executor,
             _user,
             new ExecuteProcedureRequestValidator(),
+            new ExecutionParameterResolver(QueryPlus.Application.Services.Converters.ParameterConverterRegistry.CreateDefault()),
+            new GridColumnBuilder(),
             NullLogger<ExecutionService>.Instance);
     }
 

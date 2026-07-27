@@ -28,4 +28,22 @@ public class Procedure : IHasTimestamps, IAuditedEntity
     public ICollection<ProcedureParameter> Parameters { get; set; } = new List<ProcedureParameter>();
     public ICollection<ProcedureColumn> Columns { get; set; } = new List<ProcedureColumn>();
     public ICollection<ExecutionLog> ExecutionLogs { get; set; } = new List<ExecutionLog>();
+
+    /// <summary>
+    /// Calculates parameters currently attached to this procedure that are omitted from the updated parameter IDs.
+    /// </summary>
+    public IReadOnlyList<ProcedureParameter> GetRemovedParameters(IEnumerable<int> updatedParameterIds)
+    {
+        var targetSet = updatedParameterIds.ToHashSet();
+        return Parameters.Where(p => !targetSet.Contains(p.IdProcedureParameter)).ToList();
+    }
+
+    /// <summary>
+    /// Calculates columns currently attached to this procedure that are omitted from the updated column IDs.
+    /// </summary>
+    public IReadOnlyList<ProcedureColumn> GetRemovedColumns(IEnumerable<int> updatedColumnIds)
+    {
+        var targetSet = updatedColumnIds.ToHashSet();
+        return Columns.Where(c => !targetSet.Contains(c.IdProcedureColumn)).ToList();
+    }
 }

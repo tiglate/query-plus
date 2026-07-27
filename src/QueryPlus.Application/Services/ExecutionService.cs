@@ -20,6 +20,8 @@ public sealed class ExecutionService(
     IStoredProcedureExecutor executor,
     ICurrentUserContext currentUser,
     IValidator<ExecuteProcedureRequest> requestValidator,
+    IExecutionParameterResolver parameterResolver,
+    IGridColumnBuilder columnBuilder,
     ILogger<ExecutionService> logger)
     : IExecutionService
 {
@@ -39,11 +41,11 @@ public sealed class ExecutionService(
 
         EnsureUserMayExecute(procedure);
 
-        // Bind only non-reserved catalog parameters (pagination args are injected by the app).
-        var userParameterDefs = procedure.Parameters
-            .Where(p => !ProcedurePagination.IsReservedParameterName(p.Name))
-            .ToList();
-        var boundParameters = ParameterValueBinder.Bind(userParameterDefs, request.ParameterValues);
+        var resolved = parameterResolver.Resolve(
+            procedure,
+            request.ParameterValues,
+            request.PageNumber,
+            request.PageSize);
 
         var log = new ExecutionLog
         {
@@ -52,37 +54,20 @@ public sealed class ExecutionService(
             IpAddress = currentUser.IpAddress,
             ExecutionStart = DateTime.UtcNow,
             ParameterValues = JsonHelpers.Serialize(
-                boundParameters.ToDictionary(kv => kv.Key, kv => kv.Value?.ToString())),
+                resolved.BoundUserParameters.ToDictionary(kv => kv.Key, kv => kv.Value?.ToString())),
             Success = false
         };
 
         await executions.AddAsync(log, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var pageNumber = ProcedurePagination.DefaultPageNumber;
-        var pageSize = ProcedurePagination.DefaultPageSize;
-
         try
         {
-            IReadOnlyDictionary<string, object?> execParameters = boundParameters;
-            IReadOnlyCollection<string>? outputs = null;
-
-            if (procedure.SupportsPagination)
-            {
-                pageNumber = ProcedurePagination.ClampPageNumber(request.PageNumber);
-                pageSize = ProcedurePagination.ClampUiPageSize(request.PageSize);
-                execParameters = ProcedurePagination.WithPagingInputs(
-                    boundParameters,
-                    pageNumber,
-                    pageSize);
-                outputs = [ProcedurePagination.TotalRecordsName];
-            }
-
             var executed = await executor.ExecuteAsync(
                 procedure.DatabaseName,
                 procedure.ProcedureName,
-                execParameters,
-                outputs,
+                resolved.ExecParameters,
+                resolved.OutputParameterNames,
                 cancellationToken);
 
             var data = executed.Data;
@@ -94,7 +79,7 @@ public sealed class ExecutionService(
             log.ExecutionEnd = DateTime.UtcNow;
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
-            var columns = BuildGridColumns(procedure, data);
+            var columns = columnBuilder.BuildGridColumns(procedure, data);
 
             return new ExecutionResultDto
             {
@@ -104,8 +89,8 @@ public sealed class ExecutionService(
                 ProcedureCaption = procedure.Caption,
                 RowCount = data.Rows.Count,
                 SupportsPagination = procedure.SupportsPagination,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
+                PageNumber = resolved.PageNumber,
+                PageSize = resolved.PageSize,
                 TotalRecords = executed.TotalRecords,
                 Data = data,
                 Columns = columns
@@ -133,8 +118,8 @@ public sealed class ExecutionService(
                 ProcedureCaption = procedure.Caption,
                 RowCount = 0,
                 SupportsPagination = procedure.SupportsPagination,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
+                PageNumber = resolved.PageNumber,
+                PageSize = resolved.PageSize,
                 Data = null,
                 Columns = ProcedureColumnMapper.ToGridColumnDtos(
                     procedure.Columns.Where(c => c.Visible).OrderBy(c => c.Caption).ToList())
@@ -217,42 +202,6 @@ public sealed class ExecutionService(
             throw new ForbiddenOperationException(
                 $"You do not have the required entitlement '{entitlement}' to execute this procedure.");
         }
-    }
-
-    private static IReadOnlyList<GridColumnDto> BuildGridColumns(Procedure procedure, System.Data.DataTable data)
-    {
-        var configured = procedure.Columns
-            .Where(c => c.Visible)
-            .ToDictionary(c => c.TechnicalName, c => c, StringComparer.OrdinalIgnoreCase);
-
-        var columns = new List<GridColumnDto>();
-        foreach (System.Data.DataColumn col in data.Columns)
-        {
-            if (configured.TryGetValue(col.ColumnName, out var meta))
-            {
-                columns.Add(new GridColumnDto
-                {
-                    TechnicalName = meta.TechnicalName,
-                    Caption = meta.Caption,
-                    Alignment = meta.Alignment,
-                    FormatMask = meta.FormatMask,
-                    Visible = meta.Visible
-                });
-            }
-            else
-            {
-                // Fallback: show result columns not yet configured in metadata.
-                columns.Add(new GridColumnDto
-                {
-                    TechnicalName = col.ColumnName,
-                    Caption = col.ColumnName,
-                    Alignment = Domain.Enums.ColumnAlignment.Left,
-                    Visible = true
-                });
-            }
-        }
-
-        return columns;
     }
 
     private static string Truncate(string value, int max)
