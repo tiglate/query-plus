@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using QueryPlus.Api.Security;
 using QueryPlus.Application.DTOs.Common;
 using QueryPlus.Application.DTOs.Execution;
 using QueryPlus.Application.DTOs.Procedures;
@@ -8,6 +10,7 @@ namespace QueryPlus.Api.Api;
 
 [ApiController]
 [Route("api/execution-logs")]
+[Authorize(Roles = AppRoles.Admin)]
 public sealed class ExecutionLogsController(IExecutionService executions, IProcedureService procedures) : ControllerBase
 {
     [HttpGet]

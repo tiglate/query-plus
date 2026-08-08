@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { ListChecks, Search } from "lucide-react";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "@/api/client";
 import { executionLogsSearch } from "@/api/queries";
@@ -11,14 +10,24 @@ import { Select } from "@/components/ui/fields";
 import { Input } from "@/components/ui/input";
 import { Pager } from "@/components/ui/pager";
 import { Field, PageHeader } from "@/components/ui/page";
+import { useAdminSearch } from "../hooks/useAdminSearch";
 
 interface LogFilters {
+    [key: string]: string;
     username: string;
     procedureId: string;
     success: string;
     startFrom: string;
     startTo: string;
 }
+
+const EMPTY_LOG_FILTERS: LogFilters = {
+    username: "",
+    procedureId: "",
+    success: "",
+    startFrom: "",
+    startTo: "",
+};
 
 function duration(start: string, end: string | null): string {
     if (!end) return "—";
@@ -31,33 +40,12 @@ function duration(start: string, end: string | null): string {
 
 export function ExecutionLogsPage() {
     const { t } = useTranslation();
-    const empty: LogFilters = {
-        username: "",
-        procedureId: "",
-        success: "",
-        startFrom: "",
-        startTo: "",
-    };
-    const [draft, setDraft] = useState(empty);
-    const [filter, setFilter] = useState(empty);
-    const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(20);
+    const search = useAdminSearch("execution-logs", EMPTY_LOG_FILTERS, executionLogsSearch);
     const options = useQuery({
         queryKey: ["execution-logs", "procedures"],
         queryFn: () => apiFetch<ProcedureLookup[]>("/api/execution-logs/procedures"),
     });
-    const params = new URLSearchParams({ pageNumber: String(page), pageSize: String(pageSize) });
-    (Object.keys(filter) as Array<keyof LogFilters>).forEach((key) => {
-        const value = filter[key];
-        if (value) params.set(key, value);
-    });
-    const logs = useQuery({
-        queryKey: ["execution-logs", params.toString()],
-        queryFn: () => executionLogsSearch(params),
-    });
-    const update = (key: keyof LogFilters, value: string) =>
-        setDraft((current) => ({ ...current, [key]: value }));
-    const total = logs.data?.totalCount ?? 0;
+    const logs = search.query;
     return (
         <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
             <PageHeader
@@ -65,23 +53,11 @@ export function ExecutionLogsPage() {
                 icon={<ListChecks className="h-4 w-4 text-cyan-500" />}
                 actions={
                     <>
-                        <Button
-                            onClick={() => {
-                                setFilter(draft);
-                                setPage(1);
-                            }}
-                        >
+                        <Button onClick={search.search}>
                             <Search className="h-4 w-4" />
                             {t("Search")}
                         </Button>
-                        <Button
-                            variant="secondary"
-                            onClick={() => {
-                                setDraft(empty);
-                                setFilter(empty);
-                                setPage(1);
-                            }}
-                        >
+                        <Button variant="secondary" onClick={search.clear}>
                             {t("Clear")}
                         </Button>
                     </>
@@ -94,14 +70,14 @@ export function ExecutionLogsPage() {
                 <CardBody className="grid gap-3 md:grid-cols-6">
                     <Field label={t("ExecutionLog_Username")}>
                         <Input
-                            value={draft.username}
-                            onChange={(e) => update("username", e.target.value)}
+                            value={search.draft.username}
+                            onChange={(e) => search.updateDraft("username", e.target.value)}
                         />
                     </Field>
                     <Field label={t("ExecutionLog_Procedure")}>
                         <Select
-                            value={draft.procedureId}
-                            onChange={(e) => update("procedureId", e.target.value)}
+                            value={search.draft.procedureId}
+                            onChange={(e) => search.updateDraft("procedureId", e.target.value)}
                         >
                             <option value="">—</option>
                             {options.data?.map((procedure) => (
@@ -113,8 +89,8 @@ export function ExecutionLogsPage() {
                     </Field>
                     <Field label={t("ExecutionLog_Status")}>
                         <Select
-                            value={draft.success}
-                            onChange={(e) => update("success", e.target.value)}
+                            value={search.draft.success}
+                            onChange={(e) => search.updateDraft("success", e.target.value)}
                         >
                             <option value="">—</option>
                             <option value="true">{t("ExecutionLog_StatusSuccess")}</option>
@@ -123,11 +99,8 @@ export function ExecutionLogsPage() {
                     </Field>
                     <Field label={t("Pagination_PageSize")}>
                         <Select
-                            value={pageSize}
-                            onChange={(e) => {
-                                setPageSize(Number(e.target.value));
-                                setPage(1);
-                            }}
+                            value={search.pageSize}
+                            onChange={(e) => search.changePageSize(Number(e.target.value))}
                         >
                             {[10, 20, 50, 100].map((size) => (
                                 <option key={size}>{size}</option>
@@ -137,15 +110,15 @@ export function ExecutionLogsPage() {
                     <Field label={t("ExecutionLog_StartFrom")}>
                         <Input
                             type="date"
-                            value={draft.startFrom}
-                            onChange={(e) => update("startFrom", e.target.value)}
+                            value={search.draft.startFrom}
+                            onChange={(e) => search.updateDraft("startFrom", e.target.value)}
                         />
                     </Field>
                     <Field label={t("ExecutionLog_StartTo")}>
                         <Input
                             type="date"
-                            value={draft.startTo}
-                            onChange={(e) => update("startTo", e.target.value)}
+                            value={search.draft.startTo}
+                            onChange={(e) => search.updateDraft("startTo", e.target.value)}
                         />
                     </Field>
                 </CardBody>
@@ -208,8 +181,13 @@ export function ExecutionLogsPage() {
                         </tbody>
                     </table>
                 </div>
-                {total > 0 && (
-                    <Pager page={page} pageSize={pageSize} total={total} onPage={setPage} />
+                {search.total > 0 && (
+                    <Pager
+                        page={search.page}
+                        pageSize={search.pageSize}
+                        total={search.total}
+                        onPage={search.setPage}
+                    />
                 )}
             </Card>
         </div>

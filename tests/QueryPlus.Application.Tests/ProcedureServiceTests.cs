@@ -96,6 +96,76 @@ public class ProcedureServiceTests
     }
 
     [Fact]
+    public async Task CreateAsync_PopulatesCategoryDescription_ViaCheapReferenceLoad_NotAFullRefetch()
+    {
+        _categories.GetByIdAsync(1, Arg.Any<CancellationToken>())
+            .Returns(new Category { IdCategory = 1, Description = "General" });
+        _auditReader.GetProcedureAuditDetailsAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new AuditDetailsDto { CreatedBy = "admin", UpdatedBy = "admin" });
+        _procedures.EnsureCategoryLoadedAsync(Arg.Any<Procedure>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var procedure = callInfo.Arg<Procedure>()!;
+                procedure.Category = new Category { IdCategory = 1, Description = "General" };
+                return Task.CompletedTask;
+            });
+
+        var dto = new SaveProcedureDto
+        {
+            CategoryId = 1,
+            Caption = "New Proc",
+            DatabaseName = "DB",
+            ProcedureName = "sp_new",
+            RoleEntitlement = "ROLE_QUERY_EXEC"
+        };
+
+        var result = await _sut.CreateAsync(dto);
+
+        result.CategoryDescription.Should().Be("General");
+        await _procedures.Received(1).EnsureCategoryLoadedAsync(Arg.Any<Procedure>(), Arg.Any<CancellationToken>());
+        await _procedures.DidNotReceive().GetByIdWithDetailsAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task UpdateAsync_PopulatesCategoryDescription_ViaCheapReferenceLoad_NotAFullRefetch()
+    {
+        var existing = new Procedure
+        {
+            IdProcedure = 5, IdCategory = 1, Caption = "Old", DatabaseName = "DB", ProcedureName = "sp_old",
+            RoleEntitlement = ""
+        };
+        _procedures.GetByIdWithDetailsAsync(5, Arg.Any<CancellationToken>()).Returns(existing);
+        _categories.GetByIdAsync(1, Arg.Any<CancellationToken>())
+            .Returns(new Category { IdCategory = 1, Description = "General" });
+        _procedures.EnsureCategoryLoadedAsync(Arg.Any<Procedure>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var procedure = callInfo.Arg<Procedure>()!;
+                procedure.Category = new Category { IdCategory = 1, Description = "General" };
+                return Task.CompletedTask;
+            });
+
+        var dto = new SaveProcedureDto
+        {
+            Id = 5,
+            CategoryId = 1,
+            Caption = "Renamed",
+            DatabaseName = "DB",
+            ProcedureName = "sp_old",
+            RoleEntitlement = "ROLE_QUERY_EXEC"
+        };
+
+        var result = await _sut.UpdateAsync(dto);
+
+        result.CategoryDescription.Should().Be("General");
+        result.Caption.Should().Be("Renamed");
+        await _procedures.Received(1).EnsureCategoryLoadedAsync(existing, Arg.Any<CancellationToken>());
+        // GetByIdWithDetailsAsync is called exactly once (to load the entity to mutate) - not
+        // a second time afterward to re-fetch what was just saved.
+        await _procedures.Received(1).GetByIdWithDetailsAsync(5, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task DeleteAsync_NotFound_ThrowsEntityNotFoundException()
     {
         _procedures.GetByIdWithDetailsAsync(999, Arg.Any<CancellationToken>()).Returns((Procedure?)null);

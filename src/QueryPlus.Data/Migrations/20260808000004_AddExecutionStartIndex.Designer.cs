@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using QueryPlus.Data.Context;
 
@@ -11,9 +12,11 @@ using QueryPlus.Data.Context;
 namespace QueryPlus.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260808000004_AddExecutionStartIndex")]
+    partial class AddExecutionStartIndex
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -576,10 +579,6 @@ namespace QueryPlus.Data.Migrations
                     b.Property<bool?>("IsRequired")
                         .HasColumnType("bit")
                         .HasColumnName("is_required");
-
-                    b.Property<bool?>("IsSensitive")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_sensitive");
 
                     b.Property<string>("Name")
                         .HasMaxLength(128)

@@ -50,7 +50,7 @@ public sealed class AuthAndDefaultDenyTests(QueryPlusApiApplicationFactory facto
         var json = await response.Content.ReadFromJsonAsync<JsonElement>();
         json.GetProperty("username").GetString().Should().Be("test-user");
         json.GetProperty("isAuthenticated").GetBoolean().Should().BeTrue();
-        json.GetProperty("roles").EnumerateArray().Select(r => r.GetString()).Should().Contain(["user", "admin"]);
+        json.GetProperty("roles").EnumerateArray().Select(r => r.GetString()).Should().Contain(["ROLE_ADMIN"]);
     }
 
     [Fact]

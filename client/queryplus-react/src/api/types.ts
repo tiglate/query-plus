@@ -10,10 +10,9 @@ export interface AuthUser {
 export interface PagedResult<T> {
     items: T[];
     totalCount: number;
-    pageNumber?: number;
-    page?: number;
+    page: number;
     pageSize: number;
-    totalPages?: number;
+    totalPages: number;
 }
 
 export interface AuditFields {
@@ -139,16 +138,18 @@ export interface ExportRequest {
     parameterValues: Record<string, string | null>;
 }
 
-export type ExportStatusValue = "queued" | "running" | "completed" | "failed" | 0 | 1 | 2 | 3;
+// The API never registers a JsonStringEnumConverter, so ExportJobStatus always serializes as
+// its numeric value (0=Queued, 1=Running, 2=Completed, 3=Failed) - see normalizeExportStatus.
+export type ExportStatusValue = 0 | 1 | 2 | 3;
 export interface ExportJob {
     id: string;
-    jobId?: string;
     status: ExportStatusValue;
     fileName?: string | null;
     errorMessage?: string | null;
     rowCount?: number | null;
     createdAt?: string;
     completedAt?: string | null;
+    username?: string | null;
 }
 
 export interface ExecutionLog {

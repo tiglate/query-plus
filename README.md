@@ -87,8 +87,17 @@ docker compose up -d sqlserver keycloak
 | SQL Server | `localhost:1433` (sa / value of `MSSQL_SA_PASSWORD`) |
 | Keycloak | http://localhost:8080 (`KEYCLOAK_ADMIN` / `KEYCLOAK_ADMIN_PASSWORD`) |
 | Realm | `queryplus` (imported automatically) |
-| Demo users | `demo` / `demo`, `admin` / `admin` (realm export — local only) |
+| Demo users | `demo` / `demo` (`ROLE_QUERY_EXEC`, `ROLE_CATEGORY_READ`, `ROLE_PROCEDURE_READ`), `admin` / `admin` (`ROLE_ADMIN`) — realm export, local only |
 | OIDC client secret | Must match `Keycloak__ClientSecret` and `docker/keycloak/realm-export.json` |
+
+Realm roles (`docker/keycloak/realm-export.json`) gate API access on top of per-procedure `RoleEntitlement`:
+
+| Role | Grants |
+|------|--------|
+| `ROLE_ADMIN` | Everything below, unconditionally |
+| `ROLE_CATEGORY_READ` / `ROLE_CATEGORY_WRITE` | View/search categories, or full category CRUD |
+| `ROLE_PROCEDURE_READ` / `ROLE_PROCEDURE_WRITE` | View/search the procedure catalog, or full procedure CRUD |
+| `ROLE_QUERY_EXEC` | Execute procedures and download exports — still subject to each procedure's own `RoleEntitlement` |
 
 ### 2. Apply database schema
 
@@ -253,7 +262,7 @@ On application start, `DemoDataSeeder`:
 | 30+ `Sp_Demo_*` procedures | FreeText, Numeric, Date, Time, DateTime, Boolean, Combo |
 | Supporting tables | customers, products, orders, employees, … |
 
-Role entitlement for demo procedures is **`user`** (also works for `admin`).
+Role entitlement for demo procedures is **`ROLE_QUERY_EXEC`** (also works for `ROLE_ADMIN`, which implies every permission).
 
 SQL scripts are also mirrored under `docs/database/`.
 

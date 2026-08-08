@@ -1,6 +1,6 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ArrowDown, ArrowUp, ChevronsUpDown, GripVertical } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import type { GridCell, GridColumn } from "@/api/types";
 import { cn } from "@/lib/utils";
 import { sortRows, type SortState } from "./utils/grid-sort";
@@ -17,7 +17,7 @@ function currentRowHeight(): number {
     return Math.round((Number.isFinite(size) ? size : 17) * 2);
 }
 
-export function ResultsGrid({ columns: sourceColumns, rows, meta }: Readonly<ResultsGridProps>) {
+function ResultsGridImpl({ columns: sourceColumns, rows, meta }: Readonly<ResultsGridProps>) {
     const visible: VisibleColumn[] = useMemo(
         () =>
             sourceColumns
@@ -43,11 +43,13 @@ export function ResultsGrid({ columns: sourceColumns, rows, meta }: Readonly<Res
         measurerBodyRef,
     );
 
-    const effectiveOrder =
-        order.length === visible.length ? order : visible.map((_, index) => index);
-    const ordered = effectiveOrder
-        .map((index) => visible[index])
-        .filter((value): value is VisibleColumn => value !== undefined);
+    const ordered = useMemo(() => {
+        const effectiveOrder =
+            order.length === visible.length ? order : visible.map((_, index) => index);
+        return effectiveOrder
+            .map((index) => visible[index])
+            .filter((value): value is VisibleColumn => value !== undefined);
+    }, [order, visible]);
 
     const sortedRows = useMemo(() => sortRows(rows, sort), [rows, sort]);
 
@@ -202,19 +204,23 @@ export function ResultsGrid({ columns: sourceColumns, rows, meta }: Readonly<Res
                                         height: `${rowHeight}px`,
                                     }}
                                 >
-                                    {ordered.map(({ column, sourceIndex }) => (
-                                        <td
-                                            key={sourceIndex}
-                                            title={String(row[sourceIndex] ?? "")}
-                                            className={cn(
-                                                "truncate border-r border-slate-100 px-2 py-2 align-middle dark:border-navy-700",
-                                                column.alignment === 1 && "text-center",
-                                                column.alignment === 2 && "text-right tabular-nums",
-                                            )}
-                                        >
-                                            {String(row[sourceIndex] ?? "")}
-                                        </td>
-                                    ))}
+                                    {ordered.map(({ column, sourceIndex }) => {
+                                        const text = String(row[sourceIndex] ?? "");
+                                        return (
+                                            <td
+                                                key={sourceIndex}
+                                                title={text}
+                                                className={cn(
+                                                    "truncate border-r border-slate-100 px-2 py-2 align-middle dark:border-navy-700",
+                                                    column.alignment === 1 && "text-center",
+                                                    column.alignment === 2 &&
+                                                        "text-right tabular-nums",
+                                                )}
+                                            >
+                                                {text}
+                                            </td>
+                                        );
+                                    })}
                                 </tr>
                             );
                         })}
@@ -224,3 +230,5 @@ export function ResultsGrid({ columns: sourceColumns, rows, meta }: Readonly<Res
         </div>
     );
 }
+
+export const ResultsGrid = memo(ResultsGridImpl);

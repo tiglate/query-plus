@@ -13,19 +13,25 @@ public sealed class TestAuthHandler(
     : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
     public const string SchemeName = "TestAuth";
+    public const string RolesHeader = "X-Test-Roles";
 
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
+        var roles = Request.Headers.TryGetValue(RolesHeader, out var value) && value.Count > 0
+            ? value.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            : ["ROLE_ADMIN"];
+
         var claims = new List<Claim>
         {
             new(ClaimTypes.Name, "test-user"),
             new("preferred_username", "test-user"),
-            new(ClaimTypes.NameIdentifier, "test-user-id"),
-            new("roles", "user"),
-            new("roles", "admin")
+            new(ClaimTypes.NameIdentifier, "test-user-id")
         };
+        claims.AddRange(roles.Select(role => new Claim("roles", role)));
 
-        var identity = new ClaimsIdentity(claims, SchemeName);
+        // roleType must match Keycloak:RoleClaimType ("roles", see AuthenticationServiceCollectionExtensions)
+        // so ClaimsPrincipal.IsInRole/[Authorize(Roles=...)] resolve the same way they do in production.
+        var identity = new ClaimsIdentity(claims, SchemeName, ClaimTypes.Name, "roles");
         var principal = new ClaimsPrincipal(identity);
         var ticket = new AuthenticationTicket(principal, SchemeName);
         return Task.FromResult(AuthenticateResult.Success(ticket));

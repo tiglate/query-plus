@@ -1,5 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
+    CircleCheck,
+    CircleX,
     Download,
     Eraser,
     FileSpreadsheet,
@@ -8,8 +10,8 @@ import {
     SlidersHorizontal,
     Table2,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { useForm, useWatch, type Control } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import {
     accessibleProceduresQuery,
@@ -61,7 +63,7 @@ export function isExportEligible(
     return result.supportsPagination ? (result.totalRecords ?? 0) > 0 : result.rows.length > 0;
 }
 
-function resultSignature(procedureId: number | null, values: ParameterFormValues): string {
+export function resultSignature(procedureId: number | null, values: ParameterFormValues): string {
     return JSON.stringify([procedureId, serializeParameterValues(values)]);
 }
 
@@ -135,7 +137,7 @@ function ParameterControl({
     );
 }
 
-function ProcedureList({
+const ProcedureList = memo(function ProcedureList({
     procedures,
     selectedId,
     onSelect,
@@ -149,7 +151,9 @@ function ProcedureList({
         const map = new Map<string, ProcedureLookup[]>();
         procedures.forEach((procedure) => {
             const key = procedure.categoryDescription?.trim() || t("Home_Uncategorized");
-            map.set(key, [...(map.get(key) ?? []), procedure]);
+            const list = map.get(key);
+            if (list) list.push(procedure);
+            else map.set(key, [procedure]);
         });
         return [...map].sort(([a], [b]) => a.localeCompare(b));
     }, [procedures, t]);
@@ -189,6 +193,96 @@ function ProcedureList({
             ))}
         </div>
     );
+});
+
+/**
+ * Isolates react-hook-form's live field subscription to this one button: only this
+ * component re-renders on every keystroke, not the whole HomePage tree (which would
+ * otherwise re-render the virtualized results grid and procedure list on every keystroke
+ * even though neither depends on the current parameter values).
+ */
+export function ExportButton({
+    control,
+    selectedId,
+    result,
+    executedSignature,
+    pending,
+    onExport,
+}: Readonly<{
+    control: Control<ParameterFormValues>;
+    selectedId: number | null;
+    result: ExecuteResponse | null;
+    executedSignature: string | null;
+    pending: boolean;
+    onExport: () => void;
+}>) {
+    const { t } = useTranslation();
+    const values = useWatch({ control });
+    const currentSignature = resultSignature(selectedId, values as ParameterFormValues);
+    const exportReady = isExportEligible(result, executedSignature, currentSignature);
+    return (
+        <Button
+            id="btn-export"
+            variant="accent"
+            disabled={!exportReady || pending}
+            title={exportReady ? t("Home_Export") : t("Home_ExportRequiresData")}
+            onClick={onExport}
+        >
+            {pending ? (
+                <LoaderCircle className="h-4 w-4 animate-spin" />
+            ) : (
+                <FileSpreadsheet className="h-4 w-4" />
+            )}
+            {t("Home_Export")}
+        </Button>
+    );
+}
+
+/**
+ * Renders next to the Export button (not buried in the Results card header) so the
+ * queued -> running -> completed/failed transition is visible right where the user
+ * clicked, instead of requiring them to notice a change elsewhere on the page.
+ */
+function ExportStatus({
+    jobId,
+    state,
+}: Readonly<{
+    jobId: string | null;
+    state: "queued" | "running" | "completed" | "failed" | null;
+}>) {
+    const { t } = useTranslation();
+    if (!jobId) return null;
+    if (state === "completed") {
+        return (
+            <span className="inline-flex items-center gap-2 text-small-label">
+                <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400">
+                    <CircleCheck className="h-3.5 w-3.5" />
+                    {t("Home_ExportReady")}
+                </span>
+                <a
+                    className="inline-flex items-center gap-1 font-medium text-cyan-700 underline dark:text-cyan-400"
+                    href={`/api/exports/${jobId}/download`}
+                >
+                    <Download className="h-3.5 w-3.5" />
+                    {t("Home_Download")}
+                </a>
+            </span>
+        );
+    }
+    if (state === "failed") {
+        return (
+            <span className="inline-flex items-center gap-1 text-small-label text-red-700">
+                <CircleX className="h-3.5 w-3.5" />
+                {t("Home_ExportFailed")}
+            </span>
+        );
+    }
+    return (
+        <span className="inline-flex items-center gap-1 text-small-label text-slate-500">
+            <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+            {t(state === "running" ? "Home_ExportRunning" : "Home_ExportQueued")}
+        </span>
+    );
 }
 
 export function HomePage() {
@@ -197,8 +291,6 @@ export function HomePage() {
     const [selected, setSelected] = useState<ProcedureLookup | null>(null);
     const parameters = useQuery(procedureParametersQuery(selected?.id ?? 0));
     const form = useForm<ParameterFormValues>();
-    const values = form.watch();
-    const currentSignature = resultSignature(selected?.id ?? null, values);
     const [result, setResult] = useState<ExecuteResponse | null>(null);
     const [executedSignature, setExecutedSignature] = useState<string | null>(null);
     const [jobId, setJobId] = useState<string | null>(null);
@@ -246,7 +338,7 @@ export function HomePage() {
                 procedureId: selected!.id,
                 parameterValues: serializeParameterValues(parameterValues),
             }),
-        onSuccess: (job) => setJobId(job.jobId ?? job.id),
+        onSuccess: (job) => setJobId(job.id),
     });
     const status = useQuery({
         queryKey: ["export", jobId],
@@ -259,7 +351,6 @@ export function HomePage() {
             return state === "completed" || state === "failed" ? false : 1500;
         },
     });
-    const exportReady = isExportEligible(result, executedSignature, currentSignature);
     const total = result?.supportsPagination
         ? (result.totalRecords ?? 0)
         : (result?.rows.length ?? 0);
@@ -313,6 +404,15 @@ export function HomePage() {
         form.reset({});
     };
     const exportState = status.data ? normalizeExportStatus(status.data.status) : null;
+    const exportBusy =
+        exportMutation.isPending ||
+        (!!jobId && exportState !== "completed" && exportState !== "failed");
+    const selectProcedure = useCallback((procedure: ProcedureLookup) => {
+        setSelected(procedure);
+        setResult(null);
+        setExecutedSignature(null);
+        setJobId(null);
+    }, []);
 
     return (
         <div className="flex min-h-0 flex-1 flex-col gap-3 p-3 lg:p-4">
@@ -339,18 +439,17 @@ export function HomePage() {
                             <Eraser className="h-4 w-4" />
                             {t("Clear")}
                         </Button>
-                        <Button
-                            id="btn-export"
-                            variant="accent"
-                            disabled={!exportReady || exportMutation.isPending}
-                            title={exportReady ? t("Home_Export") : t("Home_ExportRequiresData")}
-                            onClick={() =>
+                        <ExportButton
+                            control={form.control}
+                            selectedId={selected?.id ?? null}
+                            result={result}
+                            executedSignature={executedSignature}
+                            pending={exportBusy}
+                            onExport={() =>
                                 exportMutation.mutate({ parameterValues: form.getValues() })
                             }
-                        >
-                            <FileSpreadsheet className="h-4 w-4" />
-                            {t("Home_Export")}
-                        </Button>
+                        />
+                        <ExportStatus jobId={jobId} state={exportState} />
                     </div>
                 </CardHeader>
             </Card>
@@ -374,12 +473,7 @@ export function HomePage() {
                         <ProcedureList
                             procedures={procedures.data ?? []}
                             selectedId={selected?.id ?? null}
-                            onSelect={(procedure) => {
-                                setSelected(procedure);
-                                setResult(null);
-                                setExecutedSignature(null);
-                                setJobId(null);
-                            }}
+                            onSelect={selectProcedure}
                         />
                     </Card>
                 )}
@@ -422,31 +516,6 @@ export function HomePage() {
                             {t("Home_Results")}
                         </h2>
                         <div className="flex items-center gap-2">
-                            {jobId &&
-                                exportState &&
-                                (exportState === "completed" ? (
-                                    <a
-                                        className="inline-flex items-center gap-1 text-small-label font-medium text-cyan-700 underline dark:text-cyan-400"
-                                        href={`/api/exports/${jobId}/download`}
-                                    >
-                                        <Download className="h-3 w-3" />
-                                        {t("Home_Download")}
-                                    </a>
-                                ) : (
-                                    <span
-                                        className={
-                                            exportState === "failed"
-                                                ? "text-small-label text-red-700"
-                                                : "text-small-label text-slate-500"
-                                        }
-                                    >
-                                        {t(
-                                            exportState === "failed"
-                                                ? "Home_ExportFailed"
-                                                : "Home_ExportRunning",
-                                        )}
-                                    </span>
-                                ))}
                             <MaximizeButton maximized={maximized} onToggle={toggle} />
                         </div>
                     </CardHeader>

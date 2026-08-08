@@ -1,5 +1,9 @@
 using System.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using QueryPlus.Api.DependencyInjection;
+using QueryPlus.Api.Security;
 using QueryPlus.Api.Services;
 using QueryPlus.Application.Abstractions;
 using QueryPlus.Application.Common;
@@ -15,6 +19,8 @@ namespace QueryPlus.Api.Api;
 
 [ApiController]
 [Route("api/execute")]
+[Authorize(Roles = AppRoles.CanExecute)]
+[EnableRateLimiting(RateLimitingServiceCollectionExtensions.ExecutePolicy)]
 public sealed class ExecuteController(
     IProcedureRepository repository,
     IExecutionService execution,
@@ -26,27 +32,27 @@ public sealed class ExecuteController(
     {
         var values = Normalize(request.ParameterValues, out var reserved);
         if (reserved.Count > 0)
-            return BadRequest(Problem(title: "Reserved pagination parameters are not accepted",
-                detail: string.Join(", ", reserved), statusCode: 400));
+            return Problem(title: "Reserved pagination parameters are not accepted",
+                detail: string.Join(", ", reserved), statusCode: 400);
         if (request.ProcedureId <= 0)
         {
             eligibility.Clear(user.Username);
-            return BadRequest(Problem(title: "Procedure is required", statusCode: 400));
+            return Problem(title: "Procedure is required", statusCode: 400);
         }
 
         var procedure = await repository.GetEnabledByIdWithDetailsAsync(request.ProcedureId, cancellationToken);
         if (procedure is null)
         {
             eligibility.Clear(user.Username);
-            return NotFound(Problem(title: "Procedure not found or disabled", statusCode: 404));
+            return Problem(title: "Procedure not found or disabled", statusCode: 404);
         }
 
         var missing = ParameterValueBinder.GetMissingRequiredCaptions(procedure.Parameters, values);
         if (missing.Count > 0)
         {
             eligibility.Clear(user.Username);
-            return BadRequest(Problem(title: "Required parameters are missing", detail: string.Join(", ", missing),
-                statusCode: 400));
+            return Problem(title: "Required parameters are missing", detail: string.Join(", ", missing),
+                statusCode: 400);
         }
 
         try
@@ -79,12 +85,12 @@ public sealed class ExecuteController(
         catch (EntityNotFoundException ex)
         {
             eligibility.Clear(user.Username);
-            return NotFound(Problem(title: "Procedure not found", detail: ex.Message, statusCode: 404));
+            return Problem(title: "Procedure not found", detail: ex.Message, statusCode: 404);
         }
         catch (ForbiddenOperationException ex)
         {
             eligibility.Clear(user.Username);
-            return StatusCode(403, Problem(title: "Procedure access denied", detail: ex.Message, statusCode: 403));
+            return Problem(title: "Procedure access denied", detail: ex.Message, statusCode: 403);
         }
     }
 

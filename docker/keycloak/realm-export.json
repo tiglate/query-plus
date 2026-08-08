@@ -9,8 +9,12 @@
   "editUsernameAllowed": false,
   "roles": {
     "realm": [
-      { "name": "user", "description": "Default application user" },
-      { "name": "admin", "description": "Application administrator" }
+      { "name": "ROLE_ADMIN", "description": "Application administrator - implies every other permission" },
+      { "name": "ROLE_CATEGORY_READ", "description": "View and search categories" },
+      { "name": "ROLE_CATEGORY_WRITE", "description": "Create, update, and delete categories" },
+      { "name": "ROLE_PROCEDURE_READ", "description": "View and search catalogued procedures" },
+      { "name": "ROLE_PROCEDURE_WRITE", "description": "Create, update, and delete catalogued procedures" },
+      { "name": "ROLE_QUERY_EXEC", "description": "Execute catalogued procedures (subject to each procedure's own role entitlement)" }
     ]
   },
   "clients": [
@@ -77,7 +81,7 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["user"]
+      "realmRoles": ["ROLE_QUERY_EXEC", "ROLE_CATEGORY_READ", "ROLE_PROCEDURE_READ"]
     },
     {
       "username": "admin",
@@ -93,7 +97,7 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["user", "admin"]
+      "realmRoles": ["ROLE_ADMIN"]
     }
   ]
 }

@@ -32,7 +32,7 @@ public class ExcelExportServiceTests : IDisposable
     {
         var paramsDict = new Dictionary<string, string?> { ["@Category"] = "Sales" };
 
-        var jobId = _sut.QueueExport(procedureId: 5, paramsDict, username: "test_user");
+        var jobId = _sut.QueueExport(procedureId: 5, paramsDict, username: "test_user", userRoles: ["user"]);
 
         jobId.Should().NotBeEmpty();
 
@@ -45,7 +45,8 @@ public class ExcelExportServiceTests : IDisposable
     [Fact]
     public void GetFilePath_ReturnsNull_WhenJobNotCompleted()
     {
-        var jobId = _sut.QueueExport(procedureId: 5, new Dictionary<string, string?>(), username: "user");
+        var jobId = _sut.QueueExport(procedureId: 5, new Dictionary<string, string?>(), username: "user",
+            userRoles: ["user"]);
 
         var path = _sut.GetFilePath(jobId);
 
@@ -55,7 +56,8 @@ public class ExcelExportServiceTests : IDisposable
     [Fact]
     public void GetFilePath_ReturnsFilePath_WhenJobCompletedAndFileExists()
     {
-        var jobId = _sut.QueueExport(procedureId: 5, new Dictionary<string, string?>(), username: "user");
+        var jobId = _sut.QueueExport(procedureId: 5, new Dictionary<string, string?>(), username: "user",
+            userRoles: ["user"]);
 
         _sut.TryGetJobState(jobId, out var state);
         state.Should().NotBeNull();
@@ -70,5 +72,61 @@ public class ExcelExportServiceTests : IDisposable
         var path = _sut.GetFilePath(jobId);
 
         path.Should().Be(fakeFile);
+    }
+
+    [Fact]
+    public void EvictExpiredJobs_RemovesOldCompletedJob_AndDeletesItsFile()
+    {
+        var jobId = _sut.QueueExport(5, new Dictionary<string, string?>(), "user", userRoles: ["user"]);
+        var fakeFile = Path.Combine(_sut.ExportDirectory, "old.xlsx");
+        File.WriteAllText(fakeFile, "fake content");
+        _sut.TryGetJobState(jobId, out var state);
+        state!.Status = ExportJobStatus.Completed;
+        state.FilePath = fakeFile;
+        state.CompletedAt = DateTime.UtcNow.AddHours(-2);
+        _sut.UpdateJob(state);
+
+        var evicted = _sut.EvictExpiredJobs(TimeSpan.FromHours(1));
+
+        evicted.Should().Be(1);
+        _sut.GetJob(jobId).Should().BeNull();
+        File.Exists(fakeFile).Should().BeFalse();
+    }
+
+    [Fact]
+    public void EvictExpiredJobs_KeepsRecentCompletedJob()
+    {
+        var jobId = _sut.QueueExport(5, new Dictionary<string, string?>(), "user", userRoles: ["user"]);
+        _sut.TryGetJobState(jobId, out var state);
+        state!.Status = ExportJobStatus.Completed;
+        state.CompletedAt = DateTime.UtcNow;
+        _sut.UpdateJob(state);
+
+        var evicted = _sut.EvictExpiredJobs(TimeSpan.FromHours(1));
+
+        evicted.Should().Be(0);
+        _sut.GetJob(jobId).Should().NotBeNull();
+    }
+
+    [Fact]
+    public void EvictExpiredJobs_NeverEvictsInFlightJobs_RegardlessOfAge()
+    {
+        var jobId = _sut.QueueExport(5, new Dictionary<string, string?>(), "user", userRoles: ["user"]);
+        _sut.TryGetJobState(jobId, out var state);
+        state!.Status = ExportJobStatus.Running;
+        _sut.UpdateJob(state);
+        // CreatedAt is deep in the past relative to the retention window, but Running jobs must
+        // never be evicted out from under an in-progress export.
+        var oldCreatedState = new ExcelExportService.ExportJobState
+        {
+            Id = jobId, ProcedureId = 5, Status = ExportJobStatus.Running,
+            CreatedAt = DateTime.UtcNow.AddDays(-1), Username = "user"
+        };
+        _sut.UpdateJob(oldCreatedState);
+
+        var evicted = _sut.EvictExpiredJobs(TimeSpan.FromHours(1));
+
+        evicted.Should().Be(0);
+        _sut.GetJob(jobId).Should().NotBeNull();
     }
 }

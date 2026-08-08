@@ -13,27 +13,22 @@ import { Select } from "@/components/ui/fields";
 import { Input } from "@/components/ui/input";
 import { Pager } from "@/components/ui/pager";
 import { Field, PageHeader } from "@/components/ui/page";
+import { useAdminSearch } from "../hooks/useAdminSearch";
+
+const EMPTY_PROCEDURE_FILTERS = {
+    categoryId: "",
+    caption: "",
+    roleEntitlement: "",
+    enabled: "",
+};
 
 export function ProceduresPage() {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
     const categories = useQuery(categoryLookupQuery);
-    const [draft, setDraft] = useState({
-        categoryId: "",
-        caption: "",
-        roleEntitlement: "",
-        enabled: "",
-    });
-    const [filter, setFilter] = useState(draft);
-    const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(20);
+    const search = useAdminSearch("procedures", EMPTY_PROCEDURE_FILTERS, proceduresSearch);
     const [deleting, setDeleting] = useState<ProcedureListItem | null>(null);
-    const params = new URLSearchParams({ pageNumber: String(page), pageSize: String(pageSize) });
-    Object.entries(filter).forEach(([key, value]) => value && params.set(key, value));
-    const procedures = useQuery({
-        queryKey: ["procedures", "search", params.toString()],
-        queryFn: () => proceduresSearch(params),
-    });
+    const procedures = search.query;
     const remove = useMutation({
         mutationFn: (id: number) => apiFetch<void>(`/api/procedures/${id}`, { method: "DELETE" }),
         onSuccess: async () => {
@@ -41,9 +36,6 @@ export function ProceduresPage() {
             await queryClient.invalidateQueries({ queryKey: ["procedures"] });
         },
     });
-    const total = procedures.data?.totalCount ?? 0;
-    const updateDraft = (key: keyof typeof draft, value: string) =>
-        setDraft((current) => ({ ...current, [key]: value }));
     return (
         <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
             <PageHeader
@@ -51,29 +43,11 @@ export function ProceduresPage() {
                 icon={<Database className="h-4 w-4 text-cyan-500" />}
                 actions={
                     <>
-                        <Button
-                            onClick={() => {
-                                setFilter(draft);
-                                setPage(1);
-                            }}
-                        >
+                        <Button onClick={search.search}>
                             <Search className="h-4 w-4" />
                             {t("Search")}
                         </Button>
-                        <Button
-                            variant="secondary"
-                            onClick={() => {
-                                const empty = {
-                                    categoryId: "",
-                                    caption: "",
-                                    roleEntitlement: "",
-                                    enabled: "",
-                                };
-                                setDraft(empty);
-                                setFilter(empty);
-                                setPage(1);
-                            }}
-                        >
+                        <Button variant="secondary" onClick={search.clear}>
                             {t("Clear")}
                         </Button>
                         <Button asChild variant="accent">
@@ -92,8 +66,8 @@ export function ProceduresPage() {
                 <CardBody className="grid gap-3 md:grid-cols-6">
                     <Field label={t("Procedures_Category")}>
                         <Select
-                            value={draft.categoryId}
-                            onChange={(e) => updateDraft("categoryId", e.target.value)}
+                            value={search.draft.categoryId}
+                            onChange={(e) => search.updateDraft("categoryId", e.target.value)}
                         >
                             <option value="">—</option>
                             {categories.data?.map((category) => (
@@ -105,20 +79,20 @@ export function ProceduresPage() {
                     </Field>
                     <Field label={t("Procedures_Caption")}>
                         <Input
-                            value={draft.caption}
-                            onChange={(e) => updateDraft("caption", e.target.value)}
+                            value={search.draft.caption}
+                            onChange={(e) => search.updateDraft("caption", e.target.value)}
                         />
                     </Field>
                     <Field label={t("Procedures_Role")}>
                         <Input
-                            value={draft.roleEntitlement}
-                            onChange={(e) => updateDraft("roleEntitlement", e.target.value)}
+                            value={search.draft.roleEntitlement}
+                            onChange={(e) => search.updateDraft("roleEntitlement", e.target.value)}
                         />
                     </Field>
                     <Field label={t("Enabled")}>
                         <Select
-                            value={draft.enabled}
-                            onChange={(e) => updateDraft("enabled", e.target.value)}
+                            value={search.draft.enabled}
+                            onChange={(e) => search.updateDraft("enabled", e.target.value)}
                         >
                             <option value="">—</option>
                             <option value="true">{t("Yes")}</option>
@@ -127,11 +101,8 @@ export function ProceduresPage() {
                     </Field>
                     <Field label={t("Pagination_PageSize")}>
                         <Select
-                            value={pageSize}
-                            onChange={(e) => {
-                                setPageSize(Number(e.target.value));
-                                setPage(1);
-                            }}
+                            value={search.pageSize}
+                            onChange={(e) => search.changePageSize(Number(e.target.value))}
                         >
                             {[10, 20, 50, 100].map((size) => (
                                 <option key={size}>{size}</option>
@@ -213,8 +184,13 @@ export function ProceduresPage() {
                         </tbody>
                     </table>
                 </div>
-                {total > 0 && (
-                    <Pager page={page} pageSize={pageSize} total={total} onPage={setPage} />
+                {search.total > 0 && (
+                    <Pager
+                        page={search.page}
+                        pageSize={search.pageSize}
+                        total={search.total}
+                        onPage={search.setPage}
+                    />
                 )}
             </Card>
             <ConfirmDialog

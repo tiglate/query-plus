@@ -187,8 +187,16 @@ export function ProcedureEditorPage() {
             setConfirmSync(false);
         },
     });
-    const parameterTypes = ["FreeText", "Numeric", "Date", "Time", "DateTime", "Boolean", "Combo"];
-    const alignments = ["Left", "Center", "Right"];
+    const parameterTypeKeys = [
+        "ParamType_FreeText",
+        "ParamType_Numeric",
+        "ParamType_Date",
+        "ParamType_Time",
+        "ParamType_DateTime",
+        "ParamType_Boolean",
+        "ParamType_Combo",
+    ];
+    const alignmentKeys = ["Alignment_Left", "Alignment_Center", "Alignment_Right"];
     let pageTitle;
     if (readOnly) {
         pageTitle = t("Procedures_View");
@@ -388,9 +396,9 @@ export function ProcedureEditorPage() {
                                                     { valueAsNumber: true },
                                                 )}
                                             >
-                                                {parameterTypes.map((label, value) => (
-                                                    <option key={label} value={value}>
-                                                        {label}
+                                                {parameterTypeKeys.map((key, value) => (
+                                                    <option key={key} value={value}>
+                                                        {t(key)}
                                                     </option>
                                                 ))}
                                             </Select>
@@ -519,9 +527,9 @@ export function ProcedureEditorPage() {
                                                 valueAsNumber: true,
                                             })}
                                         >
-                                            {alignments.map((label, value) => (
-                                                <option key={label} value={value}>
-                                                    {label}
+                                            {alignmentKeys.map((key, value) => (
+                                                <option key={key} value={value}>
+                                                    {t(key)}
                                                 </option>
                                             ))}
                                         </Select>

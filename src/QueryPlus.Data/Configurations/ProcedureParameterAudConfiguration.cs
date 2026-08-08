@@ -40,6 +40,8 @@ public class ProcedureParameterAudConfiguration : IEntityTypeConfiguration<Proce
             .HasColumnType("nvarchar(max)");
         builder.Property(e => e.IsRequired)
             .HasColumnName("is_required");
+        builder.Property(e => e.IsSensitive)
+            .HasColumnName("is_sensitive");
         builder.Property(e => e.CreatedAt)
             .HasColumnName("created_at")
             .HasColumnType("datetime2");

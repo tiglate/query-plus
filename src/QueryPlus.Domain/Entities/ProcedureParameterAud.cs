@@ -17,6 +17,7 @@ public class ProcedureParameterAud
     public string? DefaultValue { get; set; }
     public string? ComboValues { get; set; }
     public bool? IsRequired { get; set; }
+    public bool? IsSensitive { get; set; }
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 

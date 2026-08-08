@@ -21,6 +21,13 @@ import { Button } from "@/components/ui/button";
 import { applyTheme, changeFontSize, THEME_KEY, type Theme } from "@/lib/preferences";
 import { setLocale, type SupportedLocale } from "@/i18n";
 import { useUser } from "@/features/auth/useUser";
+import {
+    ADMIN_AREA_ROLES,
+    CATEGORY_ROLES,
+    EXECUTION_LOG_ROLES,
+    PROCEDURE_ROLES,
+    hasAnyRole,
+} from "@/features/auth/roles";
 
 function navClass({ isActive }: { isActive: boolean }): string {
     return `inline-flex h-8 items-center gap-1.5 rounded px-2 text-body hover:bg-white/10 ${isActive ? "bg-white/10 text-cyan-400" : "text-white"}`;
@@ -29,6 +36,11 @@ function navClass({ isActive }: { isActive: boolean }): string {
 export function AppShell() {
     const { t, i18n } = useTranslation();
     const user = useUser();
+    const roles = user.data?.roles;
+    const canSeeAdminArea = hasAnyRole(roles, ADMIN_AREA_ROLES);
+    const canSeeCategories = hasAnyRole(roles, CATEGORY_ROLES);
+    const canSeeProcedures = hasAnyRole(roles, PROCEDURE_ROLES);
+    const canSeeExecutionLogs = hasAnyRole(roles, EXECUTION_LOG_ROLES);
     const [theme, setTheme] = useState<Theme>(() => {
         const saved = localStorage.getItem(THEME_KEY);
         return saved === "light" || saved === "dark" || saved === "system" ? saved : "system";
@@ -64,37 +76,54 @@ export function AppShell() {
                                 <Gauge className="h-4 w-4" />
                                 {t("Nav_Home")}
                             </NavLink>
-                            <DropdownMenu.Root>
-                                <DropdownMenu.Trigger className="inline-flex h-8 items-center gap-1.5 rounded px-2 text-body hover:bg-white/10">
-                                    <Settings className="h-4 w-4" />
-                                    {t("Nav_Admin")}
-                                </DropdownMenu.Trigger>
-                                <DropdownMenu.Portal>
-                                    <DropdownMenu.Content
-                                        align="start"
-                                        className="z-50 min-w-52 rounded-md border border-slate-200 bg-white p-1 text-slate-900 shadow-xl dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100"
-                                    >
-                                        <DropdownMenu.Item asChild>
-                                            <Link className="menu-item" to="/admin/categories">
-                                                <Folder className="h-4 w-4" />
-                                                {t("Nav_Categories")}
-                                            </Link>
-                                        </DropdownMenu.Item>
-                                        <DropdownMenu.Item asChild>
-                                            <Link className="menu-item" to="/admin/procedures">
-                                                <Database className="h-4 w-4" />
-                                                {t("Nav_Procedures")}
-                                            </Link>
-                                        </DropdownMenu.Item>
-                                        <DropdownMenu.Item asChild>
-                                            <Link className="menu-item" to="/admin/execution-logs">
-                                                <ListChecks className="h-4 w-4" />
-                                                {t("Nav_ExecutionLogs")}
-                                            </Link>
-                                        </DropdownMenu.Item>
-                                    </DropdownMenu.Content>
-                                </DropdownMenu.Portal>
-                            </DropdownMenu.Root>
+                            {canSeeAdminArea && (
+                                <DropdownMenu.Root>
+                                    <DropdownMenu.Trigger className="inline-flex h-8 items-center gap-1.5 rounded px-2 text-body hover:bg-white/10">
+                                        <Settings className="h-4 w-4" />
+                                        {t("Nav_Admin")}
+                                    </DropdownMenu.Trigger>
+                                    <DropdownMenu.Portal>
+                                        <DropdownMenu.Content
+                                            align="start"
+                                            className="z-50 min-w-52 rounded-md border border-slate-200 bg-white p-1 text-slate-900 shadow-xl dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100"
+                                        >
+                                            {canSeeCategories && (
+                                                <DropdownMenu.Item asChild>
+                                                    <Link
+                                                        className="menu-item"
+                                                        to="/admin/categories"
+                                                    >
+                                                        <Folder className="h-4 w-4" />
+                                                        {t("Nav_Categories")}
+                                                    </Link>
+                                                </DropdownMenu.Item>
+                                            )}
+                                            {canSeeProcedures && (
+                                                <DropdownMenu.Item asChild>
+                                                    <Link
+                                                        className="menu-item"
+                                                        to="/admin/procedures"
+                                                    >
+                                                        <Database className="h-4 w-4" />
+                                                        {t("Nav_Procedures")}
+                                                    </Link>
+                                                </DropdownMenu.Item>
+                                            )}
+                                            {canSeeExecutionLogs && (
+                                                <DropdownMenu.Item asChild>
+                                                    <Link
+                                                        className="menu-item"
+                                                        to="/admin/execution-logs"
+                                                    >
+                                                        <ListChecks className="h-4 w-4" />
+                                                        {t("Nav_ExecutionLogs")}
+                                                    </Link>
+                                                </DropdownMenu.Item>
+                                            )}
+                                        </DropdownMenu.Content>
+                                    </DropdownMenu.Portal>
+                                </DropdownMenu.Root>
+                            )}
                             <NavLink to="/support" className={navClass}>
                                 <LifeBuoy className="h-4 w-4" />
                                 {t("Nav_Support")}

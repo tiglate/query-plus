@@ -175,7 +175,7 @@ public sealed class DemoDataSeeder(
             ProcedureName = entry.ProcedureName,
             Enabled = true,
             SupportsPagination = entry.SupportsPagination,
-            RoleEntitlement = string.IsNullOrWhiteSpace(entry.Role) ? "user" : entry.Role,
+            RoleEntitlement = string.IsNullOrWhiteSpace(entry.Role) ? "ROLE_QUERY_EXEC" : entry.Role,
             Description = entry.Description,
             CreatedAt = DateTime.UtcNow
         };

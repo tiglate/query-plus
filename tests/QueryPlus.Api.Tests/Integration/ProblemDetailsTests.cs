@@ -9,6 +9,7 @@ using QueryPlus.Application.Common;
 using QueryPlus.Application.DTOs.Categories;
 using QueryPlus.Application.DTOs.Execution;
 using QueryPlus.Domain.Entities;
+using QueryPlus.Domain.Exceptions;
 
 namespace QueryPlus.Api.Tests.Integration;
 
@@ -54,6 +55,66 @@ public sealed class ProblemDetailsTests(QueryPlusApiApplicationFactory factory)
         var raw = await response.Content.ReadAsStringAsync();
         raw.Should().Contain("Validation failed");
         raw.Should().Contain("errors");
+    }
+
+    [Fact]
+    public async Task BusinessRuleException_returns_fixed_generic_detail_not_the_raw_message()
+    {
+        // BusinessRuleException falls into ApiExceptionHandler's generic DomainException
+        // catch-all (it has no dedicated switch arm), which is exactly the path a future,
+        // unreviewed DomainException subtype would also take - the raw exception.Message must
+        // never reach the wire for this branch.
+        factory.Categories.GetByIdAsync(3, Arg.Any<CancellationToken>())
+            .Returns(new CategoryDetailDto { Id = 3, Description = "Sales", CreatedAt = DateTime.UtcNow });
+        factory.Categories.DeleteAsync(3, Arg.Any<CancellationToken>())
+            .Returns<Task>(_ => throw new BusinessRuleException(
+                "Cannot delete a category that still has procedures."));
+
+        using var request = await AuthedDeleteAsync("/api/categories/3");
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        json.GetProperty("title").GetString().Should().Be("Invalid request");
+        json.GetProperty("detail").GetString().Should().Be("The request could not be processed.");
+        var raw = await response.Content.ReadAsStringAsync();
+        raw.Should().NotContain("still has procedures");
+    }
+
+    [Fact]
+    public async Task EntityNotFoundException_returns_its_own_reviewed_message_as_detail()
+    {
+        factory.Execution.ExecuteAsync(Arg.Any<ExecuteProcedureRequest>(), Arg.Any<CancellationToken>())
+            .Returns<ExecutionResultDto>(_ => throw new EntityNotFoundException("Procedure", 42));
+
+        var procedure = new Procedure
+        {
+            IdProcedure = 42, IdCategory = 1, Caption = "Demo", DatabaseName = "db",
+            ProcedureName = "dbo.usp_Demo", RoleEntitlement = "", Enabled = true, Parameters = [], Columns = []
+        };
+        factory.ProcedureRepository.GetEnabledByIdWithDetailsAsync(42, Arg.Any<CancellationToken>())
+            .Returns(procedure);
+
+        var token = await AntiforgeryApiHelper.GetTokenAsync(_client);
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/execute")
+        {
+            Content = JsonContent.Create(new { procedureId = 42, parameterValues = new Dictionary<string, string?>() })
+        };
+        request.Headers.TryAddWithoutValidation(AntiforgeryApiHelper.CsrfHeaderName, token);
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        json.GetProperty("detail").GetString().Should().Be("Procedure with id 42 was not found.");
+    }
+
+    private async Task<HttpRequestMessage> AuthedDeleteAsync(string url)
+    {
+        var token = await AntiforgeryApiHelper.GetTokenAsync(_client);
+        var request = new HttpRequestMessage(HttpMethod.Delete, url);
+        request.Headers.TryAddWithoutValidation(AntiforgeryApiHelper.CsrfHeaderName, token);
+        return request;
     }
 
     [Fact]

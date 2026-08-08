@@ -86,9 +86,11 @@ public sealed class ProcedureService(
         await procedures.AddAsync(entity, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var created = await procedures.GetByIdWithDetailsAsync(entity.IdProcedure, cancellationToken)
-                      ?? entity;
-        return await MapDetailAsync(created, cancellationToken);
+        // Parameters/Columns are already correct on the tracked graph after SaveChanges; only
+        // Category needs loading (it was set via IdCategory FK, not the navigation) - a full
+        // GetByIdWithDetailsAsync re-fetch would redundantly reload data already in memory.
+        await procedures.EnsureCategoryLoadedAsync(entity, cancellationToken);
+        return await MapDetailAsync(entity, cancellationToken);
     }
 
     public async Task<ProcedureDetailDto> UpdateAsync(
@@ -126,9 +128,8 @@ public sealed class ProcedureService(
         procedures.Update(entity);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var updated = await procedures.GetByIdWithDetailsAsync(entity.IdProcedure, cancellationToken)
-                      ?? entity;
-        return await MapDetailAsync(updated, cancellationToken);
+        await procedures.EnsureCategoryLoadedAsync(entity, cancellationToken);
+        return await MapDetailAsync(entity, cancellationToken);
     }
 
     public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)

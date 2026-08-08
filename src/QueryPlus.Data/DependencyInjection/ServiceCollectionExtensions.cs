@@ -23,7 +23,6 @@ public static class ServiceCollectionExtensions
                                ?? throw new InvalidOperationException(
                                    "Connection string 'DefaultConnection' is not configured.");
 
-        services.AddScoped<IAuditContext, NullAuditContext>();
         services.AddScoped<AuditSaveChangesInterceptor>();
 
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
@@ -41,8 +40,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IStoredProcedureExecutor, DapperStoredProcedureExecutor>();
         services.AddScoped<IProcedureMetadataSyncService, SqlProcedureMetadataSyncService>();
 
-        // Generic repository kept for simple lookups if needed.
-        services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<DemoDataSeeder>();
 
         return services;

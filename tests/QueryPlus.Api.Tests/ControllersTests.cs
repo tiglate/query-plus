@@ -46,7 +46,12 @@ public class ControllersTests
 
         var actionResult = await controller.Get(999, CancellationToken.None);
 
-        actionResult.Result.Should().BeOfType<NotFoundObjectResult>();
+        // Must be a single, flat ObjectResult (from Problem()) - not NotFound(Problem(...)),
+        // which double-wraps the ProblemDetails inside another ObjectResult's Value and
+        // corrupts the serialized response body.
+        var result = actionResult.Result.Should().BeOfType<ObjectResult>().Subject;
+        result.StatusCode.Should().Be(404);
+        result.Value.Should().BeOfType<Microsoft.AspNetCore.Mvc.ProblemDetails>();
     }
 
     [Fact]

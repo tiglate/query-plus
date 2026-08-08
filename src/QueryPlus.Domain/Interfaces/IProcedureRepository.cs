@@ -52,6 +52,13 @@ public interface IProcedureRepository
     void Update(Procedure procedure);
     void Remove(Procedure procedure);
 
+    /// <summary>
+    /// Loads <paramref name="procedure"/>.Category if it isn't already loaded (no-op otherwise).
+    /// Used after Create/Update so the response DTO can include the category description without
+    /// a full round-trip re-fetch of the whole graph, which is already correct in memory.
+    /// </summary>
+    Task EnsureCategoryLoadedAsync(Procedure procedure, CancellationToken cancellationToken = default);
+
     void RemoveParameter(ProcedureParameter parameter);
     void RemoveColumn(ProcedureColumn column);
 }

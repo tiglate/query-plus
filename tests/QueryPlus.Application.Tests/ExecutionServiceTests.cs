@@ -144,4 +144,92 @@ public class ExecutionServiceTests
         savedLog.ParameterValues.Should().Contain("\"@Password\":\"***\"");
         savedLog.ParameterValues.Should().NotContain("SuperSecret123!");
     }
+
+    [Fact]
+    public async Task ExecuteAsync_ThrowsForbidden_WhenUserLacksRequiredEntitlement()
+    {
+        var procedure = new Procedure
+        {
+            IdProcedure = 20,
+            IdCategory = 1,
+            Caption = "Restricted Proc",
+            DatabaseName = "DB",
+            ProcedureName = "sp_restricted",
+            Enabled = true,
+            RoleEntitlement = "ROLE_FINANCE"
+        };
+
+        _user.IsAuthenticated.Returns(true);
+        _user.Username.Returns("someone");
+        _user.Roles.Returns((IReadOnlyCollection<string>)["ROLE_QUERY_EXEC"]);
+        _procedures.GetEnabledByIdWithDetailsAsync(20, Arg.Any<CancellationToken>()).Returns(procedure);
+
+        var request = new ExecuteProcedureRequest { ProcedureId = 20, ParameterValues = new Dictionary<string, string?>() };
+
+        await FluentActions.Awaiting(() => _sut.ExecuteAsync(request))
+            .Should().ThrowAsync<Domain.Exceptions.ForbiddenOperationException>();
+        await _executor.DidNotReceive().ExecuteAsync(Arg.Any<string>(), Arg.Any<string>(),
+            Arg.Any<IReadOnlyDictionary<string, object?>>(), Arg.Any<IReadOnlyCollection<string>?>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Succeeds_WhenUserHoldsRequiredEntitlement()
+    {
+        var procedure = new Procedure
+        {
+            IdProcedure = 21,
+            IdCategory = 1,
+            Caption = "Restricted Proc",
+            DatabaseName = "DB",
+            ProcedureName = "sp_restricted",
+            Enabled = true,
+            RoleEntitlement = "ROLE_FINANCE, ROLE_ADMIN"
+        };
+
+        _user.IsAuthenticated.Returns(true);
+        _user.Username.Returns("someone");
+        _user.Roles.Returns((IReadOnlyCollection<string>)["ROLE_FINANCE"]);
+        _procedures.GetEnabledByIdWithDetailsAsync(21, Arg.Any<CancellationToken>()).Returns(procedure);
+        _executor.ExecuteAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, object?>>(),
+                Arg.Any<IReadOnlyCollection<string>?>(), Arg.Any<CancellationToken>())
+            .Returns(new StoredProcedureExecutionResult { Data = new System.Data.DataTable() });
+
+        var request = new ExecuteProcedureRequest { ProcedureId = 21, ParameterValues = new Dictionary<string, string?>() };
+
+        var result = await _sut.ExecuteAsync(request);
+
+        result.Success.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Succeeds_ForRoleAdmin_EvenWithoutTheProceduresOwnEntitlement()
+    {
+        var procedure = new Procedure
+        {
+            IdProcedure = 22,
+            IdCategory = 1,
+            Caption = "Restricted Proc",
+            DatabaseName = "DB",
+            ProcedureName = "sp_restricted",
+            Enabled = true,
+            RoleEntitlement = "ROLE_FINANCE_TEAM",
+        };
+
+        _user.IsAuthenticated.Returns(true);
+        _user.Username.Returns("admin");
+        // ROLE_ADMIN holds none of the procedure's own entitlement roles - must still succeed,
+        // since ROLE_ADMIN implies every permission system-wide.
+        _user.Roles.Returns((IReadOnlyCollection<string>)["ROLE_ADMIN"]);
+        _procedures.GetEnabledByIdWithDetailsAsync(22, Arg.Any<CancellationToken>()).Returns(procedure);
+        _executor.ExecuteAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, object?>>(),
+                Arg.Any<IReadOnlyCollection<string>?>(), Arg.Any<CancellationToken>())
+            .Returns(new StoredProcedureExecutionResult { Data = new System.Data.DataTable() });
+
+        var request = new ExecuteProcedureRequest { ProcedureId = 22, ParameterValues = new Dictionary<string, string?>() };
+
+        var result = await _sut.ExecuteAsync(request);
+
+        result.Success.Should().BeTrue();
+    }
 }

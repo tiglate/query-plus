@@ -16,15 +16,21 @@ public sealed class ProcedureRepository(ApplicationDbContext db) : IProcedureRep
             .OrderBy(p => p.Caption)
             .ToListAsync(cancellationToken);
 
+    // Tracked: ProcedureService.UpdateAsync/DeleteAsync mutate the entity returned by this method.
     public Task<Procedure?> GetByIdWithDetailsAsync(int id, CancellationToken cancellationToken = default)
         => db.Procedures
+            .AsSplitQuery()
             .Include(p => p.Category)
             .Include(p => p.Parameters)
             .Include(p => p.Columns)
             .FirstOrDefaultAsync(p => p.IdProcedure == id, cancellationToken);
 
+    // Read-only: used only to build execution parameters/grid metadata (ExecutionService, the
+    // export worker) - never saved through, so no change tracking is needed.
     public Task<Procedure?> GetEnabledByIdWithDetailsAsync(int id, CancellationToken cancellationToken = default)
         => db.Procedures
+            .AsNoTracking()
+            .AsSplitQuery()
             .Include(p => p.Category)
             .Include(p => p.Parameters)
             .Include(p => p.Columns)
@@ -97,20 +103,9 @@ public sealed class ProcedureRepository(ApplicationDbContext db) : IProcedureRep
 
         var items = await query.ToListAsync(cancellationToken);
 
-        IEnumerable<Procedure> accessible = items;
-        if (userRoles.Count > 0)
-        {
-            var roleSet = new HashSet<string>(userRoles, StringComparer.OrdinalIgnoreCase);
-            accessible = items.Where(p =>
-            {
-                var required = p.RoleEntitlement
-                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                return required.Length == 0 || required.Any(roleSet.Contains);
-            });
-        }
-
         // Home list groups by category (A–Z), procedures by caption within each group.
-        return accessible
+        return items
+            .Where(p => p.IsAccessibleTo(userRoles))
             .OrderBy(p => p.Category?.Description ?? string.Empty, StringComparer.CurrentCultureIgnoreCase)
             .ThenBy(p => p.Caption, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
@@ -159,4 +154,13 @@ public sealed class ProcedureRepository(ApplicationDbContext db) : IProcedureRep
 
     public void RemoveColumn(ProcedureColumn column)
         => db.ProcedureColumns.Remove(column);
+
+    public async Task EnsureCategoryLoadedAsync(Procedure procedure, CancellationToken cancellationToken = default)
+    {
+        var entry = db.Entry(procedure).Reference(p => p.Category);
+        if (!entry.IsLoaded)
+        {
+            await entry.LoadAsync(cancellationToken);
+        }
+    }
 }

@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Pager } from "@/components/ui/pager";
 import { Field, PageHeader } from "@/components/ui/page";
 import { Select } from "@/components/ui/fields";
+import { useAdminSearch } from "../hooks/useAdminSearch";
 
 const categorySchema = z.object({ description: z.string().trim().min(1).max(200) });
 type CategoryForm = z.infer<typeof categorySchema>;
@@ -148,24 +149,17 @@ function CategoryDialog({
     );
 }
 
+const EMPTY_CATEGORY_FILTERS = { description: "" };
+
 export function CategoriesPage() {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
-    const [description, setDescription] = useState("");
-    const [filter, setFilter] = useState("");
-    const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(20);
+    const search = useAdminSearch("categories", EMPTY_CATEGORY_FILTERS, categoriesSearch);
     const [dialog, setDialog] = useState<{
         id: number | null;
         mode: "create" | "view" | "edit";
     } | null>(null);
     const [deleting, setDeleting] = useState<number | null>(null);
-    const params = new URLSearchParams({ pageNumber: String(page), pageSize: String(pageSize) });
-    if (filter) params.set("description", filter);
-    const categories = useQuery({
-        queryKey: ["categories", "search", params.toString()],
-        queryFn: () => categoriesSearch(params),
-    });
     const remove = useMutation({
         mutationFn: (id: number) => apiFetch<void>(`/api/categories/${id}`, { method: "DELETE" }),
         onSuccess: async () => {
@@ -173,7 +167,7 @@ export function CategoriesPage() {
             await queryClient.invalidateQueries({ queryKey: ["categories"] });
         },
     });
-    const total = categories.data?.totalCount ?? 0;
+    const categories = search.query;
     return (
         <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
             <PageHeader
@@ -181,23 +175,11 @@ export function CategoriesPage() {
                 icon={<Folder className="h-4 w-4 text-cyan-500" />}
                 actions={
                     <>
-                        <Button
-                            onClick={() => {
-                                setFilter(description.trim());
-                                setPage(1);
-                            }}
-                        >
+                        <Button onClick={search.search}>
                             <Search className="h-4 w-4" />
                             {t("Search")}
                         </Button>
-                        <Button
-                            variant="secondary"
-                            onClick={() => {
-                                setDescription("");
-                                setFilter("");
-                                setPage(1);
-                            }}
-                        >
+                        <Button variant="secondary" onClick={search.clear}>
                             {t("Clear")}
                         </Button>
                         <Button
@@ -217,23 +199,19 @@ export function CategoriesPage() {
                 <CardBody className="grid gap-3 sm:grid-cols-[1fr_10rem]">
                     <Field label={t("Description")}>
                         <Input
-                            value={description}
-                            onChange={(event) => setDescription(event.target.value)}
+                            value={search.draft.description}
+                            onChange={(event) =>
+                                search.updateDraft("description", event.target.value)
+                            }
                             onKeyDown={(event) => {
-                                if (event.key === "Enter") {
-                                    setFilter(description.trim());
-                                    setPage(1);
-                                }
+                                if (event.key === "Enter") search.search();
                             }}
                         />
                     </Field>
                     <Field label={t("Pagination_PageSize")}>
                         <Select
-                            value={pageSize}
-                            onChange={(event) => {
-                                setPageSize(Number(event.target.value));
-                                setPage(1);
-                            }}
+                            value={search.pageSize}
+                            onChange={(event) => search.changePageSize(Number(event.target.value))}
                         >
                             {[10, 20, 50, 100].map((size) => (
                                 <option key={size}>{size}</option>
@@ -313,8 +291,13 @@ export function CategoriesPage() {
                         </tbody>
                     </table>
                 </div>
-                {total > 0 && (
-                    <Pager page={page} pageSize={pageSize} total={total} onPage={setPage} />
+                {search.total > 0 && (
+                    <Pager
+                        page={search.page}
+                        pageSize={search.pageSize}
+                        total={search.total}
+                        onPage={search.setPage}
+                    />
                 )}
             </Card>
             {dialog && (

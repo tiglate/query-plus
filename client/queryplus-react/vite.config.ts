@@ -29,6 +29,11 @@ export default defineConfig(({ mode }) => {
                 output: {
                     entryFileNames: "assets/queryplus.js",
                     assetFileNames: "assets/[name][extname]",
+                    // Enforces the single-bundle invariant by config, not just by the current
+                    // absence of dynamic import()/React.lazy() - a future dynamic import would
+                    // otherwise silently produce a second chunk and reintroduce the
+                    // ResultsMaximize double-mount bug this setup exists to avoid.
+                    inlineDynamicImports: true,
                 },
             },
         },

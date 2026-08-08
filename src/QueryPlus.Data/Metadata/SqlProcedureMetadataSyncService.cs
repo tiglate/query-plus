@@ -62,12 +62,16 @@ public sealed class SqlProcedureMetadataSyncService(IConfiguration configuration
                           p.is_nullable
                    FROM {SqlIdentifier.Quote(databaseName)}.sys.parameters p
                    INNER JOIN {SqlIdentifier.Quote(databaseName)}.sys.types t ON p.user_type_id = t.user_type_id
-                   WHERE p.object_id = OBJECT_ID(N'{EscapeSqlLiteral(databaseName + "." + schema + "." + procedureName)}')
+                   WHERE p.object_id = OBJECT_ID(@qualifiedName)
                      AND p.parameter_id > 0
                    ORDER BY p.parameter_id;
                    """;
 
         await using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.Add(new SqlParameter("@qualifiedName", SqlDbType.NVarChar, 4000)
+        {
+            Value = $"{databaseName}.{schema}.{procedureName}"
+        });
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
 
         var list = new List<SaveProcedureParameterDto>();
@@ -203,7 +207,4 @@ public sealed class SqlProcedureMetadataSyncService(IConfiguration configuration
         "datetime" or "datetime2" or "smalldatetime" or "datetimeoffset" => ParameterType.DateTime,
         _ => ParameterType.FreeText
     };
-
-    private static string EscapeSqlLiteral(string value)
-        => value.Replace("'", "''", StringComparison.Ordinal);
 }

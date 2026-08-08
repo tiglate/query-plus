@@ -48,7 +48,8 @@ public sealed class ExportsApiTests(QueryPlusApiApplicationFactory factory)
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         factory.Exports.DidNotReceive()
-            .QueueExport(Arg.Any<int>(), Arg.Any<Dictionary<string, string?>>(), Arg.Any<string>());
+            .QueueExport(Arg.Any<int>(), Arg.Any<Dictionary<string, string?>>(), Arg.Any<string>(),
+                Arg.Any<IReadOnlyCollection<string>>());
     }
 
     [Fact]
@@ -73,7 +74,15 @@ public sealed class ExportsApiTests(QueryPlusApiApplicationFactory factory)
         eligibility.MarkEligible("test-user", 7, new Dictionary<string, string?>(), 5);
         factory.Procedures.GetByIdAsync(7, Arg.Any<CancellationToken>()).Returns(EnabledDetail(7));
         var jobId = Guid.NewGuid();
-        factory.Exports.QueueExport(7, Arg.Any<IDictionary<string, string?>>(), "test-user").Returns(jobId);
+        factory.Exports.QueueExport(7, Arg.Any<IDictionary<string, string?>>(), "test-user",
+            Arg.Any<IReadOnlyCollection<string>>()).Returns(jobId);
+        factory.Exports.GetJob(jobId).Returns(new ExportJobDto
+        {
+            Id = jobId,
+            Status = ExportJobStatus.Queued,
+            Username = "test-user",
+            CreatedAt = DateTime.UtcNow
+        });
 
         using var request = await AuthedJsonAsync(HttpMethod.Post, "/api/exports",
             JsonContent.Create(new { procedureId = 7, parameterValues = new Dictionary<string, string?>() }));
@@ -82,7 +91,15 @@ public sealed class ExportsApiTests(QueryPlusApiApplicationFactory factory)
 
         response.StatusCode.Should().Be(HttpStatusCode.Accepted);
         response.Headers.Location.Should().NotBeNull();
-        factory.Exports.Received(1).QueueExport(7, Arg.Any<IDictionary<string, string?>>(), "test-user");
+        // Regression guard: the queue response body must use the same DTO shape (an "id" field)
+        // as the status/download endpoints - a hand-built anonymous object here once used
+        // "jobId" instead, which the SPA's ExportJob type never matched, silently breaking the
+        // Export button (queueExport().then(job => setJobId(job.id)) received undefined).
+        var body = await response.Content.ReadFromJsonAsync<ExportJobDto>();
+        body!.Id.Should().Be(jobId);
+        body.Status.Should().Be(ExportJobStatus.Queued);
+        factory.Exports.Received(1).QueueExport(7, Arg.Any<IDictionary<string, string?>>(), "test-user",
+            Arg.Any<IReadOnlyCollection<string>>());
     }
 
     [Fact]

@@ -191,25 +191,10 @@ public sealed class ExecutionService(
             throw new ForbiddenOperationException("This procedure is disabled.");
         }
 
-        var entitlement = procedure.RoleEntitlement.Trim();
-        if (string.IsNullOrEmpty(entitlement))
-        {
-            return;
-        }
-
-        // Role entitlement may be a single role or comma-separated list.
-        var required = entitlement
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-        if (required.Length == 0)
-        {
-            return;
-        }
-
-        if (!required.Any(r => currentUser.IsInRole(r)))
+        if (!procedure.IsAccessibleTo(currentUser.Roles))
         {
             throw new ForbiddenOperationException(
-                $"You do not have the required entitlement '{entitlement}' to execute this procedure.");
+                $"You do not have the required entitlement '{procedure.RoleEntitlement}' to execute this procedure.");
         }
     }
 

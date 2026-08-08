@@ -56,7 +56,14 @@ public static class AuthenticationServiceCollectionExtensions
                 options.CallbackPath = "/signin-oidc";
                 options.SignedOutCallbackPath = "/signout-callback-oidc";
                 options.TokenValidationParameters.NameClaimType = "preferred_username";
-                options.TokenValidationParameters.RoleClaimType = "roles";
+                // Keycloak's token carries roles under the short claim name "roles", but the
+                // token handler's default inbound claim-type mapping (the same mechanism that
+                // remaps "sub" -> ClaimTypes.NameIdentifier, "email" -> ClaimTypes.Email, etc.)
+                // rewrites it to the long ClaimTypes.Role URI before any event below ever sees
+                // the principal - so RoleClaimType must point at ClaimTypes.Role (the default),
+                // not the literal "roles" string, or ClaimsPrincipal.IsInRole /
+                // [Authorize(Roles=...)] silently never matches anything.
+                options.TokenValidationParameters.RoleClaimType = ClaimTypes.Role;
                 options.TokenValidationParameters.ValidIssuer = authority;
                 options.TokenValidationParameters.ValidateIssuer = true;
                 if (!string.IsNullOrWhiteSpace(backchannelHost) &&
@@ -78,10 +85,14 @@ public static class AuthenticationServiceCollectionExtensions
                     },
                     OnTokenValidated = context =>
                     {
+                        // Defensive fallback: if some future claim source sends the singular
+                        // "role" key (unmapped) instead of "roles", normalize it - a no-op today
+                        // since Keycloak's "roles" claim is already inbound-mapped to
+                        // ClaimTypes.Role by this point (see RoleClaimType above).
                         if (context.Principal?.Identity is ClaimsIdentity identity &&
                             !identity.HasClaim(x => x.Type is "roles" || x.Type == ClaimTypes.Role))
                             foreach (var role in context.Principal.FindAll("role"))
-                                identity.AddClaim(new Claim("roles", role.Value));
+                                identity.AddClaim(new Claim(ClaimTypes.Role, role.Value));
                         return Task.CompletedTask;
                     }
                 };

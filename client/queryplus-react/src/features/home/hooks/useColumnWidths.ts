@@ -67,33 +67,33 @@ export function useColumnWidths(
 
             const total = rows.length;
             const stride = total > SAMPLE_SIZE ? Math.floor(total / SAMPLE_SIZE) : 1;
-            const bodyCeiling = MAX_COLUMN_WIDTH - CELL_PADDING_PX;
             const next: Record<number, number> = {};
+            const sizedColumns: number[] = [];
 
             for (const entry of visibleColumns) {
                 if (cancelled) return;
                 const { column, sourceIndex } = entry;
                 if (userSizedRef.current.has(sourceIndex)) continue;
+                sizedColumns.push(sourceIndex);
 
                 const headerText = column.caption || column.technicalName;
                 const headerWidth = measureHeader(headerText);
-                let maxBodyWidth = 0;
 
+                // Find the longest candidate in pure JS first (character count, same
+                // heuristic as approxWidth's fallback) and DOM-measure only that one
+                // string - one layout read per column instead of one per sampled row.
+                let longestText = "";
                 if (total > 0) {
                     for (let i = 0; i < total; i += stride) {
                         const text = cellText(rows[i]?.[sourceIndex]);
-                        const w = measureBody(text);
-                        if (w > maxBodyWidth) {
-                            maxBodyWidth = w;
-                            if (maxBodyWidth >= bodyCeiling) break;
-                        }
+                        if (text.length > longestText.length) longestText = text;
                     }
                     if (stride > 1) {
                         const lastText = cellText(rows[total - 1]?.[sourceIndex]);
-                        const w = measureBody(lastText);
-                        if (w > maxBodyWidth) maxBodyWidth = w;
+                        if (lastText.length > longestText.length) longestText = lastText;
                     }
                 }
+                const maxBodyWidth = total > 0 ? measureBody(longestText) : 0;
                 next[sourceIndex] = clampWidth(
                     Math.max(headerWidth, maxBodyWidth + CELL_PADDING_PX),
                 );
@@ -102,7 +102,7 @@ export function useColumnWidths(
             if (cancelled) return;
             setAutoWidths((current) => {
                 let same = true;
-                for (const { sourceIndex } of visibleColumns) {
+                for (const sourceIndex of sizedColumns) {
                     if ((current[sourceIndex] ?? -1) !== next[sourceIndex]) {
                         same = false;
                         break;
@@ -128,11 +128,26 @@ export function useColumnWidths(
 
     const handleResizeStart = (sourceIndex: number, startX: number, startWidth: number) => {
         userSizedRef.current.add(sourceIndex);
-        const move = (event: MouseEvent) => {
-            const width = clampWidth(startWidth + event.clientX - startX);
+        let raf = 0;
+        let latestClientX = startX;
+        const applyWidth = () => {
+            raf = 0;
+            const width = clampWidth(startWidth + latestClientX - startX);
             setUserWidths((current) => ({ ...current, [sourceIndex]: width }));
         };
+        const move = (event: MouseEvent) => {
+            latestClientX = event.clientX;
+            // Coalesce to at most one setState per animation frame instead of one per
+            // mousemove (which can fire well over 60/sec and re-renders the whole grid).
+            if (!raf) raf = requestAnimationFrame(applyWidth);
+        };
         const up = () => {
+            // Flush any pending frame so the final width matches the cursor's last
+            // position instead of whatever the last-rendered frame happened to catch.
+            if (raf) {
+                cancelAnimationFrame(raf);
+                applyWidth();
+            }
             document.removeEventListener("mousemove", move);
             document.removeEventListener("mouseup", up);
         };

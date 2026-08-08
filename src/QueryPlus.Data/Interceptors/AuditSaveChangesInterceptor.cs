@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using QueryPlus.Application.Abstractions;
 using QueryPlus.Domain.Common;
 using QueryPlus.Domain.Entities;
 using QueryPlus.Domain.Enums;
@@ -13,9 +14,11 @@ namespace QueryPlus.Data.Interceptors;
 /// </summary>
 /// <remarks>
 /// For INSERT, temporary identity keys are shared between the principal row and its audit row
-/// so EF Core generates the same INT value for both after the round-trip.
+/// so EF Core generates the same INT value for both after the round-trip. The "who made this
+/// change" identity comes from <see cref="ICurrentUserContext"/> (Application layer) rather than
+/// a Data-layer-owned abstraction, so Api never needs to reference Data just to satisfy audit.
 /// </remarks>
-public class AuditSaveChangesInterceptor(IAuditContext auditContext) : SaveChangesInterceptor
+public class AuditSaveChangesInterceptor(ICurrentUserContext currentUser) : SaveChangesInterceptor
 {
     private readonly List<PendingInsertAudit> _pendingInsertAudits = [];
 
@@ -101,10 +104,10 @@ public class AuditSaveChangesInterceptor(IAuditContext auditContext) : SaveChang
 
         var revision = new Revision
         {
-            Username = string.IsNullOrWhiteSpace(auditContext.Username)
+            Username = string.IsNullOrWhiteSpace(currentUser.Username)
                 ? "system"
-                : auditContext.Username,
-            IpAddress = auditContext.IpAddress,
+                : currentUser.Username,
+            IpAddress = currentUser.IpAddress,
             RevisionTimestamp = utcNow
         };
 
@@ -210,6 +213,7 @@ public class AuditSaveChangesInterceptor(IAuditContext auditContext) : SaveChang
             DefaultValue = Read<string?>(entry, nameof(ProcedureParameter.DefaultValue)),
             ComboValues = Read<string?>(entry, nameof(ProcedureParameter.ComboValues)),
             IsRequired = Read<bool?>(entry, nameof(ProcedureParameter.IsRequired)),
+            IsSensitive = Read<bool?>(entry, nameof(ProcedureParameter.IsSensitive)),
             CreatedAt = Read<DateTime?>(entry, nameof(ProcedureParameter.CreatedAt)),
             UpdatedAt = Read<DateTime?>(entry, nameof(ProcedureParameter.UpdatedAt))
         };

@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
+using QueryPlus.Application.Abstractions;
 using QueryPlus.Data.Context;
 using QueryPlus.Data.Interceptors;
 
@@ -14,14 +15,14 @@ namespace QueryPlus.Data.Tests;
 public class AuditSaveChangesInterceptorTests : IDisposable
 {
     private readonly ApplicationDbContext _db;
-    private readonly IAuditContext _auditContext = Substitute.For<IAuditContext>();
+    private readonly ICurrentUserContext _currentUser = Substitute.For<ICurrentUserContext>();
 
     public AuditSaveChangesInterceptorTests()
     {
-        _auditContext.Username.Returns("audit_user");
-        _auditContext.IpAddress.Returns("127.0.0.1");
+        _currentUser.Username.Returns("audit_user");
+        _currentUser.IpAddress.Returns("127.0.0.1");
 
-        var interceptor = new AuditSaveChangesInterceptor(_auditContext);
+        var interceptor = new AuditSaveChangesInterceptor(_currentUser);
 
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
@@ -69,7 +70,7 @@ public class AuditSaveChangesInterceptorTests : IDisposable
         _db.Categories.Add(category);
         await _db.SaveChangesAsync();
 
-        var param = new ProcedureParameter { Caption = "P1", Name = "@P1", ParameterType = ParameterType.FreeText, IsRequired = true };
+        var param = new ProcedureParameter { Caption = "P1", Name = "@P1", ParameterType = ParameterType.FreeText, IsRequired = true, IsSensitive = true };
         var col = new ProcedureColumn { TechnicalName = "C1", Caption = "C1", Alignment = ColumnAlignment.Left, Visible = true };
 
         var proc = new Procedure
@@ -93,6 +94,10 @@ public class AuditSaveChangesInterceptorTests : IDisposable
         var paramAud = await _db.Set<ProcedureParameterAud>().FirstOrDefaultAsync(a => a.IdRevisionType == RevisionTypeCode.Insert);
         paramAud.Should().NotBeNull();
         paramAud!.Caption.Should().Be("P1");
+        // is_sensitive is itself a governance/security classification flag - if the
+        // interceptor stops populating it, changes to which parameters are marked sensitive
+        // would silently drop out of the audit trail.
+        paramAud.IsSensitive.Should().BeTrue();
 
         var colAud = await _db.Set<ProcedureColumnAud>().FirstOrDefaultAsync(a => a.IdRevisionType == RevisionTypeCode.Insert);
         colAud.Should().NotBeNull();

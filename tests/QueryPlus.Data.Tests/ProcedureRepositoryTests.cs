@@ -67,6 +67,28 @@ public class ProcedureRepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task EnsureCategoryLoadedAsync_LoadsCategory_ForEntityAddedInThisContext()
+    {
+        // Mirrors ProcedureService.CreateAsync: entity built with only IdCategory set (no
+        // Category navigation), added, saved - Category should still be null until loaded.
+        var proc = new Procedure
+        {
+            IdCategory = _catId,
+            Caption = "New Proc",
+            DatabaseName = "DB",
+            ProcedureName = "sp_new",
+            RoleEntitlement = ""
+        };
+        await _sut.AddAsync(proc);
+        await _db.SaveChangesAsync();
+
+        await _sut.EnsureCategoryLoadedAsync(proc);
+
+        proc.Category.Should().NotBeNull();
+        proc.Category.Description.Should().Be("General");
+    }
+
+    [Fact]
     public async Task SearchAsync_FiltersByCaptionAndDatabase()
     {
         await _sut.AddAsync(new Procedure
@@ -122,5 +144,26 @@ public class ProcedureRepositoryTests : IDisposable
 
         userProcs.Select(p => p.Caption).Should().Contain("Public Proc").And.NotContain("Admin Only Proc");
         adminProcs.Select(p => p.Caption).Should().Contain("Public Proc", "Admin Only Proc");
+    }
+
+    [Fact]
+    public async Task GetAccessibleForExecutionAsync_RoleAdmin_SeesEveryProcedure_RegardlessOfEntitlement()
+    {
+        await _sut.AddAsync(new Procedure
+        {
+            IdCategory = _catId,
+            Caption = "Finance Only Proc",
+            DatabaseName = "DB",
+            ProcedureName = "sp_finance",
+            Enabled = true,
+            RoleEntitlement = "ROLE_FINANCE_TEAM"
+        });
+        await _db.SaveChangesAsync();
+
+        // ROLE_ADMIN holds none of the procedure's own entitlement roles, but must still see it -
+        // ROLE_ADMIN implies every permission, including running any catalogued procedure.
+        var adminProcs = await _sut.GetAccessibleForExecutionAsync(["ROLE_ADMIN"]);
+
+        adminProcs.Select(p => p.Caption).Should().Contain("Finance Only Proc");
     }
 }
