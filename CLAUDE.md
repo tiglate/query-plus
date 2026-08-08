@@ -17,12 +17,15 @@ Full product requirements: `docs/SPECIFICATION.md`. Setup/config: `README.md`. `
 ```bash
 dotnet restore
 dotnet build QueryPlus.sln          # builds SPA only if src/QueryPlus.Api/wwwroot/index.html is missing
-dotnet test QueryPlus.sln           # all xUnit tests (Application + Data + Api)
+dotnet test QueryPlus.sln --filter "Category!=Integration"   # fast xUnit suite (Application + Data + Api) — no Docker needed
+dotnet test tests/QueryPlus.Integration.Tests                # real-SQL-Server tests via Testcontainers — needs Docker
 dotnet test tests/QueryPlus.Application.Tests   # single project
 dotnet test --filter "FullyQualifiedName~ProcedureServiceTests"  # single class/test
 
 dotnet run --project src/QueryPlus.Api          # http://localhost:5132 (http profile)
 ```
+
+`dotnet test QueryPlus.sln` with no filter also picks up `tests/QueryPlus.Integration.Tests` and will fail/hang without Docker — always pass `--filter "Category!=Integration"` for the routine fast-feedback loop.
 
 EF Core migrations (also applied automatically on startup by `DemoDataSeeder`):
 
@@ -120,3 +123,5 @@ Authorization-code flow, cookie session (`QueryPlus.Auth`) after login. Two Keyc
 - `tests/QueryPlus.Application.Tests` — service/validator/helper unit tests (xUnit, FluentAssertions, NSubstitute for mocked repos/services).
 - `tests/QueryPlus.Api.Tests` — controller unit tests plus HTTP-level integration tests via `QueryPlusApiApplicationFactory` (a `WebApplicationFactory<Program>` that swaps in NSubstitute fakes for `IProcedureService`/`ICategoryService`/`IExecutionService`/`IExcelExportService`/`IProcedureRepository`/`IProcedureMetadataSyncService` and a `TestAuthHandler` in place of real OIDC). Use the factory's exposed substitute properties to set up scenario expectations rather than hitting a real database — the factory intentionally points at an unreachable SQL Server connection string. `AntiforgeryApiHelper` handles the CSRF bootstrap dance for state-changing integration tests; `AnonymousQueryPlusApiApplicationFactory` exercises the anonymous/anonymous-only endpoints.
 - Security-relevant logic (`SqlIdentifier`, `ParameterSecurity`, `ProcedurePagination`) has dedicated `*SecurityTests.cs`/`*Tests.cs` files; extend these rather than testing the same rules indirectly through a service.
+- `tests/QueryPlus.Data.Tests/UnitOfWorkTests.cs` uses the SQLite in-memory relational provider (`Microsoft.Data.Sqlite`, connection kept open for the test's lifetime) rather than EF's InMemory provider, because `UnitOfWork` wraps `SaveChangesAsync` in a real transaction/execution-strategy that the InMemory provider doesn't support. It deliberately stops short of proving `AuditSaveChangesInterceptor`'s audit rows commit/roll back atomically with the principal row — that needs a real relational engine and is covered in `QueryPlus.Integration.Tests` instead.
+- `tests/QueryPlus.Integration.Tests` — real-SQL-Server tests via **Testcontainers.MsSql** (needs Docker locally; every class is tagged `[Trait("Category", "Integration")]` and excluded from the routine `dotnet test` filter above). One `MsSqlContainer` is shared for the whole run via a `[Collection("Integration")]` fixture (`SqlServerContainerFixture`); each test class inherits `IntegrationTestBase`, which creates its own throwaway database on that shared server, wires the real production DI graph (`AddApplication()` + `AddData()` — no test doubles), and runs `DemoDataSeeder` before every test (xUnit constructs the class fresh per `[Fact]`, so isolation is per-test, not just per-class). This is the only place `DapperStoredProcedureExecutor` and `SqlProcedureMetadataSyncService` get real coverage — both construct their `SqlConnection` internally (not injected) and query real SQL Server internals (`sys.parameters`, `sys.sp_describe_first_result_set`), so they can't be unit-tested with mocks. Covers: migrations + demo-seed apply cleanly (asserted positively, since `DemoDataSeeder` swallows install failures into a logged warning), repository CRUD against a real engine, `AuditSaveChangesInterceptor` audit-row commit/rollback atomicity, and `DapperStoredProcedureExecutor` pagination/OUTPUT-parameter round-tripping against `dbo.Sp_Demo_Numbers_Paged` (installed by the seeder).

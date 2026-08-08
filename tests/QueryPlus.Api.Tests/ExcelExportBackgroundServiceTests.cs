@@ -125,6 +125,105 @@ public sealed class ExcelExportBackgroundServiceTests : IDisposable
         sheet.Cell(3, 2).IsEmpty().Should().BeTrue();
     }
 
+    [Fact]
+    public async Task Job_fails_withOriginalExceptionMessage_when_executor_throws()
+    {
+        var procedure = new Procedure
+        {
+            IdProcedure = 32, IdCategory = 1, Caption = "Broken Export", DatabaseName = "db",
+            ProcedureName = "dbo.usp_Broken", Enabled = true, RoleEntitlement = "",
+            Parameters = [], Columns = []
+        };
+        _procedureRepository.GetEnabledByIdWithDetailsAsync(32, Arg.Any<CancellationToken>()).Returns(procedure);
+        _executor.ExecuteAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, object?>>(),
+                Arg.Any<IReadOnlyCollection<string>?>(), Arg.Any<CancellationToken>())
+            .Returns<Task<StoredProcedureExecutionResult>>(_ => throw new InvalidOperationException("boom"));
+
+        var jobId = _exports.QueueExport(32, new Dictionary<string, string?>(), "someone", userRoles: []);
+
+        await _sut.StartAsync(CancellationToken.None);
+        await WaitForTerminalStatusAsync(jobId);
+        await _sut.StopAsync(CancellationToken.None);
+
+        var job = _exports.GetJob(jobId);
+        job.Should().NotBeNull();
+        job!.Status.Should().Be(ExportJobStatus.Failed);
+        job.ErrorMessage.Should().Be("boom");
+    }
+
+    [Fact]
+    public async Task Job_usesTotalRecords_ForExecutionLogRowCount_WhenProcedureSupportsPagination()
+    {
+        var procedure = new Procedure
+        {
+            IdProcedure = 33, IdCategory = 1, Caption = "Paged Export", DatabaseName = "db",
+            ProcedureName = "dbo.usp_Paged", Enabled = true, RoleEntitlement = "", SupportsPagination = true,
+            Parameters = [], Columns = []
+        };
+        _procedureRepository.GetEnabledByIdWithDetailsAsync(33, Arg.Any<CancellationToken>()).Returns(procedure);
+
+        var table = new DataTable();
+        table.Columns.Add("Id", typeof(int));
+        table.Rows.Add(1); // only 1 row returned in this page, but 500 total records exist
+        _executor.ExecuteAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, object?>>(),
+                Arg.Any<IReadOnlyCollection<string>?>(), Arg.Any<CancellationToken>())
+            .Returns(new StoredProcedureExecutionResult { Data = table, TotalRecords = 500 });
+
+        ExecutionLog? capturedLog = null;
+        await _executionRepository.AddAsync(
+            Arg.Do<ExecutionLog>(l => capturedLog = l), Arg.Any<CancellationToken>());
+
+        var jobId = _exports.QueueExport(33, new Dictionary<string, string?>(), "someone", userRoles: []);
+
+        await _sut.StartAsync(CancellationToken.None);
+        await WaitForTerminalStatusAsync(jobId);
+        await _sut.StopAsync(CancellationToken.None);
+
+        var job = _exports.GetJob(jobId);
+        job!.Status.Should().Be(ExportJobStatus.Completed);
+        job.RowCount.Should().Be(1); // the job's own RowCount always reflects rows actually written to the sheet
+        capturedLog.Should().NotBeNull();
+        capturedLog!.RowCount.Should().Be(500); // but the audit log records the true total, not just this page
+    }
+
+    [Fact]
+    public async Task Job_writesExpectedCellRepresentations_ForNonPrimitiveColumnTypes()
+    {
+        var procedure = new Procedure
+        {
+            IdProcedure = 34, IdCategory = 1, Caption = "Mixed Types Export", DatabaseName = "db",
+            ProcedureName = "dbo.usp_MixedTypes", Enabled = true, RoleEntitlement = "",
+            Parameters = [], Columns = []
+        };
+        _procedureRepository.GetEnabledByIdWithDetailsAsync(34, Arg.Any<CancellationToken>()).Returns(procedure);
+
+        var table = new DataTable();
+        table.Columns.Add("Started", typeof(DateTimeOffset));
+        table.Columns.Add("Duration", typeof(TimeSpan));
+        table.Columns.Add("Blob", typeof(byte[]));
+        var startedAt = new DateTimeOffset(2026, 3, 5, 10, 30, 0, TimeSpan.Zero);
+        var duration = TimeSpan.FromMinutes(90);
+        var blob = new byte[] { 1, 2, 3 };
+        table.Rows.Add(startedAt, duration, blob);
+        _executor.ExecuteAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, object?>>(),
+                Arg.Any<IReadOnlyCollection<string>?>(), Arg.Any<CancellationToken>())
+            .Returns(new StoredProcedureExecutionResult { Data = table });
+
+        var jobId = _exports.QueueExport(34, new Dictionary<string, string?>(), "someone", userRoles: []);
+
+        await _sut.StartAsync(CancellationToken.None);
+        await WaitForTerminalStatusAsync(jobId);
+        await _sut.StopAsync(CancellationToken.None);
+
+        var filePath = _exports.GetFilePath(jobId);
+        filePath.Should().NotBeNull();
+        using var workbook = new XLWorkbook(filePath!);
+        var sheet = workbook.Worksheet("Results");
+        sheet.Cell(2, 1).GetDateTime().Should().Be(startedAt.DateTime);
+        sheet.Cell(2, 2).GetTimeSpan().Should().Be(duration);
+        sheet.Cell(2, 3).GetString().Should().Be(Convert.ToBase64String(blob));
+    }
+
     private async Task WaitForTerminalStatusAsync(Guid jobId)
     {
         var deadline = DateTime.UtcNow.AddSeconds(5);

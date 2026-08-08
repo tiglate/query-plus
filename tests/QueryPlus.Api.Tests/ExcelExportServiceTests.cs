@@ -109,6 +109,23 @@ public class ExcelExportServiceTests : IDisposable
     }
 
     [Fact]
+    public void EvictExpiredJobs_RemovesOldCompletedJob_WhenItHasNoFile()
+    {
+        // A job can complete with FilePath left unset (e.g. it failed before writing any file);
+        // eviction must not attempt to delete anything in that case.
+        var jobId = _sut.QueueExport(5, new Dictionary<string, string?>(), "user", userRoles: ["user"]);
+        _sut.TryGetJobState(jobId, out var state);
+        state!.Status = ExportJobStatus.Failed;
+        state.CompletedAt = DateTime.UtcNow.AddHours(-2);
+        _sut.UpdateJob(state);
+
+        var evicted = _sut.EvictExpiredJobs(TimeSpan.FromHours(1));
+
+        evicted.Should().Be(1);
+        _sut.GetJob(jobId).Should().BeNull();
+    }
+
+    [Fact]
     public void EvictExpiredJobs_NeverEvictsInFlightJobs_RegardlessOfAge()
     {
         var jobId = _sut.QueueExport(5, new Dictionary<string, string?>(), "user", userRoles: ["user"]);

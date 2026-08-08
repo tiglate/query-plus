@@ -1,9 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { CategoriesPage, categoryFormToApi } from "./CategoriesPage";
 import { vi } from "vitest";
 import { categoriesSearch } from "@/api/queries";
+import { apiFetch } from "@/api/client";
 
 vi.mock("@/api/queries", () => ({
     categoriesSearch: vi.fn().mockResolvedValue({
@@ -23,7 +24,7 @@ vi.mock("@/api/queries", () => ({
 }));
 
 vi.mock("@/api/client", () => ({
-    apiFetch: vi.fn(),
+    apiFetch: vi.fn().mockResolvedValue(undefined),
 }));
 
 function renderWithClient(component: React.ReactNode) {
@@ -60,4 +61,60 @@ test("typing a filter and clicking Search re-queries with that filter, reset to 
     const params = vi.mocked(categoriesSearch).mock.calls.at(-1)?.[0];
     expect(params?.get("description")).toBe("Fin");
     expect(params?.get("pageNumber")).toBe("1");
+});
+
+test("editing a category pre-fills the dialog and saves via PUT", async () => {
+    renderWithClient(<CategoriesPage />);
+    await screen.findByText("Finance");
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("Edit category")).toBeInTheDocument();
+    const input = await within(dialog).findByDisplayValue("Finance");
+
+    await userEvent.clear(input);
+    await userEvent.type(input, "Finance Updated");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+
+    expect(apiFetch).toHaveBeenCalledWith(
+        "/api/categories/1",
+        expect.objectContaining({
+            method: "PUT",
+            body: JSON.stringify({ id: 1, description: "Finance Updated" }),
+        }),
+    );
+});
+
+test("creating a category with a blank description blocks submission and shows a validation error", async () => {
+    renderWithClient(<CategoriesPage />);
+    await screen.findByText("Finance");
+    vi.mocked(apiFetch).mockClear();
+
+    await userEvent.click(screen.getByRole("button", { name: "New" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("New category")).toBeInTheDocument();
+
+    const input = within(dialog).getByLabelText("Description");
+    await userEvent.clear(input);
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+
+    // Blank description fails the zod schema client-side: the dialog stays open showing an
+    // inline field error instead of submitting.
+    expect(await within(dialog).findByText(/./, { selector: "span.text-red-700" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(apiFetch).not.toHaveBeenCalled();
+});
+
+test("deleting a category opens a confirmation dialog, and confirming calls DELETE", async () => {
+    renderWithClient(<CategoriesPage />);
+    await screen.findByText("Finance");
+    vi.mocked(apiFetch).mockClear();
+
+    await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+    expect(await screen.findByText("Are you sure you want to delete this record?")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Yes" }));
+
+    expect(apiFetch).toHaveBeenCalledWith("/api/categories/1", { method: "DELETE" });
+    expect(screen.queryByRole("button", { name: "Yes" })).not.toBeInTheDocument();
 });
