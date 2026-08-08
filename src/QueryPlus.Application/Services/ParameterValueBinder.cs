@@ -1,5 +1,6 @@
 using System.Globalization;
 using QueryPlus.Application.Common;
+using QueryPlus.Application.Services.Converters;
 using QueryPlus.Domain.Entities;
 using QueryPlus.Domain.Enums;
 using AppValidationException = QueryPlus.Application.Common.ValidationException;
@@ -13,8 +14,10 @@ public static class ParameterValueBinder
 {
     public static IReadOnlyDictionary<string, object?> Bind(
         IEnumerable<ProcedureParameter> definitions,
-        IDictionary<string, string?> rawValues)
+        IDictionary<string, string?> rawValues,
+        IParameterConverterRegistry? registry = null)
     {
+        registry ??= ParameterConverterRegistry.CreateDefault();
         var errors = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
         var bound = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
 
@@ -54,7 +57,7 @@ public static class ParameterValueBinder
 
             try
             {
-                bound[name] = ConvertValue(definition.ParameterType, raw, definition);
+                bound[name] = ConvertValue(definition.ParameterType, raw, definition, registry);
             }
             catch (FormatException ex)
             {
@@ -155,7 +158,8 @@ public static class ParameterValueBinder
     private static object? ConvertValue(
         ParameterType type,
         string? raw,
-        ProcedureParameter definition)
+        ProcedureParameter definition,
+        IParameterConverterRegistry registry)
     {
         if (string.IsNullOrWhiteSpace(raw))
         {
@@ -164,111 +168,7 @@ public static class ParameterValueBinder
         }
 
         var value = raw.Trim();
-
-        return type switch
-        {
-            ParameterType.FreeText => ParameterSecurity.SanitizeAndValidateFreeText(value),
-            ParameterType.Combo => ValidateCombo(value, definition),
-            ParameterType.Numeric => ParseNumeric(value),
-            ParameterType.Date => ParseDate(value),
-            ParameterType.Time => ParseTime(value),
-            ParameterType.DateTime => ParseDateTime(value),
-            ParameterType.Boolean => ParseBoolean(value),
-            _ => throw new FormatException($"Unsupported parameter type '{type}'.")
-        };
-    }
-
-    private static string ValidateCombo(string value, ProcedureParameter definition)
-    {
-        // Combo is a closed allow-list — reject anything not explicitly configured.
-        var options = JsonHelpers.ParseStringArray(definition.ComboValues);
-        if (options.Count == 0)
-        {
-            throw new FormatException("Combo parameter has no allowed options configured.");
-        }
-
-        if (!options.Contains(value, StringComparer.OrdinalIgnoreCase))
-        {
-            throw new FormatException($"Value '{value}' is not in the allowed combo options.");
-        }
-
-        // Return the canonical option text (prevents mixed-case / look-alike tricks).
-        return options.First(o => string.Equals(o, value, StringComparison.OrdinalIgnoreCase));
-    }
-
-    private static DateTime ParseDate(string value)
-    {
-        if (!DateOnly.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var date)
-            && !DateOnly.TryParse(value, CultureInfo.CurrentCulture, DateTimeStyles.None, out date))
-        {
-            throw new FormatException($"'{value}' is not a valid date.");
-        }
-
-        return date.ToDateTime(TimeOnly.MinValue);
-    }
-
-    private static TimeSpan ParseTime(string value)
-    {
-        if (!TimeOnly.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var time)
-            && !TimeOnly.TryParse(value, CultureInfo.CurrentCulture, DateTimeStyles.None, out time))
-        {
-            throw new FormatException($"'{value}' is not a valid time.");
-        }
-
-        return time.ToTimeSpan();
-    }
-
-    private static DateTime ParseDateTime(string value)
-    {
-        if (!DateTime.TryParse(
-                value,
-                CultureInfo.InvariantCulture,
-                DateTimeStyles.RoundtripKind | DateTimeStyles.AllowWhiteSpaces,
-                out var dt)
-            && !DateTime.TryParse(
-                value,
-                CultureInfo.CurrentCulture,
-                DateTimeStyles.AllowWhiteSpaces,
-                out dt))
-        {
-            throw new FormatException($"'{value}' is not a valid date/time.");
-        }
-
-        return dt;
-    }
-
-    private static object ParseNumeric(string value)
-    {
-        if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var i))
-        {
-            return i;
-        }
-
-        if (long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var l))
-        {
-            return l;
-        }
-
-        if (decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var d))
-        {
-            return d;
-        }
-
-        throw new FormatException($"'{value}' is not a valid number.");
-    }
-
-    private static bool ParseBoolean(string value)
-    {
-        if (bool.TryParse(value, out var b))
-        {
-            return b;
-        }
-
-        return value switch
-        {
-            "1" or "yes" or "sim" or "on" => true,
-            "0" or "no" or "não" or "nao" or "off" => false,
-            _ => throw new FormatException($"'{value}' is not a valid boolean.")
-        };
+        var converter = registry.GetConverter(type);
+        return converter.Convert(value, definition);
     }
 }

@@ -1,4 +1,3 @@
-using AutoMapper;
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using QueryPlus.Application.Abstractions;
@@ -6,6 +5,7 @@ using QueryPlus.Application.Common;
 using QueryPlus.Application.DTOs.Common;
 using QueryPlus.Application.DTOs.Execution;
 using QueryPlus.Application.Interfaces;
+using QueryPlus.Application.Mapping;
 using QueryPlus.Application.Validation;
 using QueryPlus.Domain.Entities;
 using QueryPlus.Domain.Exceptions;
@@ -19,8 +19,9 @@ public sealed class ExecutionService(
     IUnitOfWork unitOfWork,
     IStoredProcedureExecutor executor,
     ICurrentUserContext currentUser,
-    IMapper mapper,
     IValidator<ExecuteProcedureRequest> requestValidator,
+    IExecutionParameterResolver parameterResolver,
+    IGridColumnBuilder columnBuilder,
     ILogger<ExecutionService> logger)
     : IExecutionService
 {
@@ -36,15 +37,25 @@ public sealed class ExecutionService(
         }
 
         var procedure = await procedures.GetEnabledByIdWithDetailsAsync(request.ProcedureId, cancellationToken)
-            ?? throw new EntityNotFoundException(nameof(Procedure), request.ProcedureId);
+                        ?? throw new EntityNotFoundException(nameof(Procedure), request.ProcedureId);
 
         EnsureUserMayExecute(procedure);
 
-        // Bind only non-reserved catalog parameters (pagination args are injected by the app).
-        var userParameterDefs = procedure.Parameters
-            .Where(p => !ProcedurePagination.IsReservedParameterName(p.Name))
-            .ToList();
-        var boundParameters = ParameterValueBinder.Bind(userParameterDefs, request.ParameterValues);
+        var resolved = parameterResolver.Resolve(
+            procedure,
+            request.ParameterValues,
+            request.PageNumber,
+            request.PageSize);
+
+        var sensitiveNames = procedure.Parameters
+            .Where(p => p.IsSensitive)
+            .Select(p => SqlIdentifier.NormalizeParameterName(p.Name))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var loggedParameters = resolved.BoundUserParameters
+            .ToDictionary(
+                kv => kv.Key,
+                kv => sensitiveNames.Contains(kv.Key) ? "***" : kv.Value?.ToString());
 
         var log = new ExecutionLog
         {
@@ -52,38 +63,20 @@ public sealed class ExecutionService(
             Username = currentUser.Username,
             IpAddress = currentUser.IpAddress,
             ExecutionStart = DateTime.UtcNow,
-            ParameterValues = JsonHelpers.Serialize(
-                boundParameters.ToDictionary(kv => kv.Key, kv => kv.Value?.ToString())),
+            ParameterValues = JsonHelpers.Serialize(loggedParameters),
             Success = false
         };
 
         await executions.AddAsync(log, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var pageNumber = ProcedurePagination.DefaultPageNumber;
-        var pageSize = ProcedurePagination.DefaultPageSize;
-
         try
         {
-            IReadOnlyDictionary<string, object?> execParameters = boundParameters;
-            IReadOnlyCollection<string>? outputs = null;
-
-            if (procedure.SupportsPagination)
-            {
-                pageNumber = ProcedurePagination.ClampPageNumber(request.PageNumber);
-                pageSize = ProcedurePagination.ClampUiPageSize(request.PageSize);
-                execParameters = ProcedurePagination.WithPagingInputs(
-                    boundParameters,
-                    pageNumber,
-                    pageSize);
-                outputs = [ProcedurePagination.TotalRecordsName];
-            }
-
             var executed = await executor.ExecuteAsync(
                 procedure.DatabaseName,
                 procedure.ProcedureName,
-                execParameters,
-                outputs,
+                resolved.ExecParameters,
+                resolved.OutputParameterNames,
                 cancellationToken);
 
             var data = executed.Data;
@@ -95,7 +88,7 @@ public sealed class ExecutionService(
             log.ExecutionEnd = DateTime.UtcNow;
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
-            var columns = BuildGridColumns(procedure, data);
+            var columns = columnBuilder.BuildGridColumns(procedure, data);
 
             return new ExecutionResultDto
             {
@@ -105,8 +98,8 @@ public sealed class ExecutionService(
                 ProcedureCaption = procedure.Caption,
                 RowCount = data.Rows.Count,
                 SupportsPagination = procedure.SupportsPagination,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
+                PageNumber = resolved.PageNumber,
+                PageSize = resolved.PageSize,
                 TotalRecords = executed.TotalRecords,
                 Data = data,
                 Columns = columns
@@ -134,10 +127,10 @@ public sealed class ExecutionService(
                 ProcedureCaption = procedure.Caption,
                 RowCount = 0,
                 SupportsPagination = procedure.SupportsPagination,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
+                PageNumber = resolved.PageNumber,
+                PageSize = resolved.PageSize,
                 Data = null,
-                Columns = mapper.Map<IReadOnlyList<GridColumnDto>>(
+                Columns = ProcedureColumnMapper.ToGridColumnDtos(
                     procedure.Columns.Where(c => c.Visible).OrderBy(c => c.Caption).ToList())
             };
         }
@@ -149,7 +142,7 @@ public sealed class ExecutionService(
         CancellationToken cancellationToken = default)
     {
         var logs = await executions.GetByProcedureAsync(procedureId, take, cancellationToken);
-        return mapper.Map<IReadOnlyList<ExecutionLogDto>>(logs);
+        return ExecutionLogMapper.ToDtos(logs);
     }
 
     public async Task<PagedResult<ExecutionLogListItemDto>> SearchAsync(
@@ -184,7 +177,7 @@ public sealed class ExecutionService(
 
         return new PagedResult<ExecutionLogListItemDto>
         {
-            Items = mapper.Map<IReadOnlyList<ExecutionLogListItemDto>>(items),
+            Items = ExecutionLogMapper.ToListItemDtos(items),
             TotalCount = totalCount,
             Page = page,
             PageSize = pageSize
@@ -198,62 +191,11 @@ public sealed class ExecutionService(
             throw new ForbiddenOperationException("This procedure is disabled.");
         }
 
-        var entitlement = procedure.RoleEntitlement.Trim();
-        if (string.IsNullOrEmpty(entitlement))
-        {
-            return;
-        }
-
-        // Role entitlement may be a single role or comma-separated list.
-        var required = entitlement
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-        if (required.Length == 0)
-        {
-            return;
-        }
-
-        if (!required.Any(r => currentUser.IsInRole(r)))
+        if (!procedure.IsAccessibleTo(currentUser.Roles))
         {
             throw new ForbiddenOperationException(
-                $"You do not have the required entitlement '{entitlement}' to execute this procedure.");
+                $"You do not have the required entitlement '{procedure.RoleEntitlement}' to execute this procedure.");
         }
-    }
-
-    private static IReadOnlyList<GridColumnDto> BuildGridColumns(Procedure procedure, System.Data.DataTable data)
-    {
-        var configured = procedure.Columns
-            .Where(c => c.Visible)
-            .ToDictionary(c => c.TechnicalName, c => c, StringComparer.OrdinalIgnoreCase);
-
-        var columns = new List<GridColumnDto>();
-        foreach (System.Data.DataColumn col in data.Columns)
-        {
-            if (configured.TryGetValue(col.ColumnName, out var meta))
-            {
-                columns.Add(new GridColumnDto
-                {
-                    TechnicalName = meta.TechnicalName,
-                    Caption = meta.Caption,
-                    Alignment = meta.Alignment,
-                    FormatMask = meta.FormatMask,
-                    Visible = meta.Visible
-                });
-            }
-            else
-            {
-                // Fallback: show result columns not yet configured in metadata.
-                columns.Add(new GridColumnDto
-                {
-                    TechnicalName = col.ColumnName,
-                    Caption = col.ColumnName,
-                    Alignment = Domain.Enums.ColumnAlignment.Left,
-                    Visible = true
-                });
-            }
-        }
-
-        return columns;
     }
 
     private static string Truncate(string value, int max)

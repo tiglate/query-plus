@@ -8,49 +8,44 @@ namespace QueryPlus.Data.Repositories;
 
 public sealed class ConfigurationAuditReader(ApplicationDbContext db) : IConfigurationAuditReader
 {
+    // Only the first Insert and last Update revision are ever needed, but the audit table for a
+    // frequently-edited entity grows unboundedly (one row per edit, never purged). Two targeted
+    // ORDER BY + TOP(1) queries push that selection to SQL instead of loading the full history.
     public async Task<AuditDetailsDto> GetCategoryAuditDetailsAsync(
         int categoryId,
         CancellationToken cancellationToken = default)
     {
-        var revisions = await db.CategoryAudits
-            .AsNoTracking()
-            .Where(a => a.IdCategory == categoryId)
-            .Select(a => new AuditRevision(a.IdRevisionType, a.Revision.Username, a.Revision.RevisionTimestamp, a.IdRevision))
-            .ToListAsync(cancellationToken);
+        var createdBy = await db.CategoryAudits.AsNoTracking()
+            .Where(a => a.IdCategory == categoryId && a.IdRevisionType == RevisionTypeCode.Insert)
+            .OrderBy(a => a.Revision.RevisionTimestamp).ThenBy(a => a.IdRevision)
+            .Select(a => a.Revision.Username)
+            .FirstOrDefaultAsync(cancellationToken);
 
-        return BuildDetails(revisions);
+        var updatedBy = await db.CategoryAudits.AsNoTracking()
+            .Where(a => a.IdCategory == categoryId && a.IdRevisionType == RevisionTypeCode.Update)
+            .OrderByDescending(a => a.Revision.RevisionTimestamp).ThenByDescending(a => a.IdRevision)
+            .Select(a => a.Revision.Username)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return new AuditDetailsDto { CreatedBy = createdBy, UpdatedBy = updatedBy };
     }
 
     public async Task<AuditDetailsDto> GetProcedureAuditDetailsAsync(
         int procedureId,
         CancellationToken cancellationToken = default)
     {
-        var revisions = await db.ProcedureAudits
-            .AsNoTracking()
-            .Where(a => a.IdProcedure == procedureId)
-            .Select(a => new AuditRevision(a.IdRevisionType, a.Revision.Username, a.Revision.RevisionTimestamp, a.IdRevision))
-            .ToListAsync(cancellationToken);
+        var createdBy = await db.ProcedureAudits.AsNoTracking()
+            .Where(a => a.IdProcedure == procedureId && a.IdRevisionType == RevisionTypeCode.Insert)
+            .OrderBy(a => a.Revision.RevisionTimestamp).ThenBy(a => a.IdRevision)
+            .Select(a => a.Revision.Username)
+            .FirstOrDefaultAsync(cancellationToken);
 
-        return BuildDetails(revisions);
+        var updatedBy = await db.ProcedureAudits.AsNoTracking()
+            .Where(a => a.IdProcedure == procedureId && a.IdRevisionType == RevisionTypeCode.Update)
+            .OrderByDescending(a => a.Revision.RevisionTimestamp).ThenByDescending(a => a.IdRevision)
+            .Select(a => a.Revision.Username)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return new AuditDetailsDto { CreatedBy = createdBy, UpdatedBy = updatedBy };
     }
-
-    private static AuditDetailsDto BuildDetails(IEnumerable<AuditRevision> revisions)
-    {
-        var ordered = revisions
-            .OrderBy(r => r.Timestamp)
-            .ThenBy(r => r.Id)
-            .ToList();
-
-        return new AuditDetailsDto
-        {
-            CreatedBy = ordered.FirstOrDefault(r => r.Type == RevisionTypeCode.Insert)?.Username,
-            UpdatedBy = ordered.LastOrDefault(r => r.Type == RevisionTypeCode.Update)?.Username
-        };
-    }
-
-    private sealed record AuditRevision(
-        RevisionTypeCode? Type,
-        string Username,
-        DateTime Timestamp,
-        int Id);
 }

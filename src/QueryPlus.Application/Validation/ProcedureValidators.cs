@@ -33,11 +33,13 @@ public sealed class SaveProcedureDtoValidator : AbstractValidator<SaveProcedureD
                 "Parameters @PageNumber, @PageSize, and @TotalRecords are reserved for system pagination and cannot be configured as user parameters.");
 
         RuleFor(x => x.Parameters)
-            .Must(p => p.Select(x => NormalizeName(x.Name)).Distinct(StringComparer.OrdinalIgnoreCase).Count() == p.Count)
+            .Must(p => p.Select(x => NormalizeName(x.Name)).Distinct(StringComparer.OrdinalIgnoreCase).Count() ==
+                       p.Count)
             .WithMessage("Parameter names must be unique within the procedure.");
 
         RuleFor(x => x.Columns)
-            .Must(c => c.Select(x => x.TechnicalName.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).Count() == c.Count)
+            .Must(c => c.Select(x => x.TechnicalName.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).Count() ==
+                       c.Count)
             .WithMessage("Column technical names must be unique within the procedure.");
     }
 

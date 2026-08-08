@@ -12,6 +12,9 @@ public class Revision
 
     public ICollection<CategoryAud> CategoryAudits { get; set; } = new List<CategoryAud>();
     public ICollection<ProcedureAud> ProcedureAudits { get; set; } = new List<ProcedureAud>();
-    public ICollection<ProcedureParameterAud> ProcedureParameterAudits { get; set; } = new List<ProcedureParameterAud>();
+
+    public ICollection<ProcedureParameterAud> ProcedureParameterAudits { get; set; } =
+        new List<ProcedureParameterAud>();
+
     public ICollection<ProcedureColumnAud> ProcedureColumnAudits { get; set; } = new List<ProcedureColumnAud>();
 }

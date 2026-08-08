@@ -153,6 +153,10 @@ namespace QueryPlus.Data.Migrations
                     b.HasKey("IdExecutionLog")
                         .HasName("pk_execution_log");
 
+                    b.HasIndex("ExecutionStart")
+                        .IsDescending()
+                        .HasDatabaseName("ix_execution_log_date");
+
                     b.HasIndex("IdProcedure", "ExecutionStart")
                         .IsDescending(false, true)
                         .HasDatabaseName("ix_execution_log_proc_date");
@@ -497,6 +501,12 @@ namespace QueryPlus.Data.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("is_required");
 
+                    b.Property<bool>("IsSensitive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_sensitive");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(128)
@@ -566,6 +576,10 @@ namespace QueryPlus.Data.Migrations
                     b.Property<bool?>("IsRequired")
                         .HasColumnType("bit")
                         .HasColumnName("is_required");
+
+                    b.Property<bool?>("IsSensitive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_sensitive");
 
                     b.Property<string>("Name")
                         .HasMaxLength(128)

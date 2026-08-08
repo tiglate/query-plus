@@ -1,10 +1,8 @@
-using AutoMapper;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using QueryPlus.Application.Abstractions;
 using QueryPlus.Application.DTOs.Execution;
-using QueryPlus.Application.Mapping;
 using QueryPlus.Application.Services;
 using QueryPlus.Application.Validation;
 using QueryPlus.Domain.Entities;
@@ -23,17 +21,15 @@ public class ExecutionServiceTests
 
     public ExecutionServiceTests()
     {
-        var mapper = new MapperConfiguration(
-            cfg => cfg.AddProfile<QueryPlusMappingProfile>(),
-            NullLoggerFactory.Instance).CreateMapper();
         _sut = new ExecutionService(
             _procedures,
             _executions,
             _unitOfWork,
             _executor,
             _user,
-            mapper,
             new ExecuteProcedureRequestValidator(),
+            new ExecutionParameterResolver(QueryPlus.Application.Services.Converters.ParameterConverterRegistry.CreateDefault()),
+            new GridColumnBuilder(),
             NullLogger<ExecutionService>.Instance);
     }
 
@@ -88,7 +84,8 @@ public class ExecutionServiceTests
     public async Task SearchAsync_ConvertsLocalDateRange_ToUtcBounds()
     {
         ExecutionLogSearchCriteria? captured = null;
-        _executions.SearchAsync(Arg.Do<ExecutionLogSearchCriteria>(c => captured = c), 1, 20, Arg.Any<CancellationToken>())
+        _executions.SearchAsync(Arg.Do<ExecutionLogSearchCriteria>(c => captured = c), 1, 20,
+                Arg.Any<CancellationToken>())
             .Returns(([], 0));
 
         var from = new DateTime(2026, 7, 1);
@@ -99,5 +96,140 @@ public class ExecutionServiceTests
         captured!.StartFrom.Should().Be(DateTime.SpecifyKind(from, DateTimeKind.Local).ToUniversalTime());
         // Upper bound is exclusive and covers the whole "to" calendar day.
         captured.StartTo.Should().Be(DateTime.SpecifyKind(to.AddDays(1), DateTimeKind.Local).ToUniversalTime());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_RedactsSensitiveParameters_InExecutionLog()
+    {
+        var procedure = new Procedure
+        {
+            IdProcedure = 10,
+            IdCategory = 1,
+            Caption = "Auth Proc",
+            DatabaseName = "DB",
+            ProcedureName = "sp_auth",
+            Enabled = true,
+            RoleEntitlement = "",
+            Parameters = new List<ProcedureParameter>
+            {
+                new() { IdProcedureParameter = 1, Name = "@Username", Caption = "User", ParameterType = Domain.Enums.ParameterType.FreeText, IsSensitive = false },
+                new() { IdProcedureParameter = 2, Name = "@Password", Caption = "Pass", ParameterType = Domain.Enums.ParameterType.FreeText, IsSensitive = true }
+            }
+        };
+
+        _user.IsAuthenticated.Returns(true);
+        _user.Username.Returns("admin");
+        _procedures.GetEnabledByIdWithDetailsAsync(10, Arg.Any<CancellationToken>()).Returns(procedure);
+
+        ExecutionLog? savedLog = null;
+        await _executions.AddAsync(Arg.Do<ExecutionLog>(l => savedLog = l), Arg.Any<CancellationToken>());
+
+        _executor.ExecuteAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, object?>>(), Arg.Any<IReadOnlyCollection<string>?>(), Arg.Any<CancellationToken>())
+            .Returns(new StoredProcedureExecutionResult { Data = new System.Data.DataTable() });
+
+        var request = new ExecuteProcedureRequest
+        {
+            ProcedureId = 10,
+            ParameterValues = new Dictionary<string, string?>
+            {
+                ["@Username"] = "john_doe",
+                ["@Password"] = "SuperSecret123!"
+            }
+        };
+
+        await _sut.ExecuteAsync(request);
+
+        savedLog.Should().NotBeNull();
+        savedLog!.ParameterValues.Should().Contain("\"@Username\":\"john[_]doe\"");
+        savedLog.ParameterValues.Should().Contain("\"@Password\":\"***\"");
+        savedLog.ParameterValues.Should().NotContain("SuperSecret123!");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ThrowsForbidden_WhenUserLacksRequiredEntitlement()
+    {
+        var procedure = new Procedure
+        {
+            IdProcedure = 20,
+            IdCategory = 1,
+            Caption = "Restricted Proc",
+            DatabaseName = "DB",
+            ProcedureName = "sp_restricted",
+            Enabled = true,
+            RoleEntitlement = "ROLE_FINANCE"
+        };
+
+        _user.IsAuthenticated.Returns(true);
+        _user.Username.Returns("someone");
+        _user.Roles.Returns((IReadOnlyCollection<string>)["ROLE_QUERY_EXEC"]);
+        _procedures.GetEnabledByIdWithDetailsAsync(20, Arg.Any<CancellationToken>()).Returns(procedure);
+
+        var request = new ExecuteProcedureRequest { ProcedureId = 20, ParameterValues = new Dictionary<string, string?>() };
+
+        await FluentActions.Awaiting(() => _sut.ExecuteAsync(request))
+            .Should().ThrowAsync<Domain.Exceptions.ForbiddenOperationException>();
+        await _executor.DidNotReceive().ExecuteAsync(Arg.Any<string>(), Arg.Any<string>(),
+            Arg.Any<IReadOnlyDictionary<string, object?>>(), Arg.Any<IReadOnlyCollection<string>?>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Succeeds_WhenUserHoldsRequiredEntitlement()
+    {
+        var procedure = new Procedure
+        {
+            IdProcedure = 21,
+            IdCategory = 1,
+            Caption = "Restricted Proc",
+            DatabaseName = "DB",
+            ProcedureName = "sp_restricted",
+            Enabled = true,
+            RoleEntitlement = "ROLE_FINANCE, ROLE_ADMIN"
+        };
+
+        _user.IsAuthenticated.Returns(true);
+        _user.Username.Returns("someone");
+        _user.Roles.Returns((IReadOnlyCollection<string>)["ROLE_FINANCE"]);
+        _procedures.GetEnabledByIdWithDetailsAsync(21, Arg.Any<CancellationToken>()).Returns(procedure);
+        _executor.ExecuteAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, object?>>(),
+                Arg.Any<IReadOnlyCollection<string>?>(), Arg.Any<CancellationToken>())
+            .Returns(new StoredProcedureExecutionResult { Data = new System.Data.DataTable() });
+
+        var request = new ExecuteProcedureRequest { ProcedureId = 21, ParameterValues = new Dictionary<string, string?>() };
+
+        var result = await _sut.ExecuteAsync(request);
+
+        result.Success.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Succeeds_ForRoleAdmin_EvenWithoutTheProceduresOwnEntitlement()
+    {
+        var procedure = new Procedure
+        {
+            IdProcedure = 22,
+            IdCategory = 1,
+            Caption = "Restricted Proc",
+            DatabaseName = "DB",
+            ProcedureName = "sp_restricted",
+            Enabled = true,
+            RoleEntitlement = "ROLE_FINANCE_TEAM",
+        };
+
+        _user.IsAuthenticated.Returns(true);
+        _user.Username.Returns("admin");
+        // ROLE_ADMIN holds none of the procedure's own entitlement roles - must still succeed,
+        // since ROLE_ADMIN implies every permission system-wide.
+        _user.Roles.Returns((IReadOnlyCollection<string>)["ROLE_ADMIN"]);
+        _procedures.GetEnabledByIdWithDetailsAsync(22, Arg.Any<CancellationToken>()).Returns(procedure);
+        _executor.ExecuteAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, object?>>(),
+                Arg.Any<IReadOnlyCollection<string>?>(), Arg.Any<CancellationToken>())
+            .Returns(new StoredProcedureExecutionResult { Data = new System.Data.DataTable() });
+
+        var request = new ExecuteProcedureRequest { ProcedureId = 22, ParameterValues = new Dictionary<string, string?>() };
+
+        var result = await _sut.ExecuteAsync(request);
+
+        result.Success.Should().BeTrue();
     }
 }

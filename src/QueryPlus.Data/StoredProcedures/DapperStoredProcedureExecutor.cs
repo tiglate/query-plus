@@ -18,7 +18,8 @@ public sealed class DapperStoredProcedureExecutor : IStoredProcedureExecutor
     public DapperStoredProcedureExecutor(IConfiguration configuration)
     {
         _connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
+                            ?? throw new InvalidOperationException(
+                                "Connection string 'DefaultConnection' is not configured.");
     }
 
     public async Task<StoredProcedureExecutionResult> ExecuteAsync(

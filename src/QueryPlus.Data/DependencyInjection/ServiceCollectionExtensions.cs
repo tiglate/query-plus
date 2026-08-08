@@ -20,14 +20,15 @@ public static class ServiceCollectionExtensions
         IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
+                               ?? throw new InvalidOperationException(
+                                   "Connection string 'DefaultConnection' is not configured.");
 
-        services.AddScoped<IAuditContext, NullAuditContext>();
         services.AddScoped<AuditSaveChangesInterceptor>();
 
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
-            options.UseSqlServer(connectionString);
+            options.UseSqlServer(connectionString,
+                o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
             options.AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>());
         });
 
@@ -39,8 +40,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IStoredProcedureExecutor, DapperStoredProcedureExecutor>();
         services.AddScoped<IProcedureMetadataSyncService, SqlProcedureMetadataSyncService>();
 
-        // Generic repository kept for simple lookups if needed.
-        services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<DemoDataSeeder>();
 
         return services;

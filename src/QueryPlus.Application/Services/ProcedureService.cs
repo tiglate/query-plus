@@ -1,4 +1,3 @@
-using AutoMapper;
 using FluentValidation;
 using QueryPlus.Application.Abstractions;
 using QueryPlus.Application.DTOs.Common;
@@ -16,7 +15,6 @@ public sealed class ProcedureService(
     IProcedureRepository procedures,
     ICategoryRepository categories,
     IUnitOfWork unitOfWork,
-    IMapper mapper,
     ICurrentUserContext currentUser,
     IConfigurationAuditReader auditReader,
     IValidator<SaveProcedureDto> saveValidator)
@@ -48,7 +46,7 @@ public sealed class ProcedureService(
 
         return new PagedResult<ProcedureListItemDto>
         {
-            Items = mapper.Map<IReadOnlyList<ProcedureListItemDto>>(items),
+            Items = ProcedureMapper.ToListItemDtos(items),
             TotalCount = totalCount,
             Page = page,
             PageSize = pageSize
@@ -65,7 +63,7 @@ public sealed class ProcedureService(
         CancellationToken cancellationToken = default)
     {
         var items = await procedures.GetAllAsync(cancellationToken);
-        return mapper.Map<IReadOnlyList<ProcedureLookupDto>>(items);
+        return ProcedureMapper.ToLookupDtos(items);
     }
 
     public async Task<IReadOnlyList<ProcedureLookupDto>> GetAccessibleForCurrentUserAsync(
@@ -73,7 +71,7 @@ public sealed class ProcedureService(
     {
         var roles = currentUser.Roles;
         var items = await procedures.GetAccessibleForExecutionAsync(roles, cancellationToken);
-        return mapper.Map<IReadOnlyList<ProcedureLookupDto>>(items);
+        return ProcedureMapper.ToLookupDtos(items);
     }
 
     public async Task<ProcedureDetailDto> CreateAsync(
@@ -88,9 +86,11 @@ public sealed class ProcedureService(
         await procedures.AddAsync(entity, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var created = await procedures.GetByIdWithDetailsAsync(entity.IdProcedure, cancellationToken)
-            ?? entity;
-        return await MapDetailAsync(created, cancellationToken);
+        // Parameters/Columns are already correct on the tracked graph after SaveChanges; only
+        // Category needs loading (it was set via IdCategory FK, not the navigation) - a full
+        // GetByIdWithDetailsAsync re-fetch would redundantly reload data already in memory.
+        await procedures.EnsureCategoryLoadedAsync(entity, cancellationToken);
+        return await MapDetailAsync(entity, cancellationToken);
     }
 
     public async Task<ProcedureDetailDto> UpdateAsync(
@@ -107,16 +107,11 @@ public sealed class ProcedureService(
         await EnsureUniqueConstraintsAsync(dto, dto.Id, cancellationToken);
 
         var entity = await procedures.GetByIdWithDetailsAsync(dto.Id.Value, cancellationToken)
-            ?? throw new EntityNotFoundException(nameof(Procedure), dto.Id.Value);
+                     ?? throw new EntityNotFoundException(nameof(Procedure), dto.Id.Value);
 
-        // Track removals for EF (collection remove alone may not mark deleted dependents
-        // depending on cascade config — explicit remove for safety).
-        var removedParameters = entity.Parameters
-            .Where(p => dto.Parameters.All(d => d.Id != p.IdProcedureParameter))
-            .ToList();
-        var removedColumns = entity.Columns
-            .Where(c => dto.Columns.All(d => d.Id != c.IdProcedureColumn))
-            .ToList();
+        // Track removals via domain aggregate helper methods.
+        var removedParameters = entity.GetRemovedParameters(dto.Parameters.Select(p => p.Id ?? 0));
+        var removedColumns = entity.GetRemovedColumns(dto.Columns.Select(c => c.Id ?? 0));
 
         ProcedureGraphMapper.ApplyUpdate(entity, dto);
 
@@ -133,15 +128,14 @@ public sealed class ProcedureService(
         procedures.Update(entity);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var updated = await procedures.GetByIdWithDetailsAsync(entity.IdProcedure, cancellationToken)
-            ?? entity;
-        return await MapDetailAsync(updated, cancellationToken);
+        await procedures.EnsureCategoryLoadedAsync(entity, cancellationToken);
+        return await MapDetailAsync(entity, cancellationToken);
     }
 
     public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
         var entity = await procedures.GetByIdWithDetailsAsync(id, cancellationToken)
-            ?? throw new EntityNotFoundException(nameof(Procedure), id);
+                     ?? throw new EntityNotFoundException(nameof(Procedure), id);
 
         procedures.Remove(entity);
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -151,7 +145,7 @@ public sealed class ProcedureService(
         Procedure entity,
         CancellationToken cancellationToken)
     {
-        var dto = mapper.Map<ProcedureDetailDto>(entity);
+        var dto = ProcedureMapper.ToDetailDto(entity);
         var audit = await auditReader.GetProcedureAuditDetailsAsync(
             entity.IdProcedure,
             cancellationToken);

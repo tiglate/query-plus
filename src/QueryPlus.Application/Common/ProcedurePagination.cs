@@ -12,8 +12,10 @@ public static class ProcedurePagination
 
     public const long DefaultPageNumber = 1;
     public const long DefaultPageSize = 50;
+
     /// <summary>Max page size for interactive UI execute (not export).</summary>
     public const long MaxUiPageSize = 200;
+
     /// <summary>Export uses a single giant page as product convention.</summary>
     public const long ExportPageSize = 999_999_999L;
 

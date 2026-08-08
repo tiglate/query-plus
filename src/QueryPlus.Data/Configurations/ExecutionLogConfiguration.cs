@@ -71,5 +71,12 @@ public class ExecutionLogConfiguration : IEntityTypeConfiguration<ExecutionLog>
         builder.HasIndex(e => new { e.IdProcedure, e.ExecutionStart })
             .HasDatabaseName("ix_execution_log_proc_date")
             .IsDescending(false, true);
+
+        // Supports the admin log view's default sort (ExecutionStart DESC) when no
+        // procedure/username filter is applied - the composite indexes above only help when
+        // that column is also filtered.
+        builder.HasIndex(e => e.ExecutionStart)
+            .HasDatabaseName("ix_execution_log_date")
+            .IsDescending(true);
     }
 }

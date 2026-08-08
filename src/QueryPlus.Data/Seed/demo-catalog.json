@@ -4,7 +4,7 @@
     "category": "Demo - Presidents",
     "description": "Optional birth State (combo), mandate Start and End dates.",
     "procedureName": "dbo.Sp_USA_President_List",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "State",
@@ -85,7 +85,7 @@
     "category": "Demo - Sales",
     "description": "No parameters; lists all customers.",
     "procedureName": "dbo.Sp_Demo_Customer_All",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [],
     "columns": [
       {
@@ -151,7 +151,7 @@
     "category": "Demo - Sales",
     "description": "FreeText name filter.",
     "procedureName": "dbo.Sp_Demo_Customer_ByName",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Name",
@@ -211,7 +211,7 @@
     "category": "Demo - Sales",
     "description": "Combo country filter.",
     "procedureName": "dbo.Sp_Demo_Customer_ByCountry",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Country",
@@ -271,7 +271,7 @@
     "category": "Demo - Sales",
     "description": "Boolean filter for active customers.",
     "procedureName": "dbo.Sp_Demo_Customer_ActiveOnly",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Active only",
@@ -317,7 +317,7 @@
     "category": "Demo - Sales",
     "description": "Numeric minimum credit limit.",
     "procedureName": "dbo.Sp_Demo_Customer_MinCredit",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Min credit",
@@ -356,7 +356,7 @@
     "category": "Demo - Sales",
     "description": "Combo category + boolean discontinued.",
     "procedureName": "dbo.Sp_Demo_Product_List",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Category",
@@ -430,7 +430,7 @@
     "category": "Demo - Sales",
     "description": "Two numeric parameters.",
     "procedureName": "dbo.Sp_Demo_Product_PriceRange",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Min price",
@@ -483,7 +483,7 @@
     "category": "Demo - Sales",
     "description": "Order date between Start and End.",
     "procedureName": "dbo.Sp_Demo_Order_ByDateRange",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Start",
@@ -557,7 +557,7 @@
     "category": "Demo - Sales",
     "description": "Combo status filter.",
     "procedureName": "dbo.Sp_Demo_Order_ByStatus",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Status",
@@ -603,7 +603,7 @@
     "category": "Demo - Sales",
     "description": "Aggregation, no parameters.",
     "procedureName": "dbo.Sp_Demo_Order_Summary",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [],
     "columns": [
       {
@@ -641,7 +641,7 @@
     "category": "Demo - HR",
     "description": "Department combo + managers boolean.",
     "procedureName": "dbo.Sp_Demo_Employee_List",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Department",
@@ -729,7 +729,7 @@
     "category": "Demo - HR",
     "description": "Single date parameter.",
     "procedureName": "dbo.Sp_Demo_Employee_ByHireDate",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Hired after",
@@ -775,7 +775,7 @@
     "category": "Demo - HR",
     "description": "Time parameters for shift filtering.",
     "procedureName": "dbo.Sp_Demo_Employee_Shift",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Start time",
@@ -828,7 +828,7 @@
     "category": "Demo - HR",
     "description": "Numeric range + free text name.",
     "procedureName": "dbo.Sp_Demo_Employee_SalaryBand",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Min salary",
@@ -881,7 +881,7 @@
     "category": "Demo - Finance",
     "description": "Currency combo + paid boolean; datetime paid_at.",
     "procedureName": "dbo.Sp_Demo_Invoice_List",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Currency",
@@ -955,7 +955,7 @@
     "category": "Demo - Finance",
     "description": "Date as-of for overdue calculation.",
     "procedureName": "dbo.Sp_Demo_Invoice_Overdue",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "As of",
@@ -1008,7 +1008,7 @@
     "category": "Demo - Finance",
     "description": "DateTime range on paid_at.",
     "procedureName": "dbo.Sp_Demo_Invoice_ByDateTimePaid",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Paid from",
@@ -1061,7 +1061,7 @@
     "category": "Demo - Operations",
     "description": "Combo type + public boolean; time columns.",
     "procedureName": "dbo.Sp_Demo_Event_List",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Event type",
@@ -1142,7 +1142,7 @@
     "category": "Demo - Operations",
     "description": "Single date equality filter.",
     "procedureName": "dbo.Sp_Demo_Event_OnDate",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Event date",
@@ -1195,7 +1195,7 @@
     "category": "Demo - Operations",
     "description": "Combo location, boolean alert, datetime range.",
     "procedureName": "dbo.Sp_Demo_Sensor_Readings",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Location",
@@ -1276,7 +1276,7 @@
     "category": "Demo - Operations",
     "description": "Numeric temperature threshold.",
     "procedureName": "dbo.Sp_Demo_Sensor_ByTemp",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Min temperature",
@@ -1322,7 +1322,7 @@
     "category": "Demo - Operations",
     "description": "Large numbers with formatting.",
     "procedureName": "dbo.Sp_Demo_Country_List",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Region",
@@ -1375,7 +1375,7 @@
     "category": "Demo - Operations",
     "description": "FreeText country name search.",
     "procedureName": "dbo.Sp_Demo_Country_Search",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Name",
@@ -1414,7 +1414,7 @@
     "category": "Demo - Operations",
     "description": "Combo status + free text origin.",
     "procedureName": "dbo.Sp_Demo_Flight_List",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Status",
@@ -1495,7 +1495,7 @@
     "category": "Demo - Operations",
     "description": "DateTime window only.",
     "procedureName": "dbo.Sp_Demo_Flight_ByDepartureWindow",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "From",
@@ -1555,7 +1555,7 @@
     "category": "Demo - Finance",
     "description": "Combo type + boolean reversed.",
     "procedureName": "dbo.Sp_Demo_Transaction_List",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Type",
@@ -1636,7 +1636,7 @@
     "category": "Demo - Finance",
     "description": "Numeric range + currency combo.",
     "procedureName": "dbo.Sp_Demo_Transaction_AmountRange",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Min amount",
@@ -1703,7 +1703,7 @@
     "category": "Demo - Mixed",
     "description": "Exercises FreeText, Numeric, Date, Time, DateTime, Boolean, Combo together.",
     "procedureName": "dbo.Sp_Demo_KitchenSink",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Name",
@@ -1805,7 +1805,7 @@
     "category": "Demo - Mixed",
     "description": "Left/center/right alignment and numeric formats.",
     "procedureName": "dbo.Sp_Demo_Alignment_Showcase",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [],
     "columns": [
       {
@@ -1843,7 +1843,7 @@
     "category": "Demo - Mixed",
     "description": "Includes a hidden technical id column.",
     "procedureName": "dbo.Sp_Demo_Hidden_Columns",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [],
     "columns": [
       {
@@ -1888,7 +1888,7 @@
     "category": "Demo - Mixed",
     "description": "Usually returns zero rows (empty grid).",
     "procedureName": "dbo.Sp_Demo_Empty_Result",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Impossible code",
@@ -1920,7 +1920,7 @@
     "category": "Demo - Mixed",
     "description": "Single boolean parameter.",
     "procedureName": "dbo.Sp_Demo_Boolean_Only",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Active only",
@@ -1952,7 +1952,7 @@
     "category": "Demo - Mixed",
     "description": "Single time parameter.",
     "procedureName": "dbo.Sp_Demo_Time_Only",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "After",
@@ -1991,7 +1991,7 @@
     "category": "Demo - Mixed",
     "description": "Generates 1,000 sample rows (default) for testing vertical scrollbars in the results grid. Optional row count, max 10,000.",
     "procedureName": "dbo.Sp_Demo_Large_Result",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "parameters": [
       {
         "caption": "Row count",
@@ -2059,7 +2059,7 @@
     "category": "Demo - Pagination",
     "description": "Server-side paginated number sequence (default 5,000 rows). Tests home grid pager and Excel full export.",
     "procedureName": "dbo.Sp_Demo_Numbers_Paged",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "supportsPagination": true,
     "parameters": [
       {
@@ -2100,7 +2100,7 @@
     "category": "Demo - Pagination",
     "description": "Large synthetic dataset with server-side pagination (default 5,000 rows, max 50,000). Use the grid pager; Export Excel pulls the full set.",
     "procedureName": "dbo.Sp_Demo_Large_Result_Paged",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "supportsPagination": true,
     "parameters": [
       {
@@ -2169,7 +2169,7 @@
     "category": "Demo - Pagination",
     "description": "Paginated presidents list (same filters as the full list). Demonstrates pagination with user filters.",
     "procedureName": "dbo.Sp_USA_President_List_Paged",
-    "role": "user",
+    "role": "ROLE_QUERY_EXEC",
     "supportsPagination": true,
     "parameters": [
       {

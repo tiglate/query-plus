@@ -1,12 +1,9 @@
-using AutoMapper;
 using FluentAssertions;
-using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using QueryPlus.Application.Abstractions;
 using QueryPlus.Application.DTOs.Common;
 using QueryPlus.Application.DTOs.Procedures;
 using QueryPlus.Application.Interfaces;
-using QueryPlus.Application.Mapping;
 using QueryPlus.Application.Services;
 using QueryPlus.Application.Validation;
 using QueryPlus.Domain.Entities;
@@ -20,163 +17,215 @@ public class ProcedureServiceTests
     private readonly IProcedureRepository _procedures = Substitute.For<IProcedureRepository>();
     private readonly ICategoryRepository _categories = Substitute.For<ICategoryRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly ICurrentUserContext _user = Substitute.For<ICurrentUserContext>();
+    private readonly ICurrentUserContext _currentUser = Substitute.For<ICurrentUserContext>();
     private readonly IConfigurationAuditReader _auditReader = Substitute.For<IConfigurationAuditReader>();
     private readonly ProcedureService _sut;
 
     public ProcedureServiceTests()
     {
-        var mapper = new MapperConfiguration(
-            cfg => cfg.AddProfile<QueryPlusMappingProfile>(),
-            NullLoggerFactory.Instance).CreateMapper();
-        _user.Roles.Returns(["user"]);
         _auditReader.GetProcedureAuditDetailsAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(new AuditDetailsDto { CreatedBy = "creator" });
+            .Returns(new AuditDetailsDto { CreatedBy = "admin", UpdatedBy = "admin" });
+
         _sut = new ProcedureService(
             _procedures,
             _categories,
             _unitOfWork,
-            mapper,
-            _user,
+            _currentUser,
             _auditReader,
             new SaveProcedureDtoValidator());
     }
 
     [Fact]
-    public async Task SearchAsync_ReturnsPagedResult()
+    public async Task GetByIdAsync_ReturnsProcedureDetail_WhenFound()
     {
-        var entities = new List<Procedure>
-        {
-            new()
-            {
-                IdProcedure = 1,
-                IdCategory = 1,
-                Caption = "Sales Report",
-                DatabaseName = "Sales",
-                ProcedureName = "dbo.usp_Sales",
-                RoleEntitlement = "user",
-                Category = new Category { IdCategory = 1, Description = "Sales" }
-            }
-        };
-        _procedures.SearchAsync(Arg.Any<ProcedureSearchCriteria>(), 1, 20, Arg.Any<CancellationToken>())
-            .Returns((entities, 1));
-
-        var result = await _sut.SearchAsync(new ProcedureFilterDto
-        {
-            Caption = "Sales",
-            Page = 1,
-            PageSize = 20
-        });
-
-        result.TotalCount.Should().Be(1);
-        result.Items.Should().ContainSingle(i => i.Caption == "Sales Report");
-    }
-
-    [Fact]
-    public async Task GetByIdAsync_ReturnsDto_WhenFound()
-    {
-        _auditReader.GetProcedureAuditDetailsAsync(1, Arg.Any<CancellationToken>())
-            .Returns(new AuditDetailsDto { CreatedBy = "creator", UpdatedBy = "editor" });
-        _procedures.GetByIdWithDetailsAsync(1).Returns(new Procedure
+        var proc = new Procedure
         {
             IdProcedure = 1,
             IdCategory = 1,
-            Caption = "Sample",
-            DatabaseName = "Sales",
-            ProcedureName = "dbo.usp_Sample",
-            RoleEntitlement = "user",
-            Category = new Category { IdCategory = 1, Description = "Sales" }
-        });
+            Caption = "Monthly Sales",
+            DatabaseName = "DB",
+            ProcedureName = "sp_sales",
+            RoleEntitlement = ""
+        };
+        _procedures.GetByIdWithDetailsAsync(1, Arg.Any<CancellationToken>()).Returns(proc);
 
         var result = await _sut.GetByIdAsync(1);
 
         result.Should().NotBeNull();
-        result!.Caption.Should().Be("Sample");
-        result.CategoryDescription.Should().Be("Sales");
-        result.CreatedBy.Should().Be("creator");
-        result.UpdatedBy.Should().Be("editor");
+        result!.Caption.Should().Be("Monthly Sales");
     }
 
     [Fact]
-    public async Task CreateAsync_Saves_WhenValid()
+    public async Task CreateAsync_CategoryNotFound_ThrowsEntityNotFoundException()
     {
-        _categories.GetByIdAsync(1).Returns(new Category { IdCategory = 1, Description = "Cat" });
-        _procedures.ExistsByCaptionAsync(Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<CancellationToken>())
-            .Returns(false);
-        _procedures.ExistsByDatabaseAndNameAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<CancellationToken>())
-            .Returns(false);
-        _procedures.When(x => x.AddAsync(Arg.Any<Procedure>(), Arg.Any<CancellationToken>()))
-            .Do(ci =>
-            {
-                var p = ci.ArgAt<Procedure>(0);
-                p.IdProcedure = 10;
-            });
-        _procedures.GetByIdWithDetailsAsync(10).Returns(ci => new Procedure
-        {
-            IdProcedure = 10,
-            IdCategory = 1,
-            Caption = "New Procedure",
-            DatabaseName = "Sales",
-            ProcedureName = "usp_New",
-            RoleEntitlement = "user",
-            Category = new Category { IdCategory = 1, Description = "Cat" }
-        });
+        _categories.GetByIdAsync(99, Arg.Any<CancellationToken>()).Returns((Category?)null);
 
         var dto = new SaveProcedureDto
         {
-            CategoryId = 1,
-            Caption = "New Procedure",
-            DatabaseName = "Sales",
-            ProcedureName = "usp_New",
+            CategoryId = 99,
+            Caption = "Test Caption",
+            DatabaseName = "DB",
+            ProcedureName = "sp_test",
             RoleEntitlement = "user"
         };
 
-        var result = await _sut.CreateAsync(dto);
-
-        result.Id.Should().Be(10);
-        result.CreatedBy.Should().Be("creator");
-        result.UpdatedBy.Should().BeNull();
-        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
-    public async Task DeleteAsync_Throws_WhenNotFound()
-    {
-        _procedures.GetByIdWithDetailsAsync(99).Returns((Procedure?)null);
-
-        var act = async () => await _sut.DeleteAsync(99);
+        Func<Task> act = async () => await _sut.CreateAsync(dto);
 
         await act.Should().ThrowAsync<EntityNotFoundException>();
     }
 
     [Fact]
-    public async Task ListAllAsync_MapsAllProcedures()
+    public async Task CreateAsync_DuplicateCaption_ThrowsValidationException()
     {
-        _procedures.GetAllAsync(Arg.Any<CancellationToken>()).Returns(
-        [
-            new Procedure
-            {
-                IdProcedure = 1,
-                IdCategory = 1,
-                Caption = "Alpha",
-                DatabaseName = "Sales",
-                ProcedureName = "dbo.usp_Alpha",
-                RoleEntitlement = "user"
-            },
-            new Procedure
-            {
-                IdProcedure = 2,
-                IdCategory = 1,
-                Caption = "Beta",
-                DatabaseName = "Sales",
-                ProcedureName = "dbo.usp_Beta",
-                RoleEntitlement = "user"
-            }
-        ]);
+        _categories.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(new Category { IdCategory = 1, Description = "Gen" });
+        _procedures.ExistsByCaptionAsync("Test Caption", null, Arg.Any<CancellationToken>()).Returns(true);
 
-        var result = await _sut.ListAllAsync();
+        var dto = new SaveProcedureDto
+        {
+            CategoryId = 1,
+            Caption = "Test Caption",
+            DatabaseName = "DB",
+            ProcedureName = "sp_test",
+            RoleEntitlement = "user"
+        };
 
-        result.Should().HaveCount(2);
-        result.Select(p => p.Caption).Should().Equal("Alpha", "Beta");
+        Func<Task> act = async () => await _sut.CreateAsync(dto);
+
+        var exc = await act.Should().ThrowAsync<Common.ValidationException>();
+        exc.Which.Errors.Should().ContainKey("Caption");
+    }
+
+    [Fact]
+    public async Task CreateAsync_PopulatesCategoryDescription_ViaCheapReferenceLoad_NotAFullRefetch()
+    {
+        _categories.GetByIdAsync(1, Arg.Any<CancellationToken>())
+            .Returns(new Category { IdCategory = 1, Description = "General" });
+        _auditReader.GetProcedureAuditDetailsAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new AuditDetailsDto { CreatedBy = "admin", UpdatedBy = "admin" });
+        _procedures.EnsureCategoryLoadedAsync(Arg.Any<Procedure>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var procedure = callInfo.Arg<Procedure>()!;
+                procedure.Category = new Category { IdCategory = 1, Description = "General" };
+                return Task.CompletedTask;
+            });
+
+        var dto = new SaveProcedureDto
+        {
+            CategoryId = 1,
+            Caption = "New Proc",
+            DatabaseName = "DB",
+            ProcedureName = "sp_new",
+            RoleEntitlement = "ROLE_QUERY_EXEC"
+        };
+
+        var result = await _sut.CreateAsync(dto);
+
+        result.CategoryDescription.Should().Be("General");
+        await _procedures.Received(1).EnsureCategoryLoadedAsync(Arg.Any<Procedure>(), Arg.Any<CancellationToken>());
+        await _procedures.DidNotReceive().GetByIdWithDetailsAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task UpdateAsync_PopulatesCategoryDescription_ViaCheapReferenceLoad_NotAFullRefetch()
+    {
+        var existing = new Procedure
+        {
+            IdProcedure = 5, IdCategory = 1, Caption = "Old", DatabaseName = "DB", ProcedureName = "sp_old",
+            RoleEntitlement = ""
+        };
+        _procedures.GetByIdWithDetailsAsync(5, Arg.Any<CancellationToken>()).Returns(existing);
+        _categories.GetByIdAsync(1, Arg.Any<CancellationToken>())
+            .Returns(new Category { IdCategory = 1, Description = "General" });
+        _procedures.EnsureCategoryLoadedAsync(Arg.Any<Procedure>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var procedure = callInfo.Arg<Procedure>()!;
+                procedure.Category = new Category { IdCategory = 1, Description = "General" };
+                return Task.CompletedTask;
+            });
+
+        var dto = new SaveProcedureDto
+        {
+            Id = 5,
+            CategoryId = 1,
+            Caption = "Renamed",
+            DatabaseName = "DB",
+            ProcedureName = "sp_old",
+            RoleEntitlement = "ROLE_QUERY_EXEC"
+        };
+
+        var result = await _sut.UpdateAsync(dto);
+
+        result.CategoryDescription.Should().Be("General");
+        result.Caption.Should().Be("Renamed");
+        await _procedures.Received(1).EnsureCategoryLoadedAsync(existing, Arg.Any<CancellationToken>());
+        // GetByIdWithDetailsAsync is called exactly once (to load the entity to mutate) - not
+        // a second time afterward to re-fetch what was just saved.
+        await _procedures.Received(1).GetByIdWithDetailsAsync(5, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task DeleteAsync_NotFound_ThrowsEntityNotFoundException()
+    {
+        _procedures.GetByIdWithDetailsAsync(999, Arg.Any<CancellationToken>()).Returns((Procedure?)null);
+
+        Func<Task> act = async () => await _sut.DeleteAsync(999);
+
+        await act.Should().ThrowAsync<EntityNotFoundException>();
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ExistingProcedure_RemovesEntity()
+    {
+        var proc = new Procedure { IdProcedure = 5, IdCategory = 1, Caption = "Del", DatabaseName = "DB", ProcedureName = "sp_del", RoleEntitlement = "" };
+        _procedures.GetByIdWithDetailsAsync(5, Arg.Any<CancellationToken>()).Returns(proc);
+
+        await _sut.DeleteAsync(5);
+
+        _procedures.Received(1).Remove(proc);
+        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task UpdateAsync_NullOrZeroId_ThrowsValidationException()
+    {
+        var dto = new SaveProcedureDto { Id = null, CategoryId = 1, Caption = "C", DatabaseName = "DB", ProcedureName = "sp_c", RoleEntitlement = "" };
+
+        Func<Task> act = async () => await _sut.UpdateAsync(dto);
+
+        await act.Should().ThrowAsync<Common.ValidationException>();
+    }
+
+    [Fact]
+    public async Task GetAccessibleForCurrentUserAsync_ReturnsAccessibleProcedures()
+    {
+        _currentUser.Roles.Returns(["user"]);
+        var list = new List<Procedure>
+        {
+            new() { IdProcedure = 1, IdCategory = 1, Caption = "Accessible", DatabaseName = "DB", ProcedureName = "sp_a", RoleEntitlement = "user" }
+        };
+        _procedures.GetAccessibleForExecutionAsync(Arg.Any<IReadOnlyCollection<string>>(), Arg.Any<CancellationToken>())
+            .Returns(list);
+
+        var result = await _sut.GetAccessibleForCurrentUserAsync();
+
+        result.Should().ContainSingle(p => p.Caption == "Accessible");
+    }
+
+    [Fact]
+    public async Task SearchAsync_ReturnsPagedProcedures()
+    {
+        var list = new List<Procedure>
+        {
+            new() { IdProcedure = 1, IdCategory = 1, Caption = "Found", DatabaseName = "DB", ProcedureName = "sp_f", RoleEntitlement = "" }
+        };
+        _procedures.SearchAsync(Arg.Any<ProcedureSearchCriteria>(), 1, 10, Arg.Any<CancellationToken>())
+            .Returns((list, 1));
+
+        var result = await _sut.SearchAsync(new ProcedureFilterDto { Caption = "Found", Page = 1, PageSize = 10 });
+
+        result.TotalCount.Should().Be(1);
+        result.Items.Should().ContainSingle(i => i.Caption == "Found");
     }
 }

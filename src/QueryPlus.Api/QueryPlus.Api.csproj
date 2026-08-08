@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <SkipClientAppBuild Condition="'$(SkipClientAppBuild)' == ''">false</SkipClientAppBuild>
+    <RepositoryRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../..'))</RepositoryRoot>
+    <ClientAppDirectory>$([System.IO.Path]::Combine('$(RepositoryRoot)', 'client', 'queryplus-react'))</ClientAppDirectory>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\QueryPlus.Application\QueryPlus.Application.csproj" />
+    <ProjectReference Include="..\QueryPlus.Infrastructure\QueryPlus.Infrastructure.csproj" />
+    <ProjectReference Include="..\QueryPlus.Data\QueryPlus.Data.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.10">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.19.2" />
+  </ItemGroup>
+  <Target Name="BuildClientAppIfMissing" BeforeTargets="BeforeBuild" Condition="'$(SkipClientAppBuild)' != 'true' And !Exists('$(MSBuildProjectDirectory)/wwwroot/index.html')">
+    <Exec WorkingDirectory="$(ClientAppDirectory)" Command="pnpm install --frozen-lockfile" />
+    <Exec WorkingDirectory="$(ClientAppDirectory)" Command="pnpm run build" />
+  </Target>
+  <Target Name="BuildClientAppOnPublish" BeforeTargets="ComputeFilesToPublish" Condition="'$(SkipClientAppBuild)' != 'true'">
+    <Exec WorkingDirectory="$(ClientAppDirectory)" Command="pnpm install --frozen-lockfile" />
+    <Exec WorkingDirectory="$(ClientAppDirectory)" Command="pnpm run build" />
+    <ItemGroup>
+      <SpaFiles Include="$(MSBuildProjectDirectory)/wwwroot/**" />
+      <ResolvedFileToPublish Include="@(SpaFiles)">
+        <RelativePath>wwwroot/%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
+</Project>

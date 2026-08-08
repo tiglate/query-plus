@@ -9,7 +9,7 @@ public sealed class SystemUserContext : ICurrentUserContext
     public bool IsAuthenticated => true;
     public string Username => "system";
     public string? IpAddress => null;
-    public IReadOnlyCollection<string> Roles { get; } = ["admin", "user"];
+    public IReadOnlyCollection<string> Roles { get; } = ["ROLE_ADMIN"];
 
     public bool IsInRole(string role)
         => Roles.Contains(role, StringComparer.OrdinalIgnoreCase);

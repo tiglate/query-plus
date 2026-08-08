@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="theme-color" content="#1c334d" />
+        <meta name="description" content="QueryPlus — consultas governadas com segurança" />
+        <title>QueryPlus</title>
+        <script>
+            (function () {
+                try {
+                    let pref = localStorage.getItem("qp-theme") || "system";
+                    if (pref !== "light" && pref !== "dark" && pref !== "system") {
+                        pref = "system";
+                    }
+                    const dark =
+                        pref === "dark" ||
+                        (pref === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+                    document.documentElement.classList.toggle("dark", dark);
+                    document.documentElement.style.colorScheme = dark ? "dark" : "light";
+                    document.documentElement.dataset.theme = pref;
+                    document.documentElement.dataset.themeResolved = dark ? "dark" : "light";
+                } catch (error) {
+                    console.warn("Unable to apply theme preference.", error);
+                }
+            })();
+        </script>
+        <script>
+            (function () {
+                try {
+                    const steps = [14, 15, 16, 17, 18, 19, 20];
+                    const raw = localStorage.getItem("qp-font-size-step");
+                    const parsed = raw === null ? Number.NaN : Number(raw);
+                    const step = Number.isFinite(parsed)
+                        ? Math.min(steps.length - 1, Math.max(0, Math.trunc(parsed)))
+                        : 3;
+                    document.documentElement.style.fontSize = steps[step] + "px";
+                    document.documentElement.dataset.fontSizeStep = String(step);
+                } catch (error) {
+                    console.warn("Unable to apply font size preference.", error);
+                }
+            })();
+        </script>
+    </head>
+    <body>
+        <div id="root"></div>
+        <script type="module" src="/src/main.tsx"></script>
+    </body>
+</html>

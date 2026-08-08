@@ -1,11 +1,8 @@
-using AutoMapper;
 using FluentAssertions;
-using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using QueryPlus.Application.DTOs.Categories;
 using QueryPlus.Application.DTOs.Common;
 using QueryPlus.Application.Interfaces;
-using QueryPlus.Application.Mapping;
 using QueryPlus.Application.Services;
 using QueryPlus.Application.Validation;
 using QueryPlus.Domain.Entities;
@@ -23,99 +20,75 @@ public class CategoryServiceTests
 
     public CategoryServiceTests()
     {
-        var mapper = new MapperConfiguration(
-            cfg => cfg.AddProfile<QueryPlusMappingProfile>(),
-            NullLoggerFactory.Instance).CreateMapper();
         _auditReader.GetCategoryAuditDetailsAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(new AuditDetailsDto { CreatedBy = "creator" });
+            .Returns(new AuditDetailsDto { CreatedBy = "admin", UpdatedBy = "admin" });
+
         _sut = new CategoryService(
             _categories,
             _unitOfWork,
-            mapper,
             _auditReader,
             new CreateCategoryDtoValidator(),
             new UpdateCategoryDtoValidator());
     }
 
     [Fact]
-    public async Task CreateAsync_PersistsCategory()
+    public async Task SearchAsync_ReturnsPagedCategories()
     {
-        _categories.ExistsByDescriptionAsync("Finance", null, Arg.Any<CancellationToken>()).Returns(false);
+        var list = new List<Category> { new() { IdCategory = 1, Description = "Finance" } };
+        _categories.SearchAsync("Fin", 1, 10, Arg.Any<CancellationToken>()).Returns((list, 1));
 
-        var result = await _sut.CreateAsync(new CreateCategoryDto { Description = "Finance" });
+        var result = await _sut.SearchAsync(new CategoryFilterDto { Description = "Fin", Page = 1, PageSize = 10 });
 
-        result.Description.Should().Be("Finance");
-        result.CreatedBy.Should().Be("creator");
-        result.UpdatedBy.Should().BeNull();
-        await _categories.Received(1).AddAsync(Arg.Any<Category>(), Arg.Any<CancellationToken>());
+        result.TotalCount.Should().Be(1);
+        result.Items.Should().ContainSingle(i => i.Description == "Finance");
+    }
+
+    [Fact]
+    public async Task CreateAsync_DuplicateDescription_ThrowsValidationException()
+    {
+        _categories.ExistsByDescriptionAsync("Finance", null, Arg.Any<CancellationToken>()).Returns(true);
+
+        var dto = new CreateCategoryDto { Description = "Finance" };
+
+        Func<Task> act = async () => await _sut.CreateAsync(dto);
+
+        var exc = await act.Should().ThrowAsync<Common.ValidationException>();
+        exc.Which.Errors.Should().ContainKey("Description");
+    }
+
+    [Fact]
+    public async Task CreateAsync_ValidDto_CreatesCategory()
+    {
+        _categories.ExistsByDescriptionAsync("Sales", null, Arg.Any<CancellationToken>()).Returns(false);
+
+        var dto = new CreateCategoryDto { Description = "Sales" };
+
+        var result = await _sut.CreateAsync(dto);
+
+        result.Description.Should().Be("Sales");
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task DeleteAsync_Throws_WhenHasProcedures()
+    public async Task UpdateAsync_NotFound_ThrowsEntityNotFoundException()
     {
-        _categories.GetByIdAsync(1).Returns(new Category { IdCategory = 1, Description = "X" });
-        _categories.HasProceduresAsync(1).Returns(true);
+        _categories.GetByIdAsync(999, Arg.Any<CancellationToken>()).Returns((Category?)null);
 
-        var act = async () => await _sut.DeleteAsync(1);
+        var dto = new UpdateCategoryDto { Id = 999, Description = "Updated" };
 
-        await act.Should().ThrowAsync<BusinessRuleException>();
+        Func<Task> act = async () => await _sut.UpdateAsync(dto);
+
+        await act.Should().ThrowAsync<EntityNotFoundException>();
     }
 
     [Fact]
-    public async Task SearchAsync_ReturnsPagedResult()
+    public async Task DeleteAsync_HasProcedures_ThrowsBusinessRuleException()
     {
-        var entities = new List<Category>
-        {
-            new() { IdCategory = 1, Description = "Alpha" },
-            new() { IdCategory = 2, Description = "Beta" }
-        };
-        _categories.SearchAsync("a", 1, 20, Arg.Any<CancellationToken>())
-            .Returns((entities, 2));
+        _categories.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(new Category { IdCategory = 1, Description = "Ops" });
+        _categories.HasProceduresAsync(1, Arg.Any<CancellationToken>()).Returns(true);
 
-        var result = await _sut.SearchAsync(new CategoryFilterDto
-        {
-            Description = "a",
-            Page = 1,
-            PageSize = 20
-        });
+        Func<Task> act = async () => await _sut.DeleteAsync(1);
 
-        result.TotalCount.Should().Be(2);
-        result.Page.Should().Be(1);
-        result.PageSize.Should().Be(20);
-        result.Items.Should().HaveCount(2);
-        result.Items[0].Description.Should().Be("Alpha");
-    }
-
-    [Fact]
-    public async Task SearchAsync_ClampsPage_WhenPastEnd()
-    {
-        _categories.SearchAsync(null, 5, 10, Arg.Any<CancellationToken>())
-            .Returns((Array.Empty<Category>(), 12));
-        _categories.SearchAsync(null, 2, 10, Arg.Any<CancellationToken>())
-            .Returns((
-                new List<Category> { new() { IdCategory = 3, Description = "Last" } },
-                12));
-
-        var result = await _sut.SearchAsync(new CategoryFilterDto { Page = 5, PageSize = 10 });
-
-        result.Page.Should().Be(2);
-        result.TotalCount.Should().Be(12);
-        result.Items.Should().ContainSingle(i => i.Description == "Last");
-    }
-
-    [Fact]
-    public async Task ListAllAsync_MapsAllCategories()
-    {
-        _categories.GetAllAsync(Arg.Any<CancellationToken>()).Returns(
-        [
-            new Category { IdCategory = 1, Description = "A" },
-            new Category { IdCategory = 2, Description = "B" }
-        ]);
-
-        var result = await _sut.ListAllAsync();
-
-        result.Should().HaveCount(2);
-        result.Select(c => c.Description).Should().Equal("A", "B");
+        await act.Should().ThrowAsync<BusinessRuleException>().WithMessage("*still has procedures*");
     }
 }

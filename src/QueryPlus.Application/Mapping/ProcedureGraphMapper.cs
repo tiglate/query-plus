@@ -77,6 +77,7 @@ public static class ProcedureGraphMapper
                 existing.DefaultValue = NormalizeOptional(dto.DefaultValue);
                 existing.ComboValues = NormalizeOptional(dto.ComboValues);
                 existing.IsRequired = dto.IsRequired;
+                existing.IsSensitive = dto.IsSensitive;
             }
             else
             {
@@ -125,7 +126,8 @@ public static class ProcedureGraphMapper
         ParameterType = dto.ParameterType,
         DefaultValue = NormalizeOptional(dto.DefaultValue),
         ComboValues = NormalizeOptional(dto.ComboValues),
-        IsRequired = dto.IsRequired
+        IsRequired = dto.IsRequired,
+        IsSensitive = dto.IsSensitive
     };
 
     private static ProcedureColumn ToNewColumn(SaveProcedureColumnDto dto) => new()

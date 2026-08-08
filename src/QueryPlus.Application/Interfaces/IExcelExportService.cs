@@ -2,8 +2,13 @@ namespace QueryPlus.Application.Interfaces;
 
 public interface IExcelExportService
 {
-    /// <summary>Queues a background export. Returns job id for polling.</summary>
-    Guid QueueExport(int procedureId, IDictionary<string, string?> parameterValues, string username);
+    /// <summary>
+    /// Queues a background export. Returns job id for polling. <paramref name="userRoles"/> is
+    /// captured at queue time so the background worker (which has no HttpContext/current-user)
+    /// can re-check the procedure's RoleEntitlement before it actually runs.
+    /// </summary>
+    Guid QueueExport(int procedureId, IDictionary<string, string?> parameterValues, string username,
+        IReadOnlyCollection<string> userRoles);
 
     ExportJobDto? GetJob(Guid jobId);
 

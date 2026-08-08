@@ -14,7 +14,7 @@ public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Applicati
     {
         LoadEnvFromAncestors(Directory.GetCurrentDirectory());
 
-        var basePath = Path.Combine(Directory.GetCurrentDirectory(), "..", "QueryPlus.Web");
+        var basePath = Path.Combine(Directory.GetCurrentDirectory(), "..", "QueryPlus.Api");
         if (!Directory.Exists(basePath))
         {
             basePath = Directory.GetCurrentDirectory();

@@ -1,266 +1,276 @@
 # QueryPlus
 
-Governed execution of SQL Server stored procedures for business users — with catalog management, RBAC, audit trail, and Excel export.
+Execução governada de stored procedures do SQL Server para usuários de negócio — com catálogo, RBAC, trilha de auditoria e exportação para Excel.
 
-Built with **.NET 10**, **ASP.NET Core MVC**, **HTMX**, **Tailwind CSS**, **EF Core**, **Dapper**, and **Keycloak** (OpenID Connect).
+Construído com **.NET 10**, **ASP.NET Core Web API (controllers)**, **React 19 + TypeScript (SPA com Vite)**, **EF Core**, **Dapper**, **Tailwind 4** e **Keycloak** (OpenID Connect).
 
-**Default language:** Brazilian Portuguese (`pt-BR`), with English (`en`).
+**Idioma padrão:** Português do Brasil (`pt-BR`), com suporte a inglês (`en`).
 
-## ✨ Features
+## ✨ Funcionalidades
 
-- 🏠 **Home** — pick a catalogued procedure, set parameters, execute, page large results server-side, export to Excel
-- 🗂️ **Admin** — manage categories and procedures (parameters, columns, sync metadata from SQL Server)
-- 🔐 **Security** — OIDC via Keycloak; procedure-level role entitlements; reserved pagination args never exposed to end users
-- 📋 **Ops** — execution log, configuration audit tables, demo data seeded on startup
+- 🏠 **Início** — escolha uma procedure catalogada, defina os parâmetros, execute, pagine grandes resultados no servidor e exporte para Excel
+- 🗂️ **Admin** — gerencie categorias e procedures (parâmetros, colunas, sincronização de metadados a partir do SQL Server)
+- 🔐 **Segurança** — OIDC via Keycloak (sessão em cookie + antiforgery); entitlements de papel (role) por procedure; argumentos reservados de paginação nunca expostos aos usuários finais
+- 📋 **Operação** — log de execuções, tabelas de auditoria de configuração, dados de demonstração semeados na inicialização
 
-## 📦 Solution structure
+## 📦 Estrutura da solução
 
 ```
 QueryPlus.sln
 src/
-  QueryPlus.Web              # MVC Controllers + Views + ClientApp (TS/Tailwind) + OIDC
-  QueryPlus.Application      # Application services & interfaces
-  QueryPlus.Domain           # Entities, repository contracts (INT PKs)
-  QueryPlus.Infrastructure   # Composition root for external concerns
-  QueryPlus.Data             # EF Core CRUD + Dapper stored procedure execution
+  QueryPlus.Api               # Web API do ASP.NET Core (controllers) + OIDC + host estático da SPA
+  QueryPlus.Application       # Serviços de aplicação, DTOs, validadores FluentValidation
+  QueryPlus.Domain            # Entidades, contratos de repositório (PKs INT)
+  QueryPlus.Infrastructure    # Composition root para integrações externas
+  QueryPlus.Data              # CRUD via EF Core + execução de stored procedures via Dapper
 tests/
   QueryPlus.Application.Tests
-  QueryPlus.Web.Tests
+  QueryPlus.Data.Tests
+  QueryPlus.Api.Tests         # testes unitários de controllers + testes de integração HTTP via WebApplicationFactory
+client/
+  queryplus-react/            # SPA em React 19 + Vite + TS (Tailwind 4, TanStack Query, Radix/shadcn)
 docker/
-  keycloak/realm-export.json # Dev realm (users: demo/demo, admin/admin)
-.devcontainer/               # VS Code / Codespaces Dev Containers
+  keycloak/realm-export.json  # Realm de desenvolvimento (usuários: demo/demo, admin/admin)
+.devcontainer/                # Dev Containers do VS Code / Codespaces
 docs/
   SPECIFICATION.md
-  database/                  # schema + demo SQL mirrors
+  database/                   # espelho do schema + SQL de demonstração
 ```
 
-### Layering
+### Camadas
 
-| Layer | Responsibility |
+| Camada | Responsabilidade |
 |-------|----------------|
-| **Domain** | Entities (`int` PKs), repository/UoW interfaces |
-| **Application** | Use cases, service interfaces (e.g. `IStoredProcedureExecutor`) |
-| **Data** | EF Core `DbContext`/repositories (CRUD), Dapper executor (`DataTable`) |
-| **Infrastructure** | Wires Data + future integrations into DI |
-| **Web** | MVC UI, auth, localization, HTTP endpoints, ClientApp assets |
+| **Domain** | Entidades (PKs `int`), interfaces de repositório/UoW |
+| **Application** | Casos de uso, interfaces de serviço, DTOs, validadores FluentValidation (`SqlIdentifier`, `ParameterSecurity`, `ProcedurePagination`) |
+| **Data** | `DbContext`/repositórios do EF Core (CRUD + migrations), executor Dapper (`DataTable`), `DemoDataSeeder`, `AuditSaveChangesInterceptor` |
+| **Infrastructure** | Conecta a Data + futuras integrações à injeção de dependência |
+| **Api** | Controllers da Web API, autenticação OIDC, ProblemDetails, host estático da SPA, composição de DI |
 
-- **EF Core** — catalog CRUD and migrations  
-- **Dapper / ADO.NET** — dynamic stored procedure results as `DataTable`
+- **EF Core** — CRUD do catálogo e migrations
+- **Dapper / ADO.NET** — resultados dinâmicos de stored procedures como `DataTable`
+- **SPA em React** — `client/queryplus-react/`, Vite em modo dev na porta `:5173` (faz proxy de `/api` e `/login` para a API), o build de produção é gerado em `src/QueryPlus.Api/wwwroot/` e servido pela API como arquivos estáticos
 
-## ✅ Prerequisites
+## ✅ Pré-requisitos
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [Docker](https://www.docker.com/) (SQL Server + Keycloak)
-- [Node.js 22+](https://nodejs.org/) + [pnpm](https://pnpm.io/) 10+ for ClientApp (or [Vite+](https://viteplus.dev/) `vp`) — first build and any frontend work
+- [Node.js 22+](https://nodejs.org/) + [pnpm](https://pnpm.io/) 10+ para a SPA em React — necessário para o primeiro build e qualquer trabalho no frontend
 
-## 🚀 Quick start (local)
+## 🚀 Início rápido (local)
 
-### 0. Configure local secrets (required)
+### 0. Configure os segredos locais (obrigatório)
 
-Credentials are **not** stored in `appsettings*.json`. Copy the template and edit only if needed:
+As credenciais **não** ficam em `appsettings*.json`. Copie o template e edite apenas se necessário:
 
 ```bash
 cp .env.example .env
 ```
 
-| File | In git? | Purpose |
+| Arquivo | No git? | Finalidade |
 |------|---------|---------|
-| `.env.example` | ✅ yes | Dummy local defaults (template) |
-| `.env` | ❌ **never** (gitignored) | Your machine-only values |
+| `.env.example` | ✅ sim | Valores padrão fictícios para uso local (template) |
+| `.env` | ❌ **nunca** (no gitignore) | Seus valores, apenas nesta máquina |
 
-⚠️ **These values are dummy development credentials.** They exist only so Docker and a laptop can start quickly. **Do not use them in production, staging, or any shared environment.** Rotate secrets, use a secret manager, and enforce HTTPS/strong passwords before any real deployment.
+⚠️ **Esses valores são credenciais fictícias de desenvolvimento.** Elas existem apenas para que o Docker e um notebook consigam subir rapidamente. **Não as utilize em produção, homologação ou qualquer ambiente compartilhado.** Rotacione os segredos, utilize um gerenciador de segredos e garanta HTTPS/senhas fortes antes de qualquer implantação real.
 
-Docker Compose reads `.env` for variable substitution. `dotnet run` also loads a repo-root `.env` into the process environment (without overriding variables already set by the shell or CI).
+O Docker Compose lê o `.env` para a substituição de variáveis. O `dotnet run` também carrega um `.env` na raiz do repositório no ambiente do processo (sem sobrescrever variáveis já definidas pelo shell ou pela CI).
 
-### 1. Start infrastructure
+### 1. Suba a infraestrutura
 
 ```bash
 docker compose up -d sqlserver keycloak
 ```
 
-| Service | URL / connection (from `.env.example` dummies) |
+| Serviço | URL / conexão (valores fictícios de `.env.example`) |
 |---------|------------------|
-| SQL Server | `localhost:1433` (sa / value of `MSSQL_SA_PASSWORD`) |
+| SQL Server | `localhost:1433` (sa / valor de `MSSQL_SA_PASSWORD`) |
 | Keycloak | http://localhost:8080 (`KEYCLOAK_ADMIN` / `KEYCLOAK_ADMIN_PASSWORD`) |
-| Realm | `queryplus` (imported automatically) |
-| Demo users | `demo` / `demo`, `admin` / `admin` (realm export — local only) |
-| OIDC client secret | Must match `Keycloak__ClientSecret` and `docker/keycloak/realm-export.json` |
+| Realm | `queryplus` (importado automaticamente) |
+| Usuários de demonstração | `demo` / `demo` (`ROLE_QUERY_EXEC`, `ROLE_CATEGORY_READ`, `ROLE_PROCEDURE_READ`), `admin` / `admin` (`ROLE_ADMIN`) — export do realm, uso local apenas |
+| Client secret do OIDC | Deve coincidir com `Keycloak__ClientSecret` e com `docker/keycloak/realm-export.json` |
 
-### 2. Apply database schema
+Os papéis (roles) do realm (`docker/keycloak/realm-export.json`) controlam o acesso à API, além do `RoleEntitlement` de cada procedure:
 
-Migrations also run automatically via `DemoDataSeeder` on app startup. To apply explicitly:
+| Papel | Concede |
+|------|--------|
+| `ROLE_ADMIN` | Tudo abaixo, incondicionalmente |
+| `ROLE_CATEGORY_READ` / `ROLE_CATEGORY_WRITE` | Visualizar/buscar categorias, ou CRUD completo de categorias |
+| `ROLE_PROCEDURE_READ` / `ROLE_PROCEDURE_WRITE` | Visualizar/buscar o catálogo de procedures, ou CRUD completo de procedures |
+| `ROLE_QUERY_EXEC` | Executar procedures e baixar exportações — ainda sujeito ao `RoleEntitlement` de cada procedure |
+
+### 2. Aplique o schema do banco de dados
+
+As migrations também rodam automaticamente pelo `DemoDataSeeder` na inicialização da aplicação. Para aplicar explicitamente:
 
 ```bash
-dotnet tool install --global dotnet-ef   # once
+dotnet tool install --global dotnet-ef   # uma vez
 dotnet ef database update \
   --project src/QueryPlus.Data \
-  --startup-project src/QueryPlus.Web
+  --startup-project src/QueryPlus.Api
 ```
 
-### 3. Build the ClientApp (first time / after frontend changes)
+### 3. Faça o build da SPA em React (primeira vez / após alterações no frontend)
 
-Frontend TypeScript, Tailwind 4, HTMX, Clusterize, Font Awesome, and Inter live under  
-`src/QueryPlus.Web/ClientApp/` and build into `wwwroot/dist/` (gitignored).
+A SPA em React fica em `client/queryplus-react/` e o build é gerado em `src/QueryPlus.Api/wwwroot/` (fora do git) para que o `dotnet publish` e o `dotnet run` possam servi-la como conteúdo estático.
 
 ```bash
-cd src/QueryPlus.Web
-pnpm install          # or: vp install
-pnpm run build        # → wwwroot/dist/{js,css,fonts}
+cd client/queryplus-react
+pnpm install          # ou: vp install
+pnpm run build        # → src/QueryPlus.Api/wwwroot/{assets,index.html}
 ```
 
-#### When do I need `pnpm run build`?
+#### Quando preciso rodar `pnpm run build`?
 
-| Situation | Rebuild ClientApp? |
-|-----------|--------------------|
-| First clone / empty `wwwroot/dist` | **Yes** — or `dotnet build` / `dotnet run` (auto-builds when `dist/js/app.js` is missing) |
-| You changed files under `ClientApp/` | **Yes** — `dotnet run` alone will **not** rebuild an existing `dist` |
-| Only .NET / Razor / C# changes | No — `dotnet run` is enough |
-| `dotnet publish` or Docker image build | Automatic |
+| Situação | Refazer o build da SPA? |
+|-----------|---------------|
+| Primeiro clone / `src/QueryPlus.Api/wwwroot/index.html` ausente | **Sim** — ou `dotnet build` / `dotnet run` (faz o build automaticamente quando `wwwroot/index.html` está ausente) |
+| Você alterou arquivos em `client/queryplus-react/` | **Sim** — o `dotnet run` sozinho **não** refaz o build de um bundle já existente |
+| Apenas alterações em .NET / C# | Não — o `dotnet run` já é suficiente |
+| `dotnet publish` ou build da imagem Docker | Automático |
 
-💡 **Tip:** after TS/CSS edits, run `pnpm run build` again (or use watch mode below).
+💡 **Dica:** após alterações em React/CSS, rode `pnpm run build` novamente (ou use o modo watch abaixo).
 
-#### Day-to-day frontend development
+#### Desenvolvimento do frontend no dia a dia
 
 ```bash
-# Terminal 1 — watch ClientApp → wwwroot/dist
-cd src/QueryPlus.Web
-pnpm run dev          # or: vp dev
+# Terminal 1 — servidor Vite em http://localhost:5173 (faz proxy de /api e /login para a API)
+cd client/queryplus-react
+pnpm run dev          # ou: vp dev
 
-# Terminal 2 — ASP.NET
-dotnet run --project src/QueryPlus.Web
+# Terminal 2 — API do ASP.NET Core em http://localhost:5132
+dotnet run --project src/QueryPlus.Api
 ```
 
 ```bash
-cd src/QueryPlus.Web
+cd client/queryplus-react
 
-vp install && vp build && vp test && vp dev   # Vite+
-# or
 pnpm install && pnpm run build && pnpm test && pnpm run dev
 ```
 
-Skip the MSBuild ClientApp step when needed:
+Pule a etapa de build da SPA no MSBuild quando necessário:
 
 ```bash
 dotnet publish ... /p:SkipClientAppBuild=true
 ```
 
-Edit styles under `ClientApp/src/styles/` (not under `wwwroot`).  
-Layout loads only `~/dist/js/app.js` and `~/dist/css/site.css` (no CDNs).
+O Vite está configurado com `server.port = 5173`, `strictPort`, e um proxy de desenvolvimento `/api` → `http://localhost:5132` (sobrescreva com `VITE_API_PROXY`). O bundle de produção é gerado como um único entry point não fragmentado em `assets/queryplus.js`.
 
-### 4. Run the web app
+### 4. Rode a API
 
 ```bash
-dotnet run --project src/QueryPlus.Web
+dotnet run --project src/QueryPlus.Api
 ```
 
-Open the URL printed by Kestrel (typically `https://localhost:7xxx` or `http://localhost:5xxx`).
+Abra a URL exibida pelo Kestrel — `http://localhost:5132` para o perfil de execução `http` (ou `https://localhost:7192` para o perfil `https`). A mesma origem serve a API JSON (`/api/...`), os endpoints de login/logout do Keycloak (`/login`, `/logout`, `/signout-callback`), e a SPA já compilada (`/`).
 
-Configure Keycloak client redirect URIs to match that URL if needed (`docker/keycloak/realm-export.json`).
+Configure as redirect URIs do client no Keycloak para corresponder a essa origem, se necessário (`docker/keycloak/realm-export.json`).
 
-## 🧪 Build & test
+## 🧪 Build e testes
 
 ```bash
 dotnet restore
-dotnet build QueryPlus.sln    # builds ClientApp only if dist/js/app.js is missing
+dotnet build QueryPlus.sln    # faz o build da SPA apenas se src/QueryPlus.Api/wwwroot/index.html estiver ausente
 dotnet test QueryPlus.sln
 
-# ClientApp unit tests (Vitest + jsdom)
-cd src/QueryPlus.Web && pnpm test
+# Testes unitários da SPA (Vitest + jsdom)
+cd client/queryplus-react && pnpm test
 ```
 
-## 🐳 Docker (full stack)
+## 🐳 Docker (stack completa)
 
 ```bash
 docker compose --profile full up --build
 ```
 
-- App: http://localhost:5000  
-- Uses `appsettings.Docker.json` / environment variables for SQL Server and Keycloak.
+- API + SPA: http://localhost:5000
+- Usa `appsettings.Docker.json` / variáveis de ambiente para SQL Server e Keycloak.
 
 ## 🧰 Dev Containers
 
-1. Open the repo in VS Code / Cursor.  
-2. **Dev Containers: Reopen in Container**.  
-3. SQL Server and Keycloak start via Compose; .NET 10 is available in the `app` service.
+1. Abra o repositório no VS Code / Cursor.
+2. **Dev Containers: Reopen in Container**.
+3. O SQL Server e o Keycloak sobem via Compose; o .NET 10 está disponível no serviço `app`.
 
 ```bash
-dotnet run --project src/QueryPlus.Web --urls http://0.0.0.0:5000
+dotnet run --project src/QueryPlus.Api --urls http://0.0.0.0:5000
 ```
 
-## ⚙️ Configuration
+## ⚙️ Configuração
 
-Prefer **environment variables** (including those from `.env`) over committing secrets.
+Prefira **variáveis de ambiente** (incluindo as do `.env`) em vez de versionar segredos.
 
-| Setting / env var | Description |
+| Configuração / variável de ambiente | Descrição |
 |-------------------|-------------|
-| `ConnectionStrings__DefaultConnection` | SQL Server connection string |
-| `Keycloak__Authority` | e.g. `http://localhost:8080/realms/queryplus` |
+| `ConnectionStrings__DefaultConnection` | String de conexão com o SQL Server |
+| `Keycloak__Authority` | ex.: `http://localhost:8080/realms/queryplus` |
 | `Keycloak__ClientId` | `queryplus-web` |
-| `Keycloak__ClientSecret` | OIDC client secret (**dummy in `.env.example` only**) |
-| `Keycloak__RequireHttpsMetadata` | `false` for local HTTP Keycloak |
-| `MSSQL_SA_PASSWORD` | SQL Server `sa` password for Compose |
-| `KEYCLOAK_ADMIN` / `KEYCLOAK_ADMIN_PASSWORD` | Keycloak admin user for Compose |
+| `Keycloak__ClientSecret` | Client secret do OIDC (**fictício, apenas em `.env.example`**) |
+| `Keycloak__RequireHttpsMetadata` | `false` para Keycloak local em HTTP |
+| `MSSQL_SA_PASSWORD` | Senha do `sa` do SQL Server para o Compose |
+| `KEYCLOAK_ADMIN` / `KEYCLOAK_ADMIN_PASSWORD` | Usuário admin do Keycloak para o Compose |
 
-`appsettings.json` holds non-secret defaults (logging, public Authority/ClientId). Secrets should come from `.env`, the host environment, or a production secret store—not from source control.
+O `appsettings.json` contém apenas valores padrão não sensíveis (logging, Authority/ClientId públicos). Os segredos devem vir do `.env`, do ambiente do host, ou de um cofre de segredos de produção — nunca do controle de versão.
 
-Localization: `?culture=pt-BR` or `?culture=en` (also cookie / `Accept-Language`).
+Localização: `?culture=pt-BR` ou `?culture=en` (também via cookie / `Accept-Language`).
 
-## 🔑 Authentication notes
+## 🔑 Notas sobre autenticação
 
-- OpenID Connect authorization code flow against Keycloak.
-- Cookie session after login (`QueryPlus.Auth`).
-- `/Account/Login` challenges OIDC; `/Account/Logout` signs out cookie + OIDC (antiforgery protected).
+- Fluxo de código de autorização (authorization code) do OpenID Connect contra o Keycloak.
+- Sessão em cookie após o login (`QueryPlus.Auth`).
+- `/login` dispara o desafio OIDC; `/logout` e `/signout-callback` completam o logout nos canais front e back (proteção antiforgery para `POST /logout`).
+- A SPA conversa com a API **na mesma origem** (produção) ou pelo proxy de desenvolvimento do Vite (desenvolvimento). A API exige um token antiforgery + o cabeçalho `X-CSRF-TOKEN` em requisições que alteram estado (padrão de bootstrap: `GET /api/csrf` e depois ecoar o valor via cabeçalho). Todos os endpoints da API, exceto `/api/auth/*`, `/api/health`, `/api/csrf` e `/login`, exigem autenticação; autenticação ausente ou inválida retorna JSON `401 Unauthorized` (o React intercepta e redireciona para `/login`).
 
-### Dev Containers / Docker networking
+### Rede em Dev Containers / Docker
 
-The browser must never be redirected to the Docker DNS name `keycloak`.
+O navegador nunca deve ser redirecionado para o nome DNS interno do Docker `keycloak`.
 
-| Setting | Purpose |
+| Configuração | Finalidade |
 |---------|---------|
-| `Keycloak:Authority` | Public URL for the browser (`http://localhost:8080/realms/queryplus`) |
-| `Keycloak:MetadataAddress` | Internal discovery URL (`http://keycloak:8080/realms/.../.well-known/...`) |
-| `Keycloak:BackchannelHost` | Rewrites server token/JWKS calls from `localhost` → `keycloak` |
+| `Keycloak:Authority` | URL pública para o navegador (`http://localhost:8080/realms/queryplus`) |
+| `Keycloak:MetadataAddress` | URL interna de discovery (`http://keycloak:8080/realms/.../.well-known/...`) |
+| `Keycloak:BackchannelHost` | Reescreve as chamadas de token/JWKS do servidor de `localhost` → `keycloak` |
 
-Keycloak is started with `KC_HOSTNAME=localhost` so issuer/authorize URLs are host-reachable.
+O Keycloak é iniciado com `KC_HOSTNAME=localhost` para que as URLs de issuer/authorize sejam alcançáveis pelo host.
 
 ```bash
 docker compose down
 docker compose up -d sqlserver keycloak
-# or: Dev Containers → Rebuild Container
+# ou: Dev Containers → Rebuild Container
 ```
 
-Before any non-dev environment: use unique strong passwords, a private Keycloak client secret, disable or replace demo users, and never ship a real `.env` or commit production connection strings.
+Antes de qualquer ambiente que não seja de desenvolvimento: use senhas fortes e únicas, um client secret privado do Keycloak, desative ou substitua os usuários de demonstração, e nunca envie um `.env` real ou faça commit de strings de conexão de produção.
 
-## 🔢 Primary keys
+## 🔢 Chaves primárias
 
-All domain entities use **`int`** identity primary keys.
+Todas as entidades de domínio usam chaves primárias de identidade do tipo **`int`**.
 
-## 🌱 Demo data (automatic on startup)
+## 🌱 Dados de demonstração (automático na inicialização)
 
-On application start, `DemoDataSeeder`:
+Na inicialização da aplicação, o `DemoDataSeeder`:
 
-1. Applies EF Core migrations  
-2. Installs demo tables + stored procedures from `src/QueryPlus.Data/Seed/demo-objects.sql`  
-3. Registers categories/procedures/parameters/columns from `demo-catalog.json` (idempotent)
+1. Aplica as migrations do EF Core
+2. Instala as tabelas e stored procedures de demonstração a partir de `src/QueryPlus.Data/Seed/demo-objects.sql`
+3. Registra categorias/procedures/parâmetros/colunas a partir de `demo-catalog.json` (idempotente)
 
-### Highlights
+### Destaques
 
-| Object | Purpose |
+| Objeto | Finalidade |
 |--------|---------|
-| `tb_usa_president` + list / paged SPs | Presidents list with filters |
-| Pagination demos | `Sp_Demo_Numbers_Paged`, `Sp_Demo_Large_Result_Paged`, etc. |
-| 30+ `Sp_Demo_*` procedures | FreeText, Numeric, Date, Time, DateTime, Boolean, Combo |
-| Supporting tables | customers, products, orders, employees, … |
+| `tb_usa_president` + SPs de listagem / paginação | Listagem de presidentes dos EUA com filtros |
+| Demonstrações de paginação | `Sp_Demo_Numbers_Paged`, `Sp_Demo_Large_Result_Paged`, etc. |
+| 30+ procedures `Sp_Demo_*` | FreeText, Numeric, Date, Time, DateTime, Boolean, Combo |
+| Tabelas de apoio | clientes, produtos, pedidos, funcionários, … |
 
-Role entitlement for demo procedures is **`user`** (also works for `admin`).
+O entitlement de papel (role) das procedures de demonstração é **`ROLE_QUERY_EXEC`** (também funciona com `ROLE_ADMIN`, que implica todas as permissões).
 
-SQL scripts are also mirrored under `docs/database/`.
+Os scripts SQL também são espelhados em `docs/database/`.
 
-## 📚 Documentation
+## 📚 Documentação
 
-- [Software specification](docs/SPECIFICATION.md)  
-- [Database schema](docs/database/schema.sql)
+- [Especificação do software](docs/SPECIFICATION.md)
+- [Schema do banco de dados](docs/database/schema.sql)
 
-## 📄 License
+## 📄 Licença
 
-This project is licensed under the [MIT License](LICENSE).
+Este projeto está licenciado sob a [MIT License](LICENSE).
