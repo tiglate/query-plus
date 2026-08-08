@@ -18,7 +18,7 @@ export function NotificationCenter() {
             {notifications.map((notification) => (
                 <div
                     key={notification.id}
-                    className="flex w-full max-w-md items-start gap-2 rounded-md border border-red-300 bg-red-50 p-3 text-body text-red-800 shadow-lg dark:border-red-900 dark:bg-red-950 dark:text-red-200"
+                    className="flex w-full max-w-md items-start gap-2 rounded-md border border-danger-line bg-danger-subtle p-3 text-body text-danger shadow-lg"
                 >
                     <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
                     <p className="flex-1">{notification.message}</p>
@@ -26,7 +26,7 @@ export function NotificationCenter() {
                         type="button"
                         onClick={() => dismissNotification(notification.id)}
                         aria-label={t("Notification_Dismiss")}
-                        className="shrink-0 rounded p-0.5 hover:bg-red-100 dark:hover:bg-red-900"
+                        className="shrink-0 rounded p-0.5 hover:bg-danger-100 dark:hover:bg-danger-800"
                     >
                         <X className="h-4 w-4" />
                     </button>

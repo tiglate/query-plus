@@ -35,12 +35,12 @@ export function PageHeader({ title, icon, actions }: Readonly<PageHeaderProps>) 
 export function Field({ label, required, error, children }: Readonly<FieldProps>) {
     return (
         <label className="block min-w-0 text-small-label font-medium text-slate-700 dark:text-slate-200">
-            <span className={required ? "after:ml-1 after:text-red-600 after:content-['*']" : ""}>
+            <span className={required ? "after:ml-1 after:text-danger after:content-['*']" : ""}>
                 {label}
             </span>
             <span className="mt-1 block">{children}</span>
             {error && (
-                <span className="mt-1 block text-small-label text-red-700 dark:text-red-400">
+                <span className="mt-1 block text-small-label text-danger">
                     {error}
                 </span>
             )}

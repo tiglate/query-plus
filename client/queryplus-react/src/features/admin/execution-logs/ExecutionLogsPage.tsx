@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { apiFetch } from "@/api/client";
 import { executionLogsSearch } from "@/api/queries";
 import type { ProcedureLookup } from "@/api/types";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Select } from "@/components/ui/fields";
@@ -154,17 +155,17 @@ export function ExecutionLogsPage() {
                                         {duration(log.executionStart, log.executionEnd)}
                                     </td>
                                     <td>
-                                        <span className={log.success ? "badge-ok" : "badge-danger"}>
+                                        <Badge variant={log.success ? "success" : "danger"}>
                                             {t(
                                                 log.success
                                                     ? "ExecutionLog_StatusSuccess"
                                                     : "ExecutionLog_StatusFailed",
                                             )}
-                                        </span>
+                                        </Badge>
                                     </td>
                                     <td className="text-right">{log.rowCount ?? "—"}</td>
                                     <td
-                                        className="max-w-xs truncate text-red-700"
+                                        className="max-w-xs truncate text-danger"
                                         title={log.errorMessage ?? undefined}
                                     >
                                         {log.errorMessage ?? "—"}
@@ -173,7 +174,7 @@ export function ExecutionLogsPage() {
                             ))}
                             {!logs.data?.items.length && (
                                 <tr>
-                                    <td colSpan={9} className="p-8 text-center text-slate-500">
+                                    <td colSpan={9} className="p-8 text-center text-muted">
                                         {t("NoRecords")}
                                     </td>
                                 </tr>

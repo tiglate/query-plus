@@ -231,7 +231,7 @@ export function ProcedureEditorPage() {
                 }
             />
             {Object.keys(form.formState.errors).length > 0 && (
-                <div className="rounded border border-red-300 bg-red-50 p-3 text-body text-red-800">
+                <div className="rounded border border-danger-line bg-danger-subtle p-3 text-body text-danger">
                     {t("Validation_FixErrors")}
                 </div>
             )}
@@ -431,7 +431,7 @@ export function ProcedureEditorPage() {
                                                     />
                                                     {form.formState.errors.parameters?.[index]
                                                         ?.comboValues?.message && (
-                                                        <span className="text-small-label text-red-700">
+                                                        <span className="text-small-label text-danger">
                                                             {
                                                                 form.formState.errors.parameters[
                                                                     index
@@ -448,7 +448,7 @@ export function ProcedureEditorPage() {
                                                     type="button"
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="text-red-700"
+                                                    className="text-danger"
                                                     onClick={() => parameters.remove(index)}
                                                 >
                                                     <Trash2 className="h-4 w-4" />
@@ -460,7 +460,7 @@ export function ProcedureEditorPage() {
                             })}
                             {parameters.fields.length === 0 && (
                                 <tr>
-                                    <td colSpan={7} className="p-6 text-center text-slate-500">
+                                    <td colSpan={7} className="p-6 text-center text-muted">
                                         {t("NoRecords")}
                                     </td>
                                 </tr>
@@ -554,7 +554,7 @@ export function ProcedureEditorPage() {
                                                 type="button"
                                                 variant="ghost"
                                                 size="icon"
-                                                className="text-red-700"
+                                                className="text-danger"
                                                 onClick={() => columns.remove(index)}
                                             >
                                                 <Trash2 className="h-4 w-4" />
@@ -565,7 +565,7 @@ export function ProcedureEditorPage() {
                             ))}
                             {columns.fields.length === 0 && (
                                 <tr>
-                                    <td colSpan={6} className="p-6 text-center text-slate-500">
+                                    <td colSpan={6} className="p-6 text-center text-muted">
                                         {t("NoRecords")}
                                     </td>
                                 </tr>
@@ -603,7 +603,7 @@ export function ProcedureEditorPage() {
                 </Section>
             )}
             {(save.error || sync.error) && (
-                <p className="rounded bg-red-50 p-3 text-body text-red-700">
+                <p className="rounded bg-danger-subtle p-3 text-body text-danger">
                     {(save.error ?? sync.error)?.message}
                 </p>
             )}

@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { apiFetch } from "@/api/client";
 import { categoryLookupQuery, proceduresSearch } from "@/api/queries";
 import type { ProcedureListItem } from "@/api/types";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -126,7 +127,7 @@ export function ProceduresPage() {
                                 <th>{t("Procedures_Name")}</th>
                                 <th>{t("Procedures_Role")}</th>
                                 <th>{t("Enabled")}</th>
-                                <th>{t("Actions")}</th>
+                                <th className="text-center!">{t("Actions")}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -139,11 +140,9 @@ export function ProceduresPage() {
                                     <td className="font-mono">{procedure.procedureName}</td>
                                     <td>{procedure.roleEntitlement}</td>
                                     <td>
-                                        <span
-                                            className={procedure.enabled ? "badge-ok" : "badge-off"}
-                                        >
+                                        <Badge variant={procedure.enabled ? "success" : "neutral"}>
                                             {t(procedure.enabled ? "Enabled" : "Disabled")}
-                                        </span>
+                                        </Badge>
                                     </td>
                                     <td>
                                         <div className="flex justify-center gap-1">
@@ -164,7 +163,7 @@ export function ProceduresPage() {
                                             <Button
                                                 size="sm"
                                                 variant="ghost"
-                                                className="text-red-700"
+                                                className="text-danger"
                                                 onClick={() => setDeleting(procedure)}
                                             >
                                                 <Trash2 className="h-3 w-3" />
@@ -176,7 +175,7 @@ export function ProceduresPage() {
                             ))}
                             {!procedures.data?.items.length && (
                                 <tr>
-                                    <td colSpan={8} className="p-8 text-center text-slate-500">
+                                    <td colSpan={8} className="p-8 text-center text-muted">
                                         {t("NoRecords")}
                                     </td>
                                 </tr>

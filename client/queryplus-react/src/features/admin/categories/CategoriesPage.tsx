@@ -74,7 +74,9 @@ function CategoryDialog({
                 <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45" />
                 <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[min(36rem,calc(100%-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-5 shadow-xl dark:bg-navy-800">
                     <div className="flex items-center justify-between">
-                        <Dialog.Title className="font-semibold">{title}</Dialog.Title>
+                        <Dialog.Title className="text-card-title font-semibold">
+                            {title}
+                        </Dialog.Title>
                         <Dialog.Close asChild>
                             <Button variant="ghost" size="icon">
                                 <X className="h-4 w-4" />
@@ -128,7 +130,7 @@ function CategoryDialog({
                             </div>
                         )}
                         {save.error && (
-                            <p className="text-body text-red-700">{save.error.message}</p>
+                            <p className="text-body text-danger">{save.error.message}</p>
                         )}
                         <div className="flex justify-end gap-2">
                             <Dialog.Close asChild>
@@ -232,7 +234,7 @@ export function CategoriesPage() {
                                 <th>{t("Description")}</th>
                                 <th>{t("CreatedAt")}</th>
                                 <th>{t("UpdatedAt")}</th>
-                                <th>{t("Actions")}</th>
+                                <th className="text-center!">{t("Actions")}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -271,7 +273,7 @@ export function CategoriesPage() {
                                             <Button
                                                 size="sm"
                                                 variant="ghost"
-                                                className="text-red-700"
+                                                className="text-danger"
                                                 onClick={() => setDeleting(category.id)}
                                             >
                                                 <Trash2 className="h-3 w-3" />
@@ -283,7 +285,7 @@ export function CategoriesPage() {
                             ))}
                             {!categories.data?.items.length && (
                                 <tr>
-                                    <td colSpan={5} className="p-8 text-center text-slate-500">
+                                    <td colSpan={5} className="p-8 text-center text-muted">
                                         {t("NoRecords")}
                                     </td>
                                 </tr>

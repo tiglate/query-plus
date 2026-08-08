@@ -49,10 +49,10 @@ export function Pager({ page, pageSize, total, onPage }: Readonly<PagerProps>) {
                             aria-current={value === page ? "page" : undefined}
                             onClick={() => onPage(value)}
                             className={cn(
-                                "inline-flex h-8 items-center justify-center rounded-md px-3 text-dense font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500",
+                                "inline-flex h-8 items-center justify-center px-3 text-dense font-semibold outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500",
                                 value === page
-                                    ? "bg-lime-500 text-navy hover:bg-lime-600"
-                                    : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-navy-700",
+                                    ? "btn-bevel btn-bevel-accent"
+                                    : "rounded-md text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-navy-700",
                             )}
                         >
                             {value}
