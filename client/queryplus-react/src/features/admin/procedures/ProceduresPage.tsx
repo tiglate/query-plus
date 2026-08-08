@@ -123,6 +123,7 @@ export function ProceduresPage() {
                                 <th>{t("Id")}</th>
                                 <th>{t("Procedures_Caption")}</th>
                                 <th>{t("Procedures_Category")}</th>
+                                <th>{t("Procedures_Server")}</th>
                                 <th>{t("Procedures_Database")}</th>
                                 <th>{t("Procedures_Name")}</th>
                                 <th>{t("Procedures_Role")}</th>
@@ -136,6 +137,7 @@ export function ProceduresPage() {
                                     <td className="text-right">{procedure.id}</td>
                                     <td>{procedure.caption}</td>
                                     <td>{procedure.categoryDescription ?? "—"}</td>
+                                    <td>{procedure.connectionName}</td>
                                     <td>{procedure.databaseName}</td>
                                     <td className="font-mono">{procedure.procedureName}</td>
                                     <td>{procedure.roleEntitlement}</td>
@@ -175,7 +177,7 @@ export function ProceduresPage() {
                             ))}
                             {!procedures.data?.items.length && (
                                 <tr>
-                                    <td colSpan={8} className="p-8 text-center text-muted">
+                                    <td colSpan={9} className="p-8 text-center text-muted">
                                         {t("NoRecords")}
                                     </td>
                                 </tr>

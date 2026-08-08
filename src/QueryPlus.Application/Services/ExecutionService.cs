@@ -60,6 +60,7 @@ public sealed class ExecutionService(
         var log = new ExecutionLog
         {
             IdProcedure = procedure.IdProcedure,
+            ConnectionName = procedure.ConnectionName,
             Username = currentUser.Username,
             IpAddress = currentUser.IpAddress,
             ExecutionStart = DateTime.UtcNow,
@@ -73,6 +74,7 @@ public sealed class ExecutionService(
         try
         {
             var executed = await executor.ExecuteAsync(
+                procedure.ConnectionName,
                 procedure.DatabaseName,
                 procedure.ProcedureName,
                 resolved.ExecParameters,

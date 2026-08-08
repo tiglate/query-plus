@@ -171,6 +171,7 @@ public sealed class DemoDataSeeder(
         {
             IdCategory = categoryId,
             Caption = entry.Caption,
+            ConnectionName = "DefaultConnection",
             DatabaseName = databaseName,
             ProcedureName = entry.ProcedureName,
             Enabled = true,

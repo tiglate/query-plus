@@ -65,6 +65,8 @@
   "Procedures_Saved": "Procedure saved successfully.",
   "Procedures_Deleted": "Procedure deleted.",
   "Procedures_Caption": "Caption",
+  "Procedures_Server": "Server",
+  "Procedures_SelectServer": "— Select —",
   "Procedures_Database": "Database",
   "Procedures_Name": "Procedure name",
   "Procedures_Role": "Role / Entitlement",

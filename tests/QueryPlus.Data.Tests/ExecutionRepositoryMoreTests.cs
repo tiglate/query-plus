@@ -33,13 +33,14 @@ public class ExecutionRepositoryMoreTests : IDisposable
         _db.Categories.Add(category);
         await _db.SaveChangesAsync();
 
-        var proc = new Procedure { IdCategory = category.IdCategory, Caption = "P", DatabaseName = "DB", ProcedureName = "sp_p", RoleEntitlement = "" };
+        var proc = new Procedure { IdCategory = category.IdCategory, Caption = "P", ConnectionName = "DefaultConnection", DatabaseName = "DB", ProcedureName = "sp_p", RoleEntitlement = "" };
         _db.Procedures.Add(proc);
         await _db.SaveChangesAsync();
 
         var log1 = new ExecutionLog
         {
             IdProcedure = proc.IdProcedure,
+            ConnectionName = "DefaultConnection",
             Username = "alice",
             ExecutionStart = DateTime.UtcNow.AddHours(-2),
             Success = true,
@@ -49,6 +50,7 @@ public class ExecutionRepositoryMoreTests : IDisposable
         var log2 = new ExecutionLog
         {
             IdProcedure = proc.IdProcedure,
+            ConnectionName = "DefaultConnection",
             Username = "bob",
             ExecutionStart = DateTime.UtcNow.AddHours(-1),
             Success = false,
@@ -73,8 +75,8 @@ public class ExecutionRepositoryMoreTests : IDisposable
     [Fact]
     public async Task GetByProcedureAsync_ReturnsLogsOrderedByDate()
     {
-        var log1 = new ExecutionLog { IdProcedure = 5, Username = "user1", ExecutionStart = DateTime.UtcNow.AddMinutes(-10), Success = true, ParameterValues = "{}" };
-        var log2 = new ExecutionLog { IdProcedure = 5, Username = "user2", ExecutionStart = DateTime.UtcNow.AddMinutes(-2), Success = true, ParameterValues = "{}" };
+        var log1 = new ExecutionLog { IdProcedure = 5, ConnectionName = "DefaultConnection", Username = "user1", ExecutionStart = DateTime.UtcNow.AddMinutes(-10), Success = true, ParameterValues = "{}" };
+        var log2 = new ExecutionLog { IdProcedure = 5, ConnectionName = "DefaultConnection", Username = "user2", ExecutionStart = DateTime.UtcNow.AddMinutes(-2), Success = true, ParameterValues = "{}" };
 
         await _sut.AddAsync(log1);
         await _sut.AddAsync(log2);

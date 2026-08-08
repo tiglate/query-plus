@@ -1,5 +1,7 @@
 using FluentAssertions;
 using FluentValidation.TestHelper;
+using NSubstitute;
+using QueryPlus.Application.Abstractions;
 using QueryPlus.Application.Common;
 using QueryPlus.Application.DTOs.Procedures;
 using QueryPlus.Application.Validation;
@@ -67,6 +69,7 @@ public sealed class ProcedurePaginationTests
         {
             CategoryId = 1,
             Caption = "Test",
+            ConnectionName = "DefaultConnection",
             DatabaseName = "QueryPlus",
             ProcedureName = "dbo.usp_Test",
             RoleEntitlement = "user",
@@ -81,7 +84,10 @@ public sealed class ProcedurePaginationTests
             ]
         };
 
-        var result = new SaveProcedureDtoValidator().TestValidate(dto);
+        var connectionCatalog = Substitute.For<IProcedureConnectionCatalog>();
+        connectionCatalog.GetConnectionNames().Returns(new[] { "DefaultConnection" });
+
+        var result = new SaveProcedureDtoValidator(connectionCatalog).TestValidate(dto);
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e =>
             e.ErrorMessage.Contains("reserved", StringComparison.OrdinalIgnoreCase));

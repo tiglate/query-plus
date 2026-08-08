@@ -15,6 +15,7 @@ public class ProcedureGraphMapperTests
         {
             CategoryId = 1,
             Caption = " New Sales ",
+            ConnectionName = " Server1 ",
             DatabaseName = " DB_Sales ",
             ProcedureName = " sp_Sales ",
             Enabled = true,
@@ -49,6 +50,7 @@ public class ProcedureGraphMapperTests
         var entity = ProcedureGraphMapper.ToNewEntity(dto);
 
         entity.Caption.Should().Be("New Sales");
+        entity.ConnectionName.Should().Be("Server1");
         entity.DatabaseName.Should().Be("DB_Sales");
         entity.ProcedureName.Should().Be("sp_Sales");
         entity.RoleEntitlement.Should().Be("user_role");
@@ -70,6 +72,7 @@ public class ProcedureGraphMapperTests
             IdProcedure = 1,
             IdCategory = 1,
             Caption = "Old Cap",
+            ConnectionName = "DefaultConnection",
             DatabaseName = "DB",
             ProcedureName = "sp_old",
             RoleEntitlement = "",
@@ -82,6 +85,7 @@ public class ProcedureGraphMapperTests
             Id = 1,
             CategoryId = 2,
             Caption = "Updated Cap",
+            ConnectionName = "DefaultConnection",
             DatabaseName = "DB",
             ProcedureName = "sp_old",
             RoleEntitlement = "admin",

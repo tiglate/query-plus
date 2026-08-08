@@ -15,6 +15,7 @@ public static class ProcedureGraphMapper
         {
             IdCategory = dto.CategoryId,
             Caption = dto.Caption.Trim(),
+            ConnectionName = dto.ConnectionName.Trim(),
             DatabaseName = dto.DatabaseName.Trim(),
             ProcedureName = dto.ProcedureName.Trim(),
             Enabled = dto.Enabled,
@@ -40,6 +41,7 @@ public static class ProcedureGraphMapper
     {
         entity.IdCategory = dto.CategoryId;
         entity.Caption = dto.Caption.Trim();
+        entity.ConnectionName = dto.ConnectionName.Trim();
         entity.DatabaseName = dto.DatabaseName.Trim();
         entity.ProcedureName = dto.ProcedureName.Trim();
         entity.Enabled = dto.Enabled;

@@ -43,6 +43,7 @@ public interface IProcedureRepository
         CancellationToken cancellationToken = default);
 
     Task<bool> ExistsByDatabaseAndNameAsync(
+        string connectionName,
         string databaseName,
         string procedureName,
         int? excludeId = null,

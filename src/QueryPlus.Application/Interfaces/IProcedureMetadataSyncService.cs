@@ -8,6 +8,7 @@ namespace QueryPlus.Application.Interfaces;
 public interface IProcedureMetadataSyncService
 {
     Task<ProcedureMetadataSnapshot> FetchAsync(
+        string connectionName,
         string databaseName,
         string procedureName,
         CancellationToken cancellationToken = default);

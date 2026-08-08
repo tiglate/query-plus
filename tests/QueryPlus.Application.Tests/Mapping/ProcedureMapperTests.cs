@@ -13,6 +13,7 @@ public class ProcedureMapperTests
         IdProcedure = 10,
         IdCategory = 1,
         Caption = "Sales Report",
+        ConnectionName = "DefaultConnection",
         DatabaseName = "Sales",
         ProcedureName = "dbo.usp_Sales",
         Enabled = true,
@@ -35,6 +36,7 @@ public class ProcedureMapperTests
         dto.CategoryId.Should().Be(1);
         dto.CategoryDescription.Should().Be("Sales");
         dto.Caption.Should().Be("Sales Report");
+        dto.ConnectionName.Should().Be("DefaultConnection");
         dto.DatabaseName.Should().Be("Sales");
         dto.ProcedureName.Should().Be("dbo.usp_Sales");
         dto.Enabled.Should().BeTrue();

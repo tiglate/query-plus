@@ -21,6 +21,13 @@ public class ExecutionLogConfiguration : IEntityTypeConfiguration<ExecutionLog>
             .HasColumnName("id_procedure")
             .IsRequired();
 
+        builder.Property(e => e.ConnectionName)
+            .HasColumnName("connection_name")
+            .HasMaxLength(100)
+            .IsUnicode(false)
+            .IsRequired()
+            .HasDefaultValue("DefaultConnection");
+
         builder.Property(e => e.Username)
             .HasColumnName("username")
             .HasMaxLength(100)

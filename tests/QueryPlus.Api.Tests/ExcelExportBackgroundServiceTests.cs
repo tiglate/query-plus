@@ -60,7 +60,7 @@ public sealed class ExcelExportBackgroundServiceTests : IDisposable
     {
         var procedure = new Procedure
         {
-            IdProcedure = 30, IdCategory = 1, Caption = "Payroll Export", DatabaseName = "db",
+            IdProcedure = 30, IdCategory = 1, Caption = "Payroll Export", ConnectionName = "DefaultConnection", DatabaseName = "db",
             ProcedureName = "dbo.usp_Payroll", Enabled = true, RoleEntitlement = "ROLE_FINANCE",
             Parameters = [], Columns = []
         };
@@ -77,7 +77,7 @@ public sealed class ExcelExportBackgroundServiceTests : IDisposable
         job.Should().NotBeNull();
         job!.Status.Should().Be(ExportJobStatus.Failed);
         job.ErrorMessage.Should().Contain("no longer entitled");
-        await _executor.DidNotReceive().ExecuteAsync(Arg.Any<string>(), Arg.Any<string>(),
+        await _executor.DidNotReceive().ExecuteAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(),
             Arg.Any<IReadOnlyDictionary<string, object?>>(), Arg.Any<IReadOnlyCollection<string>?>(),
             Arg.Any<CancellationToken>());
     }
@@ -87,7 +87,7 @@ public sealed class ExcelExportBackgroundServiceTests : IDisposable
     {
         var procedure = new Procedure
         {
-            IdProcedure = 31, IdCategory = 1, Caption = "Public Export", DatabaseName = "db",
+            IdProcedure = 31, IdCategory = 1, Caption = "Public Export", ConnectionName = "DefaultConnection", DatabaseName = "db",
             ProcedureName = "dbo.usp_Public", Enabled = true, RoleEntitlement = "",
             Parameters = [], Columns = []
         };
@@ -99,7 +99,7 @@ public sealed class ExcelExportBackgroundServiceTests : IDisposable
         table.Columns.Add("Active", typeof(bool));
         table.Rows.Add(1, "Alpha", true);
         table.Rows.Add(2, DBNull.Value, false);
-        _executor.ExecuteAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, object?>>(),
+        _executor.ExecuteAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, object?>>(),
                 Arg.Any<IReadOnlyCollection<string>?>(), Arg.Any<CancellationToken>())
             .Returns(new StoredProcedureExecutionResult { Data = table });
 
@@ -130,12 +130,12 @@ public sealed class ExcelExportBackgroundServiceTests : IDisposable
     {
         var procedure = new Procedure
         {
-            IdProcedure = 32, IdCategory = 1, Caption = "Broken Export", DatabaseName = "db",
+            IdProcedure = 32, IdCategory = 1, Caption = "Broken Export", ConnectionName = "DefaultConnection", DatabaseName = "db",
             ProcedureName = "dbo.usp_Broken", Enabled = true, RoleEntitlement = "",
             Parameters = [], Columns = []
         };
         _procedureRepository.GetEnabledByIdWithDetailsAsync(32, Arg.Any<CancellationToken>()).Returns(procedure);
-        _executor.ExecuteAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, object?>>(),
+        _executor.ExecuteAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, object?>>(),
                 Arg.Any<IReadOnlyCollection<string>?>(), Arg.Any<CancellationToken>())
             .Returns<Task<StoredProcedureExecutionResult>>(_ => throw new InvalidOperationException("boom"));
 
@@ -156,7 +156,7 @@ public sealed class ExcelExportBackgroundServiceTests : IDisposable
     {
         var procedure = new Procedure
         {
-            IdProcedure = 33, IdCategory = 1, Caption = "Paged Export", DatabaseName = "db",
+            IdProcedure = 33, IdCategory = 1, Caption = "Paged Export", ConnectionName = "DefaultConnection", DatabaseName = "db",
             ProcedureName = "dbo.usp_Paged", Enabled = true, RoleEntitlement = "", SupportsPagination = true,
             Parameters = [], Columns = []
         };
@@ -165,7 +165,7 @@ public sealed class ExcelExportBackgroundServiceTests : IDisposable
         var table = new DataTable();
         table.Columns.Add("Id", typeof(int));
         table.Rows.Add(1); // only 1 row returned in this page, but 500 total records exist
-        _executor.ExecuteAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, object?>>(),
+        _executor.ExecuteAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, object?>>(),
                 Arg.Any<IReadOnlyCollection<string>?>(), Arg.Any<CancellationToken>())
             .Returns(new StoredProcedureExecutionResult { Data = table, TotalRecords = 500 });
 
@@ -191,7 +191,7 @@ public sealed class ExcelExportBackgroundServiceTests : IDisposable
     {
         var procedure = new Procedure
         {
-            IdProcedure = 34, IdCategory = 1, Caption = "Mixed Types Export", DatabaseName = "db",
+            IdProcedure = 34, IdCategory = 1, Caption = "Mixed Types Export", ConnectionName = "DefaultConnection", DatabaseName = "db",
             ProcedureName = "dbo.usp_MixedTypes", Enabled = true, RoleEntitlement = "",
             Parameters = [], Columns = []
         };
@@ -205,7 +205,7 @@ public sealed class ExcelExportBackgroundServiceTests : IDisposable
         var duration = TimeSpan.FromMinutes(90);
         var blob = new byte[] { 1, 2, 3 };
         table.Rows.Add(startedAt, duration, blob);
-        _executor.ExecuteAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, object?>>(),
+        _executor.ExecuteAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, object?>>(),
                 Arg.Any<IReadOnlyCollection<string>?>(), Arg.Any<CancellationToken>())
             .Returns(new StoredProcedureExecutionResult { Data = table });
 

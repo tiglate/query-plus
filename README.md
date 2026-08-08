@@ -10,6 +10,7 @@ Construído com **.NET 10**, **ASP.NET Core Web API (controllers)**, **React 19 
 
 - 🏠 **Início** — escolha uma procedure catalogada, defina os parâmetros, execute, pagine grandes resultados no servidor e exporte para Excel
 - 🗂️ **Admin** — gerencie categorias e procedures (parâmetros, colunas, sincronização de metadados a partir do SQL Server)
+- 🌐 **Múltiplos servidores** — cada procedure é associada a um servidor SQL Server nomeado (`ConnectionName`), permitindo que uma única instância do QueryPlus execute procedures em vários servidores diferentes
 - 🔐 **Segurança** — OIDC via Keycloak (sessão em cookie + antiforgery); entitlements de papel (role) por procedure; argumentos reservados de paginação nunca expostos aos usuários finais
 - 📋 **Operação** — log de execuções, tabelas de auditoria de configuração, dados de demonstração semeados na inicialização
 
@@ -34,7 +35,11 @@ docker/
 .devcontainer/                # Dev Containers do VS Code / Codespaces
 docs/
   SPECIFICATION.md
-  database/                   # espelho do schema + SQL de demonstração
+  keycloak.md                 # guia introdutório sobre Keycloak/OIDC neste projeto
+  openbao.md                  # guia introdutório sobre OpenBao (segredos) neste projeto
+  deploy-producao.md          # guia de deploy em produção (IIS + Docker/Linux)
+  jenkins-ci-cd.md            # pipeline opcional de deploy multi-ambiente via Jenkins
+  database/                   # espelho do schema + SQL de demonstração + diagrama ER
 ```
 
 ### Camadas
@@ -74,7 +79,7 @@ cp .env.example .env
 
 ⚠️ **Esses valores são credenciais fictícias de desenvolvimento.** Elas existem apenas para que o Docker e um notebook consigam subir rapidamente. **Não as utilize em produção, homologação ou qualquer ambiente compartilhado.** Rotacione os segredos, utilize um gerenciador de segredos e garanta HTTPS/senhas fortes antes de qualquer implantação real.
 
-O Docker Compose lê o `.env` para a substituição de variáveis. O `dotnet run` também carrega um `.env` na raiz do repositório no ambiente do processo (sem sobrescrever variáveis já definidas pelo shell ou pela CI).
+O Docker Compose lê o `.env` para a substituição de variáveis. O `dotnet run` também carrega um `.env` na raiz do repositório no ambiente do processo (sem sobrescrever variáveis já definidas pelo shell ou pela CI). O `.env.example` também traz um `OPENBAO_TOKEN` — só é usado pela stack Docker completa (veja [🐳 Docker (stack completa)](#-docker-stack-completa)); o fluxo de `dotnet run` acima não depende dele.
 
 ### 1. Suba a infraestrutura
 
@@ -179,12 +184,24 @@ cd client/queryplus-react && pnpm test
 
 ## 🐳 Docker (stack completa)
 
+📖 Nunca mexeu com OpenBao (nem com Vault)? Veja [docs/openbao.md](docs/openbao.md) para uma explicação bem simples de como os segredos são guardados neste projeto.
+
 ```bash
 docker compose --profile full up --build
 ```
 
 - API + SPA: http://localhost:5000
 - Usa `appsettings.Docker.json` / variáveis de ambiente para SQL Server e Keycloak.
+- Segredos vêm do **OpenBao** (`openbao`), não de variáveis de ambiente individuais: o serviço
+  `openbao-init` (one-shot) grava a connection string e o client secret do Keycloak em
+  `secret/queryplus` a partir dos valores fictícios do `.env`; o container `app` só recebe
+  `OPENBAO_ADDR`/`OPENBAO_TOKEN` e busca o restante em tempo de inicialização. Esse fluxo
+  containerizado é o único que usa OpenBao — o `dotnet run` na máquina host continua lendo
+  `ConnectionStrings__DefaultConnection`/`Keycloak__ClientSecret` diretamente do `.env`, como
+  antes.
+- OpenBao roda em modo dev (armazenamento em memória): um restart do container `openbao` limpa
+  o KV store. Se o `app` falhar ao iniciar depois disso, rode `docker compose up openbao-init`
+  para regravar os segredos.
 
 ## 🧰 Dev Containers
 
@@ -202,19 +219,22 @@ Prefira **variáveis de ambiente** (incluindo as do `.env`) em vez de versionar 
 
 | Configuração / variável de ambiente | Descrição |
 |-------------------|-------------|
-| `ConnectionStrings__DefaultConnection` | String de conexão com o SQL Server |
+| `ConnectionStrings__DefaultConnection` | String de conexão com o SQL Server (lida diretamente pelo `dotnet run` na máquina host; o container `app` recebe o mesmo valor via OpenBao) |
 | `Keycloak__Authority` | ex.: `http://localhost:8080/realms/queryplus` |
 | `Keycloak__ClientId` | `queryplus-web` |
-| `Keycloak__ClientSecret` | Client secret do OIDC (**fictício, apenas em `.env.example`**) |
+| `Keycloak__ClientSecret` | Client secret do OIDC (**fictício, apenas em `.env.example`**; mesma ressalva de escopo acima) |
 | `Keycloak__RequireHttpsMetadata` | `false` para Keycloak local em HTTP |
-| `MSSQL_SA_PASSWORD` | Senha do `sa` do SQL Server para o Compose |
+| `MSSQL_SA_PASSWORD` | Senha do `sa` do SQL Server para o Compose (e para seedar o OpenBao) |
 | `KEYCLOAK_ADMIN` / `KEYCLOAK_ADMIN_PASSWORD` | Usuário admin do Keycloak para o Compose |
+| `OPENBAO_TOKEN` | Root token de dev do OpenBao — usado pelo Compose para subir/seedar o `openbao` e repassado ao container `app` como `OPENBAO_TOKEN`. Não deve ter um `OPENBAO_ADDR` correspondente aqui: o app só busca segredos no OpenBao quando `OPENBAO_ADDR` também está definido no seu próprio ambiente, o que só acontece dentro do container. |
 
-O `appsettings.json` contém apenas valores padrão não sensíveis (logging, Authority/ClientId públicos). Os segredos devem vir do `.env`, do ambiente do host, ou de um cofre de segredos de produção — nunca do controle de versão.
+O `appsettings.json` contém apenas valores padrão não sensíveis (logging, Authority/ClientId públicos). Os segredos devem vir do `.env` (dev local via `dotnet run`), do OpenBao (stack Docker completa), ou de um cofre de segredos de produção — nunca do controle de versão.
 
 Localização: `?culture=pt-BR` ou `?culture=en` (também via cookie / `Accept-Language`).
 
 ## 🔑 Notas sobre autenticação
+
+📖 Nunca mexeu com Keycloak? Veja [docs/keycloak.md](docs/keycloak.md) para uma explicação bem simples de como o login funciona neste projeto.
 
 - Fluxo de código de autorização (authorization code) do OpenID Connect contra o Keycloak.
 - Sessão em cookie após o login (`QueryPlus.Auth`).
@@ -245,6 +265,14 @@ Antes de qualquer ambiente que não seja de desenvolvimento: use senhas fortes e
 
 Todas as entidades de domínio usam chaves primárias de identidade do tipo **`int`**.
 
+## 🗂️ Modelo de dados
+
+Diagrama entidade-relacionamento (gerado a partir do schema real via JetBrains DataGrip):
+
+![Diagrama entidade-relacionamento do QueryPlus](docs/database/database-diagram.png)
+
+Veja também o [schema SQL completo](docs/database/schema.sql).
+
 ## 🌱 Dados de demonstração (automático na inicialização)
 
 Na inicialização da aplicação, o `DemoDataSeeder`:
@@ -269,7 +297,11 @@ Os scripts SQL também são espelhados em `docs/database/`.
 ## 📚 Documentação
 
 - [Especificação do software](docs/SPECIFICATION.md)
-- [Schema do banco de dados](docs/database/schema.sql)
+- [Schema do banco de dados](docs/database/schema.sql) e [diagrama entidade-relacionamento](docs/database/database-diagram.png) — veja a seção [🗂️ Modelo de dados](#-modelo-de-dados)
+- [🔑 Keycloak explicado do zero](docs/keycloak.md) — o que é, por que usamos, e como está configurado neste repositório
+- [🔒 OpenBao explicado do zero](docs/openbao.md) — o que é, por que usamos, e como está configurado neste repositório
+- [🚀 Guia de deploy em produção](docs/deploy-producao.md) — IIS (Windows, principal) e Docker em Linux (alternativa), com atenção especial a segurança
+- [🔧 CI/CD com Jenkins](docs/jenkins-ci-cd.md) — pipeline opcional de deploy multi-ambiente (DEV/QA/UAT/PRODUÇÃO)
 
 ## 📄 Licença
 

@@ -28,7 +28,7 @@ public sealed class ExecutionLogsApiTests(QueryPlusApiApplicationFactory factory
                 [
                     new ExecutionLogListItemDto
                     {
-                        Id = 1, ProcedureId = 7, ProcedureCaption = "Demo", Username = "u",
+                        Id = 1, ProcedureId = 7, ProcedureCaption = "Demo", ConnectionName = "DefaultConnection", Username = "u",
                         ExecutionStart = DateTime.UtcNow, Success = true
                     }
                 ],
@@ -75,7 +75,7 @@ public sealed class ExecutionLogsApiTests(QueryPlusApiApplicationFactory factory
         factory.Execution.GetRecentByProcedureAsync(7, 10, Arg.Any<CancellationToken>())
             .ReturnsForAnyArgs(new List<ExecutionLogDto>
             {
-                new() { Id = 1, ProcedureId = 7, Username = "u", ExecutionStart = DateTime.UtcNow, Success = true }
+                new() { Id = 1, ProcedureId = 7, ConnectionName = "DefaultConnection", Username = "u", ExecutionStart = DateTime.UtcNow, Success = true }
             });
 
         var result = await factory.Execution.GetRecentByProcedureAsync(7, 10);

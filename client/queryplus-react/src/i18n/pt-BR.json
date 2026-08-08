@@ -65,6 +65,8 @@
   "Procedures_Saved": "Procedure salva com sucesso.",
   "Procedures_Deleted": "Procedure excluída.",
   "Procedures_Caption": "Título",
+  "Procedures_Server": "Servidor",
+  "Procedures_SelectServer": "— Selecione —",
   "Procedures_Database": "Banco de dados",
   "Procedures_Name": "Nome da procedure",
   "Procedures_Role": "Papel / Entitlement",

@@ -5,6 +5,7 @@ public sealed class SaveProcedureDto
     public int? Id { get; init; }
     public int CategoryId { get; init; }
     public required string Caption { get; init; }
+    public required string ConnectionName { get; init; }
     public required string DatabaseName { get; init; }
     public required string ProcedureName { get; init; }
     public bool Enabled { get; init; } = true;

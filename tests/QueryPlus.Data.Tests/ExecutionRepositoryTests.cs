@@ -29,6 +29,7 @@ public class ExecutionRepositoryTests : IDisposable
         {
             IdCategory = cat.IdCategory,
             Caption = "Test SP",
+            ConnectionName = "DefaultConnection",
             DatabaseName = "DB",
             ProcedureName = "sp_test",
             RoleEntitlement = ""
@@ -51,6 +52,7 @@ public class ExecutionRepositoryTests : IDisposable
         var log1 = new ExecutionLog
         {
             IdProcedure = _procId,
+            ConnectionName = "DefaultConnection",
             Username = "alice",
             ExecutionStart = DateTime.UtcNow.AddMinutes(-10),
             Success = true,
@@ -59,6 +61,7 @@ public class ExecutionRepositoryTests : IDisposable
         var log2 = new ExecutionLog
         {
             IdProcedure = _procId,
+            ConnectionName = "DefaultConnection",
             Username = "bob",
             ExecutionStart = DateTime.UtcNow,
             Success = false,
@@ -78,9 +81,9 @@ public class ExecutionRepositoryTests : IDisposable
     [Fact]
     public async Task SearchAsync_FiltersByUsernameAndSuccess()
     {
-        await _sut.AddAsync(new ExecutionLog { IdProcedure = _procId, Username = "john", Success = true, ExecutionStart = DateTime.UtcNow });
-        await _sut.AddAsync(new ExecutionLog { IdProcedure = _procId, Username = "john", Success = false, ExecutionStart = DateTime.UtcNow });
-        await _sut.AddAsync(new ExecutionLog { IdProcedure = _procId, Username = "mary", Success = true, ExecutionStart = DateTime.UtcNow });
+        await _sut.AddAsync(new ExecutionLog { IdProcedure = _procId, ConnectionName = "DefaultConnection", Username = "john", Success = true, ExecutionStart = DateTime.UtcNow });
+        await _sut.AddAsync(new ExecutionLog { IdProcedure = _procId, ConnectionName = "DefaultConnection", Username = "john", Success = false, ExecutionStart = DateTime.UtcNow });
+        await _sut.AddAsync(new ExecutionLog { IdProcedure = _procId, ConnectionName = "DefaultConnection", Username = "mary", Success = true, ExecutionStart = DateTime.UtcNow });
         await _db.SaveChangesAsync();
 
         var criteria = new ExecutionLogSearchCriteria { Username = "john", Success = true };

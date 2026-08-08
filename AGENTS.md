@@ -6,7 +6,7 @@ Guidance for coding agents working in this repository. `CLAUDE.md` mirrors this 
 
 Query Plus — governed web app that lets business users discover and execute predefined SQL Server stored procedures, with a catalog (categories/procedures/parameters/columns), RBAC via Keycloak, audit trail, server-side pagination, and background Excel export. Backend: .NET 10 / ASP.NET Core Web API (controllers returning JSON — no Razor, no MVC views, no HTMX). Frontend: React 19 + TypeScript SPA (Vite, Tailwind 4, Radix/shadcn, TanStack Query, React Router 7, react-i18next) served as static assets by the API in production.
 
-Full product requirements: `docs/SPECIFICATION.md`. Setup/config: `README.md`. `docs/local/` holds gitignored private planning notes — not shipped, not for GitHub.
+Full product requirements: `docs/SPECIFICATION.md`. Setup/config: `README.md`. New to Keycloak or OpenBao? `docs/keycloak.md` and `docs/openbao.md` are beginner-friendly walkthroughs of how each is used in this repo. Deploying to production? `docs/deploy-producao.md` (IIS on Windows is the primary path; Docker/Linux is documented as an alternative) and the optional `docs/jenkins-ci-cd.md` multi-environment pipeline guide. `docs/local/` holds gitignored private planning notes — not shipped, not for GitHub.
 
 ## Commands
 
@@ -40,7 +40,7 @@ dotnet ef migrations add <Name> --project src/QueryPlus.Data --startup-project s
 pnpm install && pnpm run build   # or: vp install / vp build
 pnpm run dev                     # or: vp dev — Vite on http://localhost:5173, proxies /api + /login to the API
 pnpm test                        # or: vp test — Vitest + jsdom
-pnpm run check                   # or: vp check (tsc + eslint + prettier)
+pnpm run check                   # or: vp check (tsc + oxlint via vite-plus; eslint.config.js is an empty stub, not actually wired in)
 pnpm run gen:api                 # placeholder; contracts live in src/api/types.ts
 ```
 
@@ -59,6 +59,12 @@ docker compose --profile full up --build      # full stack incl. API + SPA, http
 ```
 
 `.env` is gitignored and loaded by both Docker Compose and `EnvFileLoader` (`src/QueryPlus.Api/Hosting/EnvFileLoader.cs`) into `dotnet run`, without overriding vars already set by the shell/CI. Never put real secrets in `appsettings*.json` — those hold non-secret defaults only.
+
+### Secrets (OpenBao)
+
+New to OpenBao? See `docs/openbao.md` for a from-scratch walkthrough. The `docker compose --profile full` stack sources its secrets (`ConnectionStrings:DefaultConnection`, `Keycloak:ClientSecret`) from **OpenBao** (`openbao` service, dev-mode/in-memory, image `openbao/openbao`) rather than plain env vars. A one-shot `openbao-init` service seeds OpenBao's KV v2 store (`secret/queryplus`) from `.env`-supplied raw values on every `up`, since dev-mode storage doesn't persist across restarts. The `app` container only receives `OPENBAO_ADDR`/`OPENBAO_TOKEN`; `OpenBaoSecretLoader` (`src/QueryPlus.Api/Hosting/OpenBaoSecretLoader.cs`) fetches the rest at startup and merges them into the process environment — same non-destructive precedence as `EnvFileLoader`, called right after it in `Program.cs`, before `WebApplication.CreateBuilder`. Fetched keys use the same double-underscore names already bound by `IConfiguration` (e.g. `ConnectionStrings__DefaultConnection`), so no other code needs to know OpenBao exists.
+
+This only applies to the containerized `app` service. Plain `dotnet run` on the host is unaffected — `OpenBaoSecretLoader` no-ops whenever `OPENBAO_ADDR`/`OPENBAO_TOKEN` aren't both set (true for the routine host dev flow), so it keeps reading `ConnectionStrings__DefaultConnection`/`Keycloak__ClientSecret` from `.env` directly, exactly as before. (A single OpenBao secret entry can't hold two different `ConnectionStrings:DefaultConnection` values for the container's `sqlserver` hostname vs. the host's `localhost` — this split is intentional, not a shortcut.)
 
 ## Architecture
 
@@ -90,13 +96,17 @@ Each layer exposes an `AddXxx(IServiceCollection)` extension under its own `Depe
 
 Procedures flagged `supports_pagination` on `tb_procedure` implement a fixed, non-catalog contract: `@PageNumber BIGINT = 1`, `@PageSize BIGINT = 50`, `@TotalRecords BIGINT OUTPUT`. The Execute API injects these and reads the OUTPUT total; interactive UI page size is capped (`ProcedurePagination.MaxUiPageSize`), while Excel export re-executes with `@PageNumber = 1` and a giant `@PageSize` (`ExportPageSize`) to pull the full result set. ADO.NET command timeout for stored-proc execution is 30 minutes (`ProcedurePagination.CommandTimeoutSeconds`).
 
+### Multi-server support (ConnectionName)
+
+Each `Procedure.ConnectionName` selects which `ConnectionStrings` entry (`appsettings.json`/env) that catalogued procedure executes against, so one QueryPlus instance can run procedures across several SQL Server targets. `DapperStoredProcedureExecutor` and `SqlProcedureMetadataSyncService` resolve the connection string per call (not once at construction) using this value; the EF-managed catalog database itself is unaffected and always stays on `ConnectionStrings:DefaultConnection`. `IProcedureConnectionCatalog` (`src/QueryPlus.Data/StoredProcedures/ProcedureConnectionCatalog.cs`) enumerates configured `ConnectionStrings` keys for the admin UI dropdown (`GET /api/procedures/connections`) and for `SaveProcedureDtoValidator`'s check that a submitted `ConnectionName` actually exists. Existing/seeded procedures default to `"DefaultConnection"` so upgrades need no config changes. `tb_execution_log.connection_name` snapshots the value at run time (not derived by joining back to the procedure), so the audit trail stays accurate even if a procedure is later reassigned to a different server.
+
 ### Excel export flow
 
 Export is queued to a background worker (`ExcelExportBackgroundService`, `src/QueryPlus.Api/Services/ExcelExportService.cs`) after a successful execute with data; eligibility is tied to the last successful execute (procedure + parameter values, TTL-bound — `ExportEligibilityService`). React polls status via TanStack Query (`refetchInterval` while pending); the API serves downloads at `GET /api/exports/{jobId}/download`. Output files land in `App_Data/exports` (gitignored, runtime-only).
 
 ### Auth (Keycloak / OIDC)
 
-Authorization-code flow, cookie session (`QueryPlus.Auth`) after login. Two Keycloak-facing URLs matter and are easy to confuse:
+New to Keycloak? See `docs/keycloak.md` for a from-scratch walkthrough. Authorization-code flow, cookie session (`QueryPlus.Auth`) after login. Two Keycloak-facing URLs matter and are easy to confuse:
 - `Keycloak:Authority` — public URL the **browser** must be redirected to (e.g. `http://localhost:8080/realms/queryplus`).
 - `Keycloak:MetadataAddress` / `Keycloak:BackchannelHost` — internal Docker DNS name (`keycloak`) used only for server-to-server discovery/token/JWKS calls.
 
@@ -121,7 +131,7 @@ Authorization-code flow, cookie session (`QueryPlus.Auth`) after login. Two Keyc
 ## Testing conventions
 
 - `tests/QueryPlus.Application.Tests` — service/validator/helper unit tests (xUnit, FluentAssertions, NSubstitute for mocked repos/services).
-- `tests/QueryPlus.Api.Tests` — controller unit tests plus HTTP-level integration tests via `QueryPlusApiApplicationFactory` (a `WebApplicationFactory<Program>` that swaps in NSubstitute fakes for `IProcedureService`/`ICategoryService`/`IExecutionService`/`IExcelExportService`/`IProcedureRepository`/`IProcedureMetadataSyncService` and a `TestAuthHandler` in place of real OIDC). Use the factory's exposed substitute properties to set up scenario expectations rather than hitting a real database — the factory intentionally points at an unreachable SQL Server connection string. `AntiforgeryApiHelper` handles the CSRF bootstrap dance for state-changing integration tests; `AnonymousQueryPlusApiApplicationFactory` exercises the anonymous/anonymous-only endpoints.
+- `tests/QueryPlus.Api.Tests` — controller unit tests plus HTTP-level integration tests via `QueryPlusApiApplicationFactory` (a `WebApplicationFactory<Program>` that swaps in NSubstitute fakes for `IProcedureService`/`ICategoryService`/`IExecutionService`/`IExcelExportService`/`IProcedureRepository`/`IProcedureMetadataSyncService` and a `TestAuthHandler` in place of real OIDC). Use the factory's exposed substitute properties to set up scenario expectations rather than hitting a real database — the factory intentionally points at an unreachable SQL Server connection string. `AntiforgeryApiHelper` handles the CSRF bootstrap dance for state-changing integration tests; `AnonymousQueryPlusApiApplicationFactory` exercises the anonymous/anonymous-only endpoints. `OpenBaoSecretLoaderIntegrationTests.cs` (tagged `Category=Integration`, needs Docker) spins up a real `openbao/openbao` container via Testcontainers' generic `ContainerBuilder` (no dedicated OpenBao module exists) to exercise `OpenBaoSecretLoader.FetchSecretsAsync` against a real KV v2 API; `OpenBaoSecretLoaderTests.cs` covers the fast no-op-when-unset guard.
 - Security-relevant logic (`SqlIdentifier`, `ParameterSecurity`, `ProcedurePagination`) has dedicated `*SecurityTests.cs`/`*Tests.cs` files; extend these rather than testing the same rules indirectly through a service.
 - `tests/QueryPlus.Data.Tests/UnitOfWorkTests.cs` uses the SQLite in-memory relational provider (`Microsoft.Data.Sqlite`, connection kept open for the test's lifetime) rather than EF's InMemory provider, because `UnitOfWork` wraps `SaveChangesAsync` in a real transaction/execution-strategy that the InMemory provider doesn't support. It deliberately stops short of proving `AuditSaveChangesInterceptor`'s audit rows commit/roll back atomically with the principal row — that needs a real relational engine and is covered in `QueryPlus.Integration.Tests` instead.
 - `tests/QueryPlus.Integration.Tests` — real-SQL-Server tests via **Testcontainers.MsSql** (needs Docker locally; every class is tagged `[Trait("Category", "Integration")]` and excluded from the routine `dotnet test` filter above). One `MsSqlContainer` is shared for the whole run via a `[Collection("Integration")]` fixture (`SqlServerContainerFixture`); each test class inherits `IntegrationTestBase`, which creates its own throwaway database on that shared server, wires the real production DI graph (`AddApplication()` + `AddData()` — no test doubles), and runs `DemoDataSeeder` before every test (xUnit constructs the class fresh per `[Fact]`, so isolation is per-test, not just per-class). This is the only place `DapperStoredProcedureExecutor` and `SqlProcedureMetadataSyncService` get real coverage — both construct their `SqlConnection` internally (not injected) and query real SQL Server internals (`sys.parameters`, `sys.sp_describe_first_result_set`), so they can't be unit-tested with mocks. Covers: migrations + demo-seed apply cleanly (asserted positively, since `DemoDataSeeder` swallows install failures into a logged warning), repository CRUD against a real engine, `AuditSaveChangesInterceptor` audit-row commit/rollback atomicity, and `DapperStoredProcedureExecutor` pagination/OUTPUT-parameter round-tripping against `dbo.Sp_Demo_Numbers_Paged` (installed by the seeder).

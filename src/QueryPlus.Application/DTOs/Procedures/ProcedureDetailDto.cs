@@ -6,6 +6,7 @@ public sealed class ProcedureDetailDto
     public int CategoryId { get; init; }
     public string? CategoryDescription { get; init; }
     public required string Caption { get; init; }
+    public required string ConnectionName { get; init; }
     public required string DatabaseName { get; init; }
     public required string ProcedureName { get; init; }
     public bool Enabled { get; init; }

@@ -48,6 +48,7 @@ export interface ProcedureListItem extends AuditFields {
     categoryId: number;
     categoryDescription: string | null;
     caption: string;
+    connectionName: string;
     databaseName: string;
     procedureName: string;
     enabled: boolean;
@@ -87,6 +88,7 @@ export interface ProcedureInput {
     id?: number;
     categoryId: number;
     caption: string;
+    connectionName: string;
     databaseName: string;
     procedureName: string;
     enabled: boolean;
@@ -98,6 +100,7 @@ export interface ProcedureInput {
 }
 
 export interface SyncMetadataRequest {
+    connectionName: string;
     databaseName: string;
     procedureName: string;
 }
@@ -156,6 +159,7 @@ export interface ExecutionLog {
     id: number;
     procedureId: number;
     procedureCaption: string;
+    connectionName: string;
     username: string;
     ipAddress: string | null;
     executionStart: string;

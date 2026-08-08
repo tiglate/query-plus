@@ -19,12 +19,14 @@ public class ProcedureServiceTests
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUserContext _currentUser = Substitute.For<ICurrentUserContext>();
     private readonly IConfigurationAuditReader _auditReader = Substitute.For<IConfigurationAuditReader>();
+    private readonly IProcedureConnectionCatalog _connectionCatalog = Substitute.For<IProcedureConnectionCatalog>();
     private readonly ProcedureService _sut;
 
     public ProcedureServiceTests()
     {
         _auditReader.GetProcedureAuditDetailsAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new AuditDetailsDto { CreatedBy = "admin", UpdatedBy = "admin" });
+        _connectionCatalog.GetConnectionNames().Returns(new[] { "DefaultConnection" });
 
         _sut = new ProcedureService(
             _procedures,
@@ -32,7 +34,7 @@ public class ProcedureServiceTests
             _unitOfWork,
             _currentUser,
             _auditReader,
-            new SaveProcedureDtoValidator());
+            new SaveProcedureDtoValidator(_connectionCatalog));
     }
 
     [Fact]
@@ -43,7 +45,7 @@ public class ProcedureServiceTests
             IdProcedure = 1,
             IdCategory = 1,
             Caption = "Monthly Sales",
-            DatabaseName = "DB",
+            ConnectionName = "DefaultConnection", DatabaseName = "DB",
             ProcedureName = "sp_sales",
             RoleEntitlement = ""
         };
@@ -64,7 +66,7 @@ public class ProcedureServiceTests
         {
             CategoryId = 99,
             Caption = "Test Caption",
-            DatabaseName = "DB",
+            ConnectionName = "DefaultConnection", DatabaseName = "DB",
             ProcedureName = "sp_test",
             RoleEntitlement = "user"
         };
@@ -84,7 +86,7 @@ public class ProcedureServiceTests
         {
             CategoryId = 1,
             Caption = "Test Caption",
-            DatabaseName = "DB",
+            ConnectionName = "DefaultConnection", DatabaseName = "DB",
             ProcedureName = "sp_test",
             RoleEntitlement = "user"
         };
@@ -114,7 +116,7 @@ public class ProcedureServiceTests
         {
             CategoryId = 1,
             Caption = "New Proc",
-            DatabaseName = "DB",
+            ConnectionName = "DefaultConnection", DatabaseName = "DB",
             ProcedureName = "sp_new",
             RoleEntitlement = "ROLE_QUERY_EXEC"
         };
@@ -131,7 +133,7 @@ public class ProcedureServiceTests
     {
         var existing = new Procedure
         {
-            IdProcedure = 5, IdCategory = 1, Caption = "Old", DatabaseName = "DB", ProcedureName = "sp_old",
+            IdProcedure = 5, IdCategory = 1, Caption = "Old", ConnectionName = "DefaultConnection", DatabaseName = "DB", ProcedureName = "sp_old",
             RoleEntitlement = ""
         };
         _procedures.GetByIdWithDetailsAsync(5, Arg.Any<CancellationToken>()).Returns(existing);
@@ -150,7 +152,7 @@ public class ProcedureServiceTests
             Id = 5,
             CategoryId = 1,
             Caption = "Renamed",
-            DatabaseName = "DB",
+            ConnectionName = "DefaultConnection", DatabaseName = "DB",
             ProcedureName = "sp_old",
             RoleEntitlement = "ROLE_QUERY_EXEC"
         };
@@ -178,7 +180,7 @@ public class ProcedureServiceTests
     [Fact]
     public async Task DeleteAsync_ExistingProcedure_RemovesEntity()
     {
-        var proc = new Procedure { IdProcedure = 5, IdCategory = 1, Caption = "Del", DatabaseName = "DB", ProcedureName = "sp_del", RoleEntitlement = "" };
+        var proc = new Procedure { IdProcedure = 5, IdCategory = 1, Caption = "Del", ConnectionName = "DefaultConnection", DatabaseName = "DB", ProcedureName = "sp_del", RoleEntitlement = "" };
         _procedures.GetByIdWithDetailsAsync(5, Arg.Any<CancellationToken>()).Returns(proc);
 
         await _sut.DeleteAsync(5);
@@ -190,7 +192,7 @@ public class ProcedureServiceTests
     [Fact]
     public async Task UpdateAsync_NullOrZeroId_ThrowsValidationException()
     {
-        var dto = new SaveProcedureDto { Id = null, CategoryId = 1, Caption = "C", DatabaseName = "DB", ProcedureName = "sp_c", RoleEntitlement = "" };
+        var dto = new SaveProcedureDto { Id = null, CategoryId = 1, Caption = "C", ConnectionName = "DefaultConnection", DatabaseName = "DB", ProcedureName = "sp_c", RoleEntitlement = "" };
 
         Func<Task> act = async () => await _sut.UpdateAsync(dto);
 
@@ -203,7 +205,7 @@ public class ProcedureServiceTests
         _currentUser.Roles.Returns(["user"]);
         var list = new List<Procedure>
         {
-            new() { IdProcedure = 1, IdCategory = 1, Caption = "Accessible", DatabaseName = "DB", ProcedureName = "sp_a", RoleEntitlement = "user" }
+            new() { IdProcedure = 1, IdCategory = 1, Caption = "Accessible", ConnectionName = "DefaultConnection", DatabaseName = "DB", ProcedureName = "sp_a", RoleEntitlement = "user" }
         };
         _procedures.GetAccessibleForExecutionAsync(Arg.Any<IReadOnlyCollection<string>>(), Arg.Any<CancellationToken>())
             .Returns(list);
@@ -218,7 +220,7 @@ public class ProcedureServiceTests
     {
         var list = new List<Procedure>
         {
-            new() { IdProcedure = 1, IdCategory = 1, Caption = "Found", DatabaseName = "DB", ProcedureName = "sp_f", RoleEntitlement = "" }
+            new() { IdProcedure = 1, IdCategory = 1, Caption = "Found", ConnectionName = "DefaultConnection", DatabaseName = "DB", ProcedureName = "sp_f", RoleEntitlement = "" }
         };
         _procedures.SearchAsync(Arg.Any<ProcedureSearchCriteria>(), 1, 10, Arg.Any<CancellationToken>())
             .Returns((list, 1));

@@ -79,6 +79,7 @@ public class CategoryRepositoryTests : IDisposable
         {
             IdCategory = cat.IdCategory,
             Caption = "Test Proc",
+            ConnectionName = "DefaultConnection",
             DatabaseName = "DB",
             ProcedureName = "sp_test",
             RoleEntitlement = ""

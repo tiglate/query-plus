@@ -32,6 +32,7 @@ public sealed class ProceduresApiTests(QueryPlusApiApplicationFactory factory)
         Id = id,
         CategoryId = 1,
         Caption = "Demo",
+        ConnectionName = "DefaultConnection",
         DatabaseName = "db",
         ProcedureName = "dbo.usp_Demo",
         Enabled = true,
@@ -78,7 +79,7 @@ public sealed class ProceduresApiTests(QueryPlusApiApplicationFactory factory)
                 [
                     new ProcedureListItemDto
                     {
-                        Id = 1, CategoryId = 1, Caption = "Demo", DatabaseName = "db", ProcedureName = "dbo.usp_Demo",
+                        Id = 1, CategoryId = 1, Caption = "Demo", ConnectionName = "DefaultConnection", DatabaseName = "db", ProcedureName = "dbo.usp_Demo",
                         RoleEntitlement = "user"
                     }
                 ],
@@ -169,6 +170,7 @@ public sealed class ProceduresApiTests(QueryPlusApiApplicationFactory factory)
         {
             categoryId = 1,
             caption = "Demo",
+            connectionName = "DefaultConnection",
             databaseName = "db",
             procedureName = "dbo.usp_Demo",
             enabled = true,
@@ -204,6 +206,7 @@ public sealed class ProceduresApiTests(QueryPlusApiApplicationFactory factory)
         {
             categoryId = 1,
             caption = "Demo",
+            connectionName = "DefaultConnection",
             databaseName = "db",
             procedureName = "dbo.usp_Demo",
             enabled = true,
@@ -234,6 +237,7 @@ public sealed class ProceduresApiTests(QueryPlusApiApplicationFactory factory)
         {
             categoryId = 1,
             caption = "Demo",
+            connectionName = "DefaultConnection",
             databaseName = "db",
             procedureName = "dbo.usp_Demo",
             enabled = true,
@@ -270,7 +274,7 @@ public sealed class ProceduresApiTests(QueryPlusApiApplicationFactory factory)
     {
         factory.Procedures.GetByIdAsync(7, Arg.Any<CancellationToken>())
             .Returns(SampleDetail(7));
-        factory.MetadataSync.FetchAsync("dbExisting", "dbo.usp_Existing", Arg.Any<CancellationToken>())
+        factory.MetadataSync.FetchAsync("DefaultConnection", "dbExisting", "dbo.usp_Existing", Arg.Any<CancellationToken>())
             .Returns(new ProcedureMetadataSnapshot
             {
                 Parameters = [new SaveProcedureParameterDto { Caption = "Start", Name = "@Start" }],
@@ -278,7 +282,7 @@ public sealed class ProceduresApiTests(QueryPlusApiApplicationFactory factory)
             });
 
         using var request = await AuthedJsonAsync(HttpMethod.Post, "/api/procedures/7/sync-metadata",
-            JsonContent.Create(new { databaseName = "dbExisting", procedureName = "dbo.usp_Existing" }));
+            JsonContent.Create(new { connectionName = "DefaultConnection", databaseName = "dbExisting", procedureName = "dbo.usp_Existing" }));
 
         var response = await _client.SendAsync(request);
 
@@ -287,22 +291,22 @@ public sealed class ProceduresApiTests(QueryPlusApiApplicationFactory factory)
         json!.Parameters.Should().ContainSingle();
         json.Columns.Should().ContainSingle();
         await factory.MetadataSync.Received(1)
-            .FetchAsync("dbExisting", "dbo.usp_Existing", Arg.Any<CancellationToken>());
+            .FetchAsync("DefaultConnection", "dbExisting", "dbo.usp_Existing", Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Sync_metadata_with_id_zero_works_without_existing_procedure()
     {
-        factory.MetadataSync.FetchAsync("dbNew", "dbo.usp_New", Arg.Any<CancellationToken>())
+        factory.MetadataSync.FetchAsync("DefaultConnection", "dbNew", "dbo.usp_New", Arg.Any<CancellationToken>())
             .Returns(new ProcedureMetadataSnapshot());
 
         using var request = await AuthedJsonAsync(HttpMethod.Post, "/api/procedures/0/sync-metadata",
-            JsonContent.Create(new { databaseName = "dbNew", procedureName = "dbo.usp_New" }));
+            JsonContent.Create(new { connectionName = "DefaultConnection", databaseName = "dbNew", procedureName = "dbo.usp_New" }));
 
         var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        await factory.MetadataSync.Received(1).FetchAsync("dbNew", "dbo.usp_New", Arg.Any<CancellationToken>());
+        await factory.MetadataSync.Received(1).FetchAsync("DefaultConnection", "dbNew", "dbo.usp_New", Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -312,7 +316,7 @@ public sealed class ProceduresApiTests(QueryPlusApiApplicationFactory factory)
             .Returns((ProcedureDetailDto?)null);
 
         using var request = await AuthedJsonAsync(HttpMethod.Post, "/api/procedures/99/sync-metadata",
-            JsonContent.Create(new { databaseName = "db", procedureName = "dbo.usp_Demo" }));
+            JsonContent.Create(new { connectionName = "DefaultConnection", databaseName = "db", procedureName = "dbo.usp_Demo" }));
 
         var response = await _client.SendAsync(request);
 

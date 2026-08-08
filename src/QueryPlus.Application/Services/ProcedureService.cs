@@ -174,6 +174,7 @@ public sealed class ProcedureService(
         }
 
         if (await procedures.ExistsByDatabaseAndNameAsync(
+                dto.ConnectionName.Trim(),
                 dto.DatabaseName.Trim(),
                 dto.ProcedureName.Trim(),
                 excludeId,
@@ -181,7 +182,7 @@ public sealed class ProcedureService(
         {
             throw new Common.ValidationException(
                 nameof(dto.ProcedureName),
-                "A procedure with this database and name already exists.");
+                "A procedure with this connection, database, and name already exists.");
         }
     }
 }

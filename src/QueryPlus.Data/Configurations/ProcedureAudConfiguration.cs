@@ -23,6 +23,10 @@ public class ProcedureAudConfiguration : IEntityTypeConfiguration<ProcedureAud>
             .HasColumnName("caption")
             .HasMaxLength(300)
             .IsUnicode(false);
+        builder.Property(e => e.ConnectionName)
+            .HasColumnName("connection_name")
+            .HasMaxLength(100)
+            .IsUnicode(false);
         builder.Property(e => e.DatabaseName)
             .HasColumnName("database_name")
             .HasMaxLength(128)

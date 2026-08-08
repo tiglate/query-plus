@@ -33,6 +33,7 @@ public sealed class ProblemDetailsTests(QueryPlusApiApplicationFactory factory)
             IdProcedure = 7,
             IdCategory = 1,
             Caption = "Demo",
+            ConnectionName = "DefaultConnection",
             DatabaseName = "db",
             ProcedureName = "dbo.usp_Demo",
             RoleEntitlement = "user",
@@ -89,7 +90,7 @@ public sealed class ProblemDetailsTests(QueryPlusApiApplicationFactory factory)
 
         var procedure = new Procedure
         {
-            IdProcedure = 42, IdCategory = 1, Caption = "Demo", DatabaseName = "db",
+            IdProcedure = 42, IdCategory = 1, Caption = "Demo", ConnectionName = "DefaultConnection", DatabaseName = "db",
             ProcedureName = "dbo.usp_Demo", RoleEntitlement = "", Enabled = true, Parameters = [], Columns = []
         };
         factory.ProcedureRepository.GetEnabledByIdWithDetailsAsync(42, Arg.Any<CancellationToken>())

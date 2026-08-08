@@ -14,6 +14,7 @@ public static class ExecutionLogMapper
     {
         Id = entity.IdExecutionLog,
         ProcedureId = entity.IdProcedure,
+        ConnectionName = entity.ConnectionName,
         Username = entity.Username,
         IpAddress = entity.IpAddress,
         ExecutionStart = entity.ExecutionStart,
@@ -32,6 +33,7 @@ public static class ExecutionLogMapper
         Id = entity.IdExecutionLog,
         ProcedureId = entity.IdProcedure,
         ProcedureCaption = entity.Procedure is null ? string.Empty : entity.Procedure.Caption,
+        ConnectionName = entity.ConnectionName,
         Username = entity.Username,
         IpAddress = entity.IpAddress,
         ExecutionStart = entity.ExecutionStart,

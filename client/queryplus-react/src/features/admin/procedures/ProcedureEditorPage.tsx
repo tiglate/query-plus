@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { apiFetch } from "@/api/client";
-import { categoryLookupQuery, procedureQuery } from "@/api/queries";
+import { categoryLookupQuery, connectionsLookupQuery, procedureQuery } from "@/api/queries";
 import type { ProcedureDetail, ProcedureInput } from "@/api/types";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -36,6 +36,7 @@ const procedureSchema = z
     .object({
         categoryId: z.coerce.number().int().positive(),
         caption: z.string().trim().min(1).max(300),
+        connectionName: z.string().trim().min(1),
         databaseName: z.string().trim().min(1),
         procedureName: z.string().trim().min(1),
         roleEntitlement: z.string().trim().min(1),
@@ -71,6 +72,7 @@ export function procedureFormToApi(values: ProcedureFormValues, id?: number): Pr
         id,
         categoryId: parsed.categoryId,
         caption: parsed.caption.trim(),
+        connectionName: parsed.connectionName.trim(),
         databaseName: parsed.databaseName.trim(),
         procedureName: parsed.procedureName.trim(),
         roleEntitlement: parsed.roleEntitlement.trim(),
@@ -101,6 +103,7 @@ export function procedureFormToApi(values: ProcedureFormValues, id?: number): Pr
 const defaults: ProcedureFormValues = {
     categoryId: 0,
     caption: "",
+    connectionName: "",
     databaseName: "",
     procedureName: "",
     roleEntitlement: "",
@@ -115,6 +118,7 @@ function detailToForm(detail: ProcedureDetail): ProcedureFormValues {
     return {
         categoryId: detail.categoryId,
         caption: detail.caption,
+        connectionName: detail.connectionName,
         databaseName: detail.databaseName,
         procedureName: detail.procedureName,
         roleEntitlement: detail.roleEntitlement,
@@ -143,6 +147,7 @@ export function ProcedureEditorPage() {
     const readOnly = search.get("mode") === "view";
     const detail = useQuery(procedureQuery(id ?? 0));
     const categories = useQuery(categoryLookupQuery);
+    const connections = useQuery(connectionsLookupQuery);
     const form = useForm<ProcedureFormValues>({
         resolver: zodResolver(procedureSchema),
         defaultValues: defaults,
@@ -154,6 +159,7 @@ export function ProcedureEditorPage() {
     });
     const columns = useFieldArray({ control: form.control, name: "columns", keyName: "_key" });
     const [confirmSync, setConfirmSync] = useState(false);
+    const connectionName = form.watch("connectionName");
     const databaseName = form.watch("databaseName");
     const procedureName = form.watch("procedureName");
 
@@ -177,6 +183,7 @@ export function ProcedureEditorPage() {
             apiFetch<Partial<ProcedureDetail>>(`/api/procedures/${id ?? 0}/sync-metadata`, {
                 method: "POST",
                 body: JSON.stringify({
+                    connectionName: String(connectionName).trim(),
                     databaseName: String(databaseName).trim(),
                     procedureName: String(procedureName).trim(),
                 }),
@@ -242,7 +249,11 @@ export function ProcedureEditorPage() {
                         <Button
                             type="button"
                             variant="accent"
-                            disabled={!String(databaseName).trim() || !String(procedureName).trim()}
+                            disabled={
+                                !String(connectionName).trim() ||
+                                !String(databaseName).trim() ||
+                                !String(procedureName).trim()
+                            }
                             onClick={() => setConfirmSync(true)}
                         >
                             <RotateCw className="h-4 w-4" />
@@ -275,6 +286,20 @@ export function ProcedureEditorPage() {
                         error={form.formState.errors.caption?.message}
                     >
                         <Input readOnly={readOnly} {...form.register("caption")} />
+                    </Field>
+                    <Field
+                        label={t("Procedures_Server")}
+                        required
+                        error={form.formState.errors.connectionName?.message}
+                    >
+                        <Select disabled={readOnly} {...form.register("connectionName")}>
+                            <option value="">{t("Procedures_SelectServer")}</option>
+                            {connections.data?.map((name) => (
+                                <option key={name} value={name}>
+                                    {name}
+                                </option>
+                            ))}
+                        </Select>
                     </Field>
                     <Field
                         label={t("Procedures_Database")}
@@ -610,7 +635,7 @@ export function ProcedureEditorPage() {
             <ConfirmDialog
                 open={confirmSync}
                 title={t("Procedures_SyncMetadata")}
-                description={`${databaseName}.${procedureName}`}
+                description={`${connectionName}: ${databaseName}.${procedureName}`}
                 onOpenChange={setConfirmSync}
                 onConfirm={() => sync.mutate()}
             />

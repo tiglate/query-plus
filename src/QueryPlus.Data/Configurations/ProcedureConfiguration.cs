@@ -27,6 +27,13 @@ public class ProcedureConfiguration : IEntityTypeConfiguration<Procedure>
             .IsUnicode(false)
             .IsRequired();
 
+        builder.Property(e => e.ConnectionName)
+            .HasColumnName("connection_name")
+            .HasMaxLength(100)
+            .IsUnicode(false)
+            .IsRequired()
+            .HasDefaultValue("DefaultConnection");
+
         builder.Property(e => e.DatabaseName)
             .HasColumnName("database_name")
             .HasMaxLength(128)
@@ -74,7 +81,7 @@ public class ProcedureConfiguration : IEntityTypeConfiguration<Procedure>
             .IsUnique()
             .HasDatabaseName("uq_procedure_caption");
 
-        builder.HasIndex(e => new { e.DatabaseName, e.ProcedureName })
+        builder.HasIndex(e => new { e.ConnectionName, e.DatabaseName, e.ProcedureName })
             .IsUnique()
             .HasDatabaseName("uq_procedure_db_proc");
     }

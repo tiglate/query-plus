@@ -31,6 +31,13 @@ public abstract class IntegrationTestBase : IAsyncLifetime
 
     protected string DatabaseName { get; } = $"qpit_{Guid.NewGuid():N}";
 
+    /// <summary>
+    /// A second database on the same shared container, registered under the "Server2" connection
+    /// name - lets multi-server tests prove a procedure's ConnectionName actually selects a
+    /// distinct physical target, without the cost of a second Testcontainers instance.
+    /// </summary>
+    protected string SecondaryDatabaseName { get; } = $"qpit2_{Guid.NewGuid():N}";
+
     protected IServiceProvider Services =>
         _provider ?? throw new InvalidOperationException("Fixture not initialized yet.");
 
@@ -40,7 +47,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         {
             await master.OpenAsync();
             await using var create = master.CreateCommand();
-            create.CommandText = $"CREATE DATABASE [{DatabaseName}];";
+            create.CommandText = $"CREATE DATABASE [{DatabaseName}]; CREATE DATABASE [{SecondaryDatabaseName}];";
             await create.ExecuteNonQueryAsync();
         }
 
@@ -49,10 +56,16 @@ public abstract class IntegrationTestBase : IAsyncLifetime
             InitialCatalog = DatabaseName,
         }.ConnectionString;
 
+        var secondaryConnectionString = new SqlConnectionStringBuilder(_fixture.MasterConnectionString)
+        {
+            InitialCatalog = SecondaryDatabaseName,
+        }.ConnectionString;
+
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ConnectionStrings:DefaultConnection"] = scopedConnectionString,
+                ["ConnectionStrings:Server2"] = secondaryConnectionString,
             })
             .Build();
 
@@ -83,6 +96,8 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         drop.CommandText = $"""
             ALTER DATABASE [{DatabaseName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
             DROP DATABASE [{DatabaseName}];
+            ALTER DATABASE [{SecondaryDatabaseName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+            DROP DATABASE [{SecondaryDatabaseName}];
             """;
         await drop.ExecuteNonQueryAsync();
     }
