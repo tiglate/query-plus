@@ -132,7 +132,7 @@ function ParameterControl({
                     {...common}
                 />
             )}
-            {error && <p className="mt-1 text-small-label text-red-700">{error}</p>}
+            {error && <p className="mt-1 text-small-label text-danger">{error}</p>}
         </div>
     );
 }
@@ -164,11 +164,11 @@ const ProcedureList = memo(function ProcedureList({
             aria-label={t("Home_SelectProcedure")}
         >
             {groups.length === 0 && (
-                <p className="p-3 text-small-label text-slate-500">{t("NoRecords")}</p>
+                <p className="p-3 text-small-label text-muted">{t("NoRecords")}</p>
             )}
             {groups.map(([category, items]) => (
                 <div key={category} role="group" aria-label={category}>
-                    <div className="sticky top-0 z-10 flex justify-between bg-slate-100 px-3 py-1.5 text-caption font-semibold uppercase tracking-wide text-slate-500 dark:bg-navy-900">
+                    <div className="sticky top-0 z-10 flex justify-between bg-slate-100 px-3 py-1.5 text-caption font-semibold uppercase tracking-wide text-muted dark:bg-navy-900">
                         <span>{category}</span>
                         <span>{items.length}</span>
                     </div>
@@ -184,7 +184,7 @@ const ProcedureList = memo(function ProcedureList({
                             <span className="block truncate text-body font-medium">
                                 {procedure.caption}
                             </span>
-                            <span className="block truncate text-small-label text-slate-500">
+                            <span className="block truncate text-small-label text-muted">
                                 {procedure.description || "—"}
                             </span>
                         </button>
@@ -255,7 +255,7 @@ function ExportStatus({
     if (state === "completed") {
         return (
             <span className="inline-flex items-center gap-2 text-small-label">
-                <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400">
+                <span className="inline-flex items-center gap-1 text-success">
                     <CircleCheck className="h-3.5 w-3.5" />
                     {t("Home_ExportReady")}
                 </span>
@@ -271,14 +271,14 @@ function ExportStatus({
     }
     if (state === "failed") {
         return (
-            <span className="inline-flex items-center gap-1 text-small-label text-red-700">
+            <span className="inline-flex items-center gap-1 text-small-label text-danger">
                 <CircleX className="h-3.5 w-3.5" />
                 {t("Home_ExportFailed")}
             </span>
         );
     }
     return (
-        <span className="inline-flex items-center gap-1 text-small-label text-slate-500">
+        <span className="inline-flex items-center gap-1 text-small-label text-muted">
             <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
             {t(state === "running" ? "Home_ExportRunning" : "Home_ExportQueued")}
         </span>
@@ -467,7 +467,7 @@ export function HomePage() {
                             <h2 className="text-card-title font-semibold">
                                 {t("Home_SelectProcedure")}
                             </h2>
-                            <span className="text-small-label text-slate-500">
+                            <span className="text-small-label text-muted">
                                 {procedures.data?.length ?? 0}
                             </span>
                         </CardHeader>
@@ -488,7 +488,7 @@ export function HomePage() {
                         </CardHeader>
                         <CardBody className="min-h-0 flex-1 space-y-3 overflow-auto">
                             {!selected && (
-                                <p className="text-small-label text-slate-500">
+                                <p className="text-small-label text-muted">
                                     {t("Home_NoProcedure")}
                                 </p>
                             )}
@@ -522,12 +522,12 @@ export function HomePage() {
                     </CardHeader>
                     <div className="flex min-h-0 flex-1 flex-col">
                         {(executeMutation.error || exportMutation.error) && (
-                            <div className="m-3 rounded border border-red-200 bg-red-50 p-2 text-small-label text-red-800">
+                            <div className="m-3 rounded border border-danger-line bg-danger-subtle p-2 text-small-label text-danger">
                                 {(executeMutation.error ?? exportMutation.error)?.message}
                             </div>
                         )}
                         {result?.errorMessage && (
-                            <div className="m-3 rounded border border-red-200 bg-red-50 p-2 text-small-label text-red-800">
+                            <div className="m-3 rounded border border-danger-line bg-danger-subtle p-2 text-small-label text-danger">
                                 {result.errorMessage}
                             </div>
                         )}
@@ -539,7 +539,7 @@ export function HomePage() {
                             />
                         ) : (
                             !result?.errorMessage && (
-                                <p className="p-4 text-small-label text-slate-500">
+                                <p className="p-4 text-small-label text-muted">
                                     {t("NoRecords")}
                                 </p>
                             )

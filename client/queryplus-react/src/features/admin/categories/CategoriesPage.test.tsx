@@ -100,7 +100,7 @@ test("creating a category with a blank description blocks submission and shows a
 
     // Blank description fails the zod schema client-side: the dialog stays open showing an
     // inline field error instead of submitting.
-    expect(await within(dialog).findByText(/./, { selector: "span.text-red-700" })).toBeInTheDocument();
+    expect(await within(dialog).findByText(/./, { selector: "span.text-danger" })).toBeInTheDocument();
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(apiFetch).not.toHaveBeenCalled();
 });

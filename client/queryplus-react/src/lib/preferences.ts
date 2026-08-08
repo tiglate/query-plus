@@ -12,7 +12,7 @@ export function applyTheme(theme: Theme): void {
     document.documentElement.classList.toggle("dark", dark);
     document.documentElement.style.colorScheme = dark ? "dark" : "light";
     document.documentElement.dataset.theme = theme;
-    document.documentElement.dataset.themeResolved = dark ? "light" : "dark";
+    document.documentElement.dataset.themeResolved = dark ? "dark" : "light";
     localStorage.setItem(THEME_KEY, theme);
 }
 

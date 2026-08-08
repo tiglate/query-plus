@@ -1,5 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
+    ALargeSmall,
     Database,
     Folder,
     Gauge,
@@ -62,7 +63,7 @@ export function AppShell() {
 
     return (
         <div className="flex h-dvh flex-col overflow-hidden bg-slate-100 text-slate-900 dark:bg-navy-900 dark:text-slate-100">
-            <header className="z-40 shrink-0 bg-navy text-white shadow">
+            <header className="z-40 shrink-0 bg-gradient-to-b from-navy to-navy-600 text-white shadow">
                 <div className="flex min-h-12 items-center justify-between gap-3 px-3 lg:px-4">
                     <div className="flex items-center gap-5">
                         <Link to="/" className="flex items-center gap-2 text-body font-semibold">
@@ -140,6 +141,7 @@ export function AppShell() {
                         >
                             <Minus className="h-3 w-3" />
                         </Button>
+                        <ALargeSmall className="hidden h-4 w-4 text-white/70 sm:block" />
                         <Button
                             variant="ghost"
                             size="icon"

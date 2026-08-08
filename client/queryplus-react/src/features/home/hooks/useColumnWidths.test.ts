@@ -56,8 +56,11 @@ test("auto-sizes a column from the approximated header/body text width (jsdom re
     await waitFor(() => {
         expect(result.current.getColumnWidth(0)).toBeGreaterThan(MIN_COLUMN_WIDTH);
     });
-    // approxWidth("AliceWonderland") + CELL_PADDING_PX = 15*7.5+16 = 128.5, clamped (no-op here)
-    expect(result.current.getColumnWidth(0)).toBe(128.5);
+    // approxWidth("AliceWonderland") + cellPaddingPx() + MEASUREMENT_SAFETY_MARGIN_PX
+    // = 15*7.5 + 2*0.75*17 + 2 = 112.5 + 25.5 + 2 = 140 (jsdom's getComputedStyle
+    // (document.documentElement).fontSize is empty, so cellPaddingPx falls back to
+    // DEFAULT_ROOT_FONT_SIZE_PX = 17), clamped (no-op here)
+    expect(result.current.getColumnWidth(0)).toBe(140);
 });
 
 test("a column with no rows falls back to MIN_COLUMN_WIDTH", async () => {
@@ -75,7 +78,7 @@ test("handleResizeStart marks the column as user-sized and tracks the drag to mo
     const columns = [makeColumn("Name", 0)];
     const rows: GridCell[][] = [["AliceWonderland"]];
     const { result } = renderHook(() => useColumnWidths(columns, rows, headerRef, bodyRef));
-    await waitFor(() => expect(result.current.getColumnWidth(0)).toBe(128.5));
+    await waitFor(() => expect(result.current.getColumnWidth(0)).toBe(140));
 
     act(() => {
         result.current.handleResizeStart(0, 100, 150); // sourceIndex 0, drag starts at x=100 from a 150px width
@@ -112,10 +115,11 @@ test("changing the visible-column set resets user-sized widths back to auto-sizi
     const { headerRef, bodyRef } = makeRefs();
     const rows: GridCell[][] = [["AliceWonderland"]];
     const { result, rerender } = renderHook(
-        ({ columns }: { columns: VisibleColumn[] }) => useColumnWidths(columns, rows, headerRef, bodyRef),
+        ({ columns }: { columns: VisibleColumn[] }) =>
+            useColumnWidths(columns, rows, headerRef, bodyRef),
         { initialProps: { columns: [makeColumn("Name", 0)] } },
     );
-    await waitFor(() => expect(result.current.getColumnWidth(0)).toBe(128.5));
+    await waitFor(() => expect(result.current.getColumnWidth(0)).toBe(140));
 
     act(() => {
         result.current.handleResizeStart(0, 100, 150);

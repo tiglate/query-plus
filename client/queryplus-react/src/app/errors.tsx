@@ -15,7 +15,7 @@ export function NotFoundPage() {
                 <p className="mt-2 font-medium text-slate-600 dark:text-slate-300">
                     {t("Error_NotFound_Lead")}
                 </p>
-                <p className="mt-2 text-body text-slate-500">{t("Error_NotFound_Body")}</p>
+                <p className="mt-2 text-body text-muted">{t("Error_NotFound_Body")}</p>
                 <Button asChild className="mt-5">
                     <Link to="/">
                         <Home className="h-4 w-4" />
@@ -35,7 +35,7 @@ export function RouteErrorPage() {
     return (
         <div className="grid min-h-dvh place-items-center bg-slate-100 p-6 text-center dark:bg-navy-900">
             <div className="max-w-xl rounded-lg bg-white p-8 shadow dark:bg-navy-800">
-                <CircleAlert className="mx-auto h-12 w-12 text-red-600" />
+                <CircleAlert className="mx-auto h-12 w-12 text-danger" />
                 <h1 className="mt-4 text-display-sm font-bold">
                     {t("Error_Server_Title").replace("{0}", String(status))}
                 </h1>

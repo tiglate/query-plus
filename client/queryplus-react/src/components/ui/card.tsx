@@ -5,7 +5,7 @@ export function Card({ className, ...props }: Readonly<HTMLAttributes<HTMLDivEle
     return (
         <section
             className={cn(
-                "rounded-lg border border-slate-200 bg-white shadow-sm dark:border-navy-600 dark:bg-navy-800",
+                "card-lift rounded-lg border border-slate-200 bg-white dark:border-navy-600 dark:bg-navy-800",
                 className,
             )}
             {...props}
@@ -17,7 +17,7 @@ export function CardHeader({ className, ...props }: Readonly<HTMLAttributes<HTML
     return (
         <div
             className={cn(
-                "flex min-h-12 items-center justify-between gap-3 border-b border-slate-200 px-4 py-2 dark:border-navy-600",
+                "card-head-lift flex min-h-12 items-center justify-between gap-3 rounded-t-lg border-b border-slate-200 px-4 py-2 dark:border-navy-600",
                 className,
             )}
             {...props}
