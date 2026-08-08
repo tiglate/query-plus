@@ -1,6 +1,17 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Database, Plus, RotateCw, Save, Trash2 } from "lucide-react";
+import {
+    ArrowLeft,
+    Database,
+    ListChecks,
+    ListOrdered,
+    Plus,
+    Power,
+    RotateCw,
+    Save,
+    SlidersHorizontal,
+    Trash2,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -14,6 +25,8 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { PageHeader, Field, Section } from "@/components/ui/page";
 import { Select, Textarea } from "@/components/ui/fields";
+import { Switch } from "@/components/ui/switch";
+import { ComboValuesEditorDialog } from "./ComboValuesEditorDialog";
 
 const parameterSchema = z.object({
     id: z.number().optional(),
@@ -159,6 +172,7 @@ export function ProcedureEditorPage() {
     });
     const columns = useFieldArray({ control: form.control, name: "columns", keyName: "_key" });
     const [confirmSync, setConfirmSync] = useState(false);
+    const [comboEditorIndex, setComboEditorIndex] = useState<number | null>(null);
     const connectionName = form.watch("connectionName");
     const databaseName = form.watch("databaseName");
     const procedureName = form.watch("procedureName");
@@ -330,32 +344,34 @@ export function ProcedureEditorPage() {
                     >
                         <Input readOnly={readOnly} {...form.register("roleEntitlement")} />
                     </Field>
-                    <div className="flex items-end gap-5 pb-2">
-                        <label className="flex items-center gap-2 text-body">
-                            <input
-                                type="checkbox"
-                                disabled={readOnly}
-                                {...form.register("enabled")}
-                            />
-                            {t("Enabled")}
-                        </label>
-                        <label className="flex items-center gap-2 text-body">
-                            <input
-                                type="checkbox"
-                                disabled={readOnly}
-                                {...form.register("supportsPagination")}
-                            />
-                            {t("Procedures_SupportsPagination")}
-                        </label>
-                    </div>
-                    <Field label={t("Description")}>
-                        <Textarea
-                            rows={3}
-                            readOnly={readOnly}
-                            className="lg:col-span-3"
-                            {...form.register("description")}
-                        />
+                    <Field label={t("Description")} className="lg:col-span-2">
+                        <Textarea rows={3} readOnly={readOnly} {...form.register("description")} />
                     </Field>
+                    <div>
+                        <span className="flex items-center gap-1.5 text-small-label font-medium text-slate-700 dark:text-slate-200">
+                            <SlidersHorizontal className="h-3.5 w-3.5" />
+                            {t("Settings")}
+                        </span>
+                        <div className="mt-1 divide-y divide-slate-200 rounded-md border border-slate-300 bg-white dark:divide-navy-700 dark:border-navy-600 dark:bg-navy-900">
+                            <label className="flex h-9 items-center justify-between gap-3 px-3">
+                                <span className="flex items-center gap-2 text-body text-slate-700 dark:text-slate-200">
+                                    <Power className="h-4 w-4 text-cyan-500" />
+                                    {t("Enabled")}
+                                </span>
+                                <Switch disabled={readOnly} {...form.register("enabled")} />
+                            </label>
+                            <label className="flex h-9 items-center justify-between gap-3 px-3">
+                                <span className="flex items-center gap-2 text-body text-slate-700 dark:text-slate-200">
+                                    <ListOrdered className="h-4 w-4 text-cyan-500" />
+                                    {t("Procedures_SupportsPagination")}
+                                </span>
+                                <Switch
+                                    disabled={readOnly}
+                                    {...form.register("supportsPagination")}
+                                />
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </Section>
             <Section
@@ -429,8 +445,7 @@ export function ProcedureEditorPage() {
                                             </Select>
                                         </td>
                                         <td className="text-center">
-                                            <input
-                                                type="checkbox"
+                                            <Switch
                                                 disabled={readOnly}
                                                 {...form.register(`parameters.${index}.isRequired`)}
                                             />
@@ -446,14 +461,37 @@ export function ProcedureEditorPage() {
                                         <td>
                                             {Number(type) === 6 && (
                                                 <div>
-                                                    <Input
-                                                        readOnly={readOnly}
-                                                        className="font-mono"
-                                                        placeholder='["A","B"]'
-                                                        {...form.register(
-                                                            `parameters.${index}.comboValues`,
-                                                        )}
-                                                    />
+                                                    <div className="flex items-center gap-2">
+                                                        <Input
+                                                            readOnly={readOnly}
+                                                            className="font-mono"
+                                                            placeholder='["A","B"]'
+                                                            {...form.register(
+                                                                `parameters.${index}.comboValues`,
+                                                            )}
+                                                        />
+                                                        <Button
+                                                            type="button"
+                                                            variant="secondary"
+                                                            size="icon"
+                                                            className="shrink-0"
+                                                            title={t(
+                                                                readOnly
+                                                                    ? "Procedures_ComboValues_View"
+                                                                    : "Procedures_ComboValues_Edit",
+                                                            )}
+                                                            aria-label={t(
+                                                                readOnly
+                                                                    ? "Procedures_ComboValues_View"
+                                                                    : "Procedures_ComboValues_Edit",
+                                                            )}
+                                                            onClick={() =>
+                                                                setComboEditorIndex(index)
+                                                            }
+                                                        >
+                                                            <ListChecks className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
                                                     {form.formState.errors.parameters?.[index]
                                                         ?.comboValues?.message && (
                                                         <span className="text-small-label text-danger">
@@ -567,8 +605,7 @@ export function ProcedureEditorPage() {
                                         />
                                     </td>
                                     <td className="text-center">
-                                        <input
-                                            type="checkbox"
+                                        <Switch
                                             disabled={readOnly}
                                             {...form.register(`columns.${index}.visible`)}
                                         />
@@ -639,6 +676,20 @@ export function ProcedureEditorPage() {
                 onOpenChange={setConfirmSync}
                 onConfirm={() => sync.mutate()}
             />
+            {comboEditorIndex !== null && (
+                <ComboValuesEditorDialog
+                    open={comboEditorIndex !== null}
+                    readOnly={readOnly}
+                    initialJson={form.watch(`parameters.${comboEditorIndex}.comboValues`)}
+                    onOpenChange={(open) => !open && setComboEditorIndex(null)}
+                    onSave={(json) =>
+                        form.setValue(`parameters.${comboEditorIndex}.comboValues`, json, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                        })
+                    }
+                />
+            )}
         </form>
     );
 }

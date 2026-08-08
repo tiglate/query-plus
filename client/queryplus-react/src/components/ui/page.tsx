@@ -1,4 +1,5 @@
 import type { PropsWithChildren, ReactNode } from "react";
+import { cn } from "@/lib/utils";
 import { Card, CardBody, CardHeader } from "./card";
 
 interface PageHeaderProps extends PropsWithChildren {
@@ -11,6 +12,7 @@ interface FieldProps extends PropsWithChildren {
     label: string;
     required?: boolean;
     error?: string;
+    className?: string;
 }
 
 interface SectionProps extends PropsWithChildren {
@@ -32,18 +34,19 @@ export function PageHeader({ title, icon, actions }: Readonly<PageHeaderProps>) 
     );
 }
 
-export function Field({ label, required, error, children }: Readonly<FieldProps>) {
+export function Field({ label, required, error, className, children }: Readonly<FieldProps>) {
     return (
-        <label className="block min-w-0 text-small-label font-medium text-slate-700 dark:text-slate-200">
+        <label
+            className={cn(
+                "block min-w-0 text-small-label font-medium text-slate-700 dark:text-slate-200",
+                className,
+            )}
+        >
             <span className={required ? "after:ml-1 after:text-danger after:content-['*']" : ""}>
                 {label}
             </span>
             <span className="mt-1 block">{children}</span>
-            {error && (
-                <span className="mt-1 block text-small-label text-danger">
-                    {error}
-                </span>
-            )}
+            {error && <span className="mt-1 block text-small-label text-danger">{error}</span>}
         </label>
     );
 }
