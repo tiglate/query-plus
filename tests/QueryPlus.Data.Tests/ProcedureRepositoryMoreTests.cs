@@ -38,8 +38,8 @@ public class ProcedureRepositoryMoreTests : IDisposable
     [Fact]
     public async Task GetAllAsync_ReturnsAllProcedures()
     {
-        _db.Procedures.Add(new Procedure { IdCategory = _catId, Caption = "P1", DatabaseName = "DB", ProcedureName = "sp_1", RoleEntitlement = "" });
-        _db.Procedures.Add(new Procedure { IdCategory = _catId, Caption = "P2", DatabaseName = "DB", ProcedureName = "sp_2", RoleEntitlement = "" });
+        _db.Procedures.Add(new Procedure { IdCategory = _catId, Caption = "P1", ConnectionName = "DefaultConnection", DatabaseName = "DB", ProcedureName = "sp_1", RoleEntitlement = "" });
+        _db.Procedures.Add(new Procedure { IdCategory = _catId, Caption = "P2", ConnectionName = "DefaultConnection", DatabaseName = "DB", ProcedureName = "sp_2", RoleEntitlement = "" });
         await _db.SaveChangesAsync();
 
         var list = await _sut.GetAllAsync();
@@ -50,7 +50,7 @@ public class ProcedureRepositoryMoreTests : IDisposable
     [Fact]
     public async Task ExistsByCaptionAsync_ChecksExistenceAndExcludeId()
     {
-        var p = new Procedure { IdCategory = _catId, Caption = "UniqueCaption", DatabaseName = "DB", ProcedureName = "sp_u", RoleEntitlement = "" };
+        var p = new Procedure { IdCategory = _catId, Caption = "UniqueCaption", ConnectionName = "DefaultConnection", DatabaseName = "DB", ProcedureName = "sp_u", RoleEntitlement = "" };
         await _sut.AddAsync(p);
         await _db.SaveChangesAsync();
 
@@ -64,12 +64,12 @@ public class ProcedureRepositoryMoreTests : IDisposable
     [Fact]
     public async Task ExistsByDatabaseAndNameAsync_ChecksExistenceAndExcludeId()
     {
-        var p = new Procedure { IdCategory = _catId, Caption = "Cap", DatabaseName = "DB_A", ProcedureName = "sp_proc", RoleEntitlement = "" };
+        var p = new Procedure { IdCategory = _catId, Caption = "Cap", ConnectionName = "DefaultConnection", DatabaseName = "DB_A", ProcedureName = "sp_proc", RoleEntitlement = "" };
         await _sut.AddAsync(p);
         await _db.SaveChangesAsync();
 
-        var exists = await _sut.ExistsByDatabaseAndNameAsync("DB_A", "sp_proc");
-        var existsEx = await _sut.ExistsByDatabaseAndNameAsync("DB_A", "sp_proc", excludeId: p.IdProcedure);
+        var exists = await _sut.ExistsByDatabaseAndNameAsync("DefaultConnection", "DB_A", "sp_proc");
+        var existsEx = await _sut.ExistsByDatabaseAndNameAsync("DefaultConnection", "DB_A", "sp_proc", excludeId: p.IdProcedure);
 
         exists.Should().BeTrue();
         existsEx.Should().BeFalse();
@@ -84,7 +84,7 @@ public class ProcedureRepositoryMoreTests : IDisposable
         {
             IdCategory = _catId,
             Caption = "WithChildren",
-            DatabaseName = "DB",
+            ConnectionName = "DefaultConnection", DatabaseName = "DB",
             ProcedureName = "sp_child",
             RoleEntitlement = "",
             Parameters = new List<ProcedureParameter> { param },
@@ -106,7 +106,7 @@ public class ProcedureRepositoryMoreTests : IDisposable
     [Fact]
     public async Task Update_And_Remove_Procedure()
     {
-        var proc = new Procedure { IdCategory = _catId, Caption = "Before", DatabaseName = "DB", ProcedureName = "sp_b", RoleEntitlement = "" };
+        var proc = new Procedure { IdCategory = _catId, Caption = "Before", ConnectionName = "DefaultConnection", DatabaseName = "DB", ProcedureName = "sp_b", RoleEntitlement = "" };
         await _sut.AddAsync(proc);
         await _db.SaveChangesAsync();
 
@@ -127,8 +127,8 @@ public class ProcedureRepositoryMoreTests : IDisposable
     [Fact]
     public async Task SearchAsync_FiltersByEnabledAndCategoryId()
     {
-        var p1 = new Procedure { IdCategory = _catId, Caption = "Search Enabled", DatabaseName = "DB", ProcedureName = "sp_e", Enabled = true, RoleEntitlement = "" };
-        var p2 = new Procedure { IdCategory = _catId, Caption = "Search Disabled", DatabaseName = "DB", ProcedureName = "sp_d", Enabled = false, RoleEntitlement = "" };
+        var p1 = new Procedure { IdCategory = _catId, Caption = "Search Enabled", ConnectionName = "DefaultConnection", DatabaseName = "DB", ProcedureName = "sp_e", Enabled = true, RoleEntitlement = "" };
+        var p2 = new Procedure { IdCategory = _catId, Caption = "Search Disabled", ConnectionName = "DefaultConnection", DatabaseName = "DB", ProcedureName = "sp_d", Enabled = false, RoleEntitlement = "" };
         await _sut.AddAsync(p1);
         await _sut.AddAsync(p2);
         await _db.SaveChangesAsync();

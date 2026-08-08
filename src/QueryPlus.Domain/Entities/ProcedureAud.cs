@@ -12,6 +12,7 @@ public class ProcedureAud
     public RevisionTypeCode? IdRevisionType { get; set; }
     public int? IdCategory { get; set; }
     public string? Caption { get; set; }
+    public string? ConnectionName { get; set; }
     public string? DatabaseName { get; set; }
     public string? ProcedureName { get; set; }
     public bool? Enabled { get; set; }

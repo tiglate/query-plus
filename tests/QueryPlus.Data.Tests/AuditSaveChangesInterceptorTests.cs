@@ -77,6 +77,7 @@ public class AuditSaveChangesInterceptorTests : IDisposable
         {
             IdCategory = category.IdCategory,
             Caption = "Audit Proc",
+            ConnectionName = "DefaultConnection",
             DatabaseName = "DB",
             ProcedureName = "sp_audit",
             RoleEntitlement = "user",
@@ -90,6 +91,7 @@ public class AuditSaveChangesInterceptorTests : IDisposable
         var procAud = await _db.Set<ProcedureAud>().FirstOrDefaultAsync(a => a.IdRevisionType == RevisionTypeCode.Insert);
         procAud.Should().NotBeNull();
         procAud!.Caption.Should().Be("Audit Proc");
+        procAud.ConnectionName.Should().Be("DefaultConnection");
 
         var paramAud = await _db.Set<ProcedureParameterAud>().FirstOrDefaultAsync(a => a.IdRevisionType == RevisionTypeCode.Insert);
         paramAud.Should().NotBeNull();

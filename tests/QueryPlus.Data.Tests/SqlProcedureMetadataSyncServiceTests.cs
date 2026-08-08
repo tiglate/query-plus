@@ -10,13 +10,14 @@ public class SqlProcedureMetadataSyncServiceTests
     private readonly IConfiguration _config = Substitute.For<IConfiguration>();
 
     [Fact]
-    public void Constructor_MissingConnectionString_ThrowsInvalidOperationException()
+    public async Task FetchAsync_MissingConnectionString_ThrowsInvalidOperationException()
     {
-        _config.GetSection("ConnectionStrings")["DefaultConnection"].Returns((string?)null);
+        _config.GetSection("ConnectionStrings")["Server2"].Returns((string?)null);
+        var sut = new SqlProcedureMetadataSyncService(_config);
 
-        Action act = () => _ = new SqlProcedureMetadataSyncService(_config);
+        Func<Task> act = async () => await sut.FetchAsync("Server2", "SalesDB", "sp_sales");
 
-        act.Should().Throw<InvalidOperationException>().WithMessage("*DefaultConnection*");
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*Server2*");
     }
 
     [Fact]
@@ -25,7 +26,7 @@ public class SqlProcedureMetadataSyncServiceTests
         _config.GetSection("ConnectionStrings")["DefaultConnection"].Returns("Server=localhost;Database=master;");
         var sut = new SqlProcedureMetadataSyncService(_config);
 
-        Func<Task> act = async () => await sut.FetchAsync("DB; DROP TABLE--", "sp_sales");
+        Func<Task> act = async () => await sut.FetchAsync("DefaultConnection", "DB; DROP TABLE--", "sp_sales");
 
         await act.Should().ThrowAsync<ArgumentException>().WithMessage("*Invalid database name*");
     }
@@ -36,7 +37,7 @@ public class SqlProcedureMetadataSyncServiceTests
         _config.GetSection("ConnectionStrings")["DefaultConnection"].Returns("Server=localhost;Database=master;");
         var sut = new SqlProcedureMetadataSyncService(_config);
 
-        Func<Task> act = async () => await sut.FetchAsync("SalesDB", "dbo.sp_sales; DROP TABLE--");
+        Func<Task> act = async () => await sut.FetchAsync("DefaultConnection", "SalesDB", "dbo.sp_sales; DROP TABLE--");
 
         await act.Should().ThrowAsync<ArgumentException>().WithMessage("*Invalid procedure name*");
     }

@@ -19,7 +19,7 @@ public sealed class SqlProcedureMetadataSyncServiceTests(SqlServerContainerFixtu
         {
             var sync = sp.GetRequiredService<IProcedureMetadataSyncService>();
 
-            var snapshot = await sync.FetchAsync(DatabaseName, "dbo.Sp_Demo_Numbers_Paged");
+            var snapshot = await sync.FetchAsync("DefaultConnection", DatabaseName, "dbo.Sp_Demo_Numbers_Paged");
 
             snapshot.Parameters.Should().ContainSingle(p => p.Name == "@MaxNumber");
             var reserved = new HashSet<string> { "@PageNumber", "@PageSize", "@TotalRecords" };

@@ -34,6 +34,7 @@ public sealed class RateLimitingTests(QueryPlusApiApplicationFactory factory)
                 IdProcedure = procedureId,
                 IdCategory = 1,
                 Caption = "Slow",
+                ConnectionName = "DefaultConnection",
                 DatabaseName = "db",
                 ProcedureName = "dbo.usp_Slow",
                 RoleEntitlement = "user",

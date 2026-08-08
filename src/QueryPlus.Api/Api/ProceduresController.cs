@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using QueryPlus.Api.Security;
+using QueryPlus.Application.Abstractions;
 using QueryPlus.Application.DTOs.Common;
 using QueryPlus.Application.DTOs.Procedures;
 using QueryPlus.Application.Interfaces;
@@ -9,10 +10,18 @@ namespace QueryPlus.Api.Api;
 
 [ApiController]
 [Route("api/procedures")]
-public sealed class ProceduresController(IProcedureService procedures, IProcedureMetadataSyncService metadataSync)
+public sealed class ProceduresController(
+    IProcedureService procedures,
+    IProcedureMetadataSyncService metadataSync,
+    IProcedureConnectionCatalog connectionCatalog)
     : ControllerBase
 {
-    public sealed record SyncMetadataRequest(string DatabaseName, string ProcedureName);
+    public sealed record SyncMetadataRequest(string ConnectionName, string DatabaseName, string ProcedureName);
+
+    [HttpGet("connections")]
+    [Authorize(Roles = AppRoles.CanWriteProcedures)]
+    public ActionResult<IReadOnlyCollection<string>> Connections() =>
+        Ok(connectionCatalog.GetConnectionNames());
 
     [HttpGet("accessible")]
     [Authorize(Roles = AppRoles.CanExecute)]
@@ -93,18 +102,21 @@ public sealed class ProceduresController(IProcedureService procedures, IProcedur
             return Problem(title: "Procedure not found", statusCode: 404);
         }
 
-        if (string.IsNullOrWhiteSpace(request.DatabaseName) || string.IsNullOrWhiteSpace(request.ProcedureName))
+        if (string.IsNullOrWhiteSpace(request.ConnectionName) || string.IsNullOrWhiteSpace(request.DatabaseName) ||
+            string.IsNullOrWhiteSpace(request.ProcedureName))
         {
-            return Problem(title: "Database and procedure names are required", statusCode: 400);
+            return Problem(title: "Connection, database, and procedure names are required", statusCode: 400);
         }
 
-        return Ok(await metadataSync.FetchAsync(request.DatabaseName, request.ProcedureName, cancellationToken));
+        return Ok(await metadataSync.FetchAsync(request.ConnectionName, request.DatabaseName, request.ProcedureName,
+            cancellationToken));
     }
 
     private static SaveProcedureDto CopyWithId(SaveProcedureDto x, int id) => new()
     {
-        Id = id, CategoryId = x.CategoryId, Caption = x.Caption, DatabaseName = x.DatabaseName,
-        ProcedureName = x.ProcedureName, Enabled = x.Enabled, SupportsPagination = x.SupportsPagination,
-        RoleEntitlement = x.RoleEntitlement, Description = x.Description, Parameters = x.Parameters, Columns = x.Columns
+        Id = id, CategoryId = x.CategoryId, Caption = x.Caption, ConnectionName = x.ConnectionName,
+        DatabaseName = x.DatabaseName, ProcedureName = x.ProcedureName, Enabled = x.Enabled,
+        SupportsPagination = x.SupportsPagination, RoleEntitlement = x.RoleEntitlement, Description = x.Description,
+        Parameters = x.Parameters, Columns = x.Columns
     };
 }

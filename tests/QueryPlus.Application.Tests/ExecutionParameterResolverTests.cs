@@ -16,6 +16,7 @@ public class ExecutionParameterResolverTests
         IdProcedure = 1,
         IdCategory = 1,
         Caption = "Test Proc",
+        ConnectionName = "DefaultConnection",
         DatabaseName = "db",
         ProcedureName = "sp_test",
         RoleEntitlement = "",

@@ -41,6 +41,7 @@ public class ProcedureRepositoryTests : IDisposable
         {
             IdCategory = _catId,
             Caption = "Get Monthly Invoices",
+            ConnectionName = "DefaultConnection",
             DatabaseName = "FinanceDB",
             ProcedureName = "sp_GetInvoices",
             RoleEntitlement = "finance-user",
@@ -75,6 +76,7 @@ public class ProcedureRepositoryTests : IDisposable
         {
             IdCategory = _catId,
             Caption = "New Proc",
+            ConnectionName = "DefaultConnection",
             DatabaseName = "DB",
             ProcedureName = "sp_new",
             RoleEntitlement = ""
@@ -95,6 +97,7 @@ public class ProcedureRepositoryTests : IDisposable
         {
             IdCategory = _catId,
             Caption = "Sales Report",
+            ConnectionName = "DefaultConnection",
             DatabaseName = "SalesDB",
             ProcedureName = "sp_sales",
             RoleEntitlement = ""
@@ -103,6 +106,7 @@ public class ProcedureRepositoryTests : IDisposable
         {
             IdCategory = _catId,
             Caption = "Customer List",
+            ConnectionName = "DefaultConnection",
             DatabaseName = "CrmDB",
             ProcedureName = "sp_customers",
             RoleEntitlement = ""
@@ -123,6 +127,7 @@ public class ProcedureRepositoryTests : IDisposable
         {
             IdCategory = _catId,
             Caption = "Admin Only Proc",
+            ConnectionName = "DefaultConnection",
             DatabaseName = "DB",
             ProcedureName = "sp_admin",
             Enabled = true,
@@ -132,6 +137,7 @@ public class ProcedureRepositoryTests : IDisposable
         {
             IdCategory = _catId,
             Caption = "Public Proc",
+            ConnectionName = "DefaultConnection",
             DatabaseName = "DB",
             ProcedureName = "sp_public",
             Enabled = true,
@@ -153,6 +159,7 @@ public class ProcedureRepositoryTests : IDisposable
         {
             IdCategory = _catId,
             Caption = "Finance Only Proc",
+            ConnectionName = "DefaultConnection",
             DatabaseName = "DB",
             ProcedureName = "sp_finance",
             Enabled = true,

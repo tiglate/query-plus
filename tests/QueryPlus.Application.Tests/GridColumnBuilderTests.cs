@@ -18,6 +18,7 @@ public class GridColumnBuilderTests
             IdProcedure = 1,
             IdCategory = 1,
             Caption = "Test SP",
+            ConnectionName = "DefaultConnection",
             DatabaseName = "DB",
             ProcedureName = "sp_test",
             RoleEntitlement = "",

@@ -11,6 +11,7 @@ public class ExecutionLogMapperTests
     {
         IdExecutionLog = 42,
         IdProcedure = 7,
+        ConnectionName = "DefaultConnection",
         Username = "alice",
         IpAddress = "10.0.0.1",
         ExecutionStart = new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc),
@@ -20,7 +21,7 @@ public class ExecutionLogMapperTests
         ParameterValues = "{\"@X\":\"1\"}",
         RowCount = 10,
         Procedure = withProcedure
-            ? new Procedure { IdProcedure = 7, Caption = "Sales", DatabaseName = "D", ProcedureName = "p", RoleEntitlement = "user" }
+            ? new Procedure { IdProcedure = 7, Caption = "Sales", ConnectionName = "DefaultConnection", DatabaseName = "D", ProcedureName = "p", RoleEntitlement = "user" }
             : null!
     };
 

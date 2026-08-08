@@ -10,6 +10,7 @@ public class Procedure : IHasTimestamps, IAuditedEntity
     public int IdProcedure { get; set; }
     public int IdCategory { get; set; }
     public required string Caption { get; set; }
+    public required string ConnectionName { get; set; }
     public required string DatabaseName { get; set; }
     public required string ProcedureName { get; set; }
     public bool Enabled { get; set; } = true;

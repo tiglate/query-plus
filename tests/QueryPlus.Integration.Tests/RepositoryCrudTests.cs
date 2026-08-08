@@ -61,6 +61,7 @@ public sealed class RepositoryCrudTests(SqlServerContainerFixture fixture) : Int
             {
                 IdCategory = category.IdCategory,
                 Caption = "IT Test Proc",
+                ConnectionName = "DefaultConnection",
                 DatabaseName = DatabaseName,
                 ProcedureName = "dbo.sp_it_test",
                 RoleEntitlement = "",
@@ -69,8 +70,8 @@ public sealed class RepositoryCrudTests(SqlServerContainerFixture fixture) : Int
             await procedures.AddAsync(procedure);
             await unitOfWork.SaveChangesAsync();
 
-            (await procedures.ExistsByDatabaseAndNameAsync(DatabaseName, "dbo.sp_it_test")).Should().BeTrue();
-            (await procedures.ExistsByDatabaseAndNameAsync(DatabaseName, "dbo.sp_it_test", excludeId: procedure.IdProcedure))
+            (await procedures.ExistsByDatabaseAndNameAsync("DefaultConnection", DatabaseName, "dbo.sp_it_test")).Should().BeTrue();
+            (await procedures.ExistsByDatabaseAndNameAsync("DefaultConnection", DatabaseName, "dbo.sp_it_test", excludeId: procedure.IdProcedure))
                 .Should().BeFalse();
         });
     }
@@ -93,6 +94,7 @@ public sealed class RepositoryCrudTests(SqlServerContainerFixture fixture) : Int
             {
                 IdCategory = category.IdCategory,
                 Caption = "IT Exec Proc",
+                ConnectionName = "DefaultConnection",
                 DatabaseName = DatabaseName,
                 ProcedureName = "dbo.sp_it_exec",
                 RoleEntitlement = "",
@@ -105,6 +107,7 @@ public sealed class RepositoryCrudTests(SqlServerContainerFixture fixture) : Int
             var log = new ExecutionLog
             {
                 IdProcedure = procedure.IdProcedure,
+                ConnectionName = "DefaultConnection",
                 Username = username,
                 ExecutionStart = DateTime.UtcNow,
                 Success = true,

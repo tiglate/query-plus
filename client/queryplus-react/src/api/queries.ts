@@ -51,6 +51,11 @@ export const procedureLookupQuery = queryOptions({
     queryFn: () => apiFetch<ProcedureLookup[]>("/api/procedures/lookup"),
 });
 
+export const connectionsLookupQuery = queryOptions({
+    queryKey: ["procedures", "connections"],
+    queryFn: () => apiFetch<string[]>("/api/procedures/connections"),
+});
+
 export const categoryQuery = (id: number) =>
     queryOptions({
         queryKey: ["categories", id],

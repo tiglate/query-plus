@@ -176,6 +176,7 @@ public class AuditSaveChangesInterceptor(ICurrentUserContext currentUser) : Save
             IdRevisionType = revisionType,
             IdCategory = Read<int?>(entry, nameof(Procedure.IdCategory)),
             Caption = Read<string?>(entry, nameof(Procedure.Caption)),
+            ConnectionName = Read<string?>(entry, nameof(Procedure.ConnectionName)),
             DatabaseName = Read<string?>(entry, nameof(Procedure.DatabaseName)),
             ProcedureName = Read<string?>(entry, nameof(Procedure.ProcedureName)),
             Enabled = Read<bool?>(entry, nameof(Procedure.Enabled)),

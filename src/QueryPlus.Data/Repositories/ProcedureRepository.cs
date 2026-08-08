@@ -126,13 +126,15 @@ public sealed class ProcedureRepository(ApplicationDbContext db) : IProcedureRep
     }
 
     public Task<bool> ExistsByDatabaseAndNameAsync(
+        string connectionName,
         string databaseName,
         string procedureName,
         int? excludeId = null,
         CancellationToken cancellationToken = default)
     {
         var query = db.Procedures.AsNoTracking()
-            .Where(p => p.DatabaseName == databaseName && p.ProcedureName == procedureName);
+            .Where(p => p.ConnectionName == connectionName && p.DatabaseName == databaseName &&
+                        p.ProcedureName == procedureName);
 
         if (excludeId is not null)
         {

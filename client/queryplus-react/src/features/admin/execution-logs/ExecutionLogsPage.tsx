@@ -134,6 +134,7 @@ export function ExecutionLogsPage() {
                             <tr>
                                 <th>{t("Id")}</th>
                                 <th>{t("ExecutionLog_Procedure")}</th>
+                                <th>{t("Procedures_Server")}</th>
                                 <th>{t("ExecutionLog_Username")}</th>
                                 <th>{t("ExecutionLog_IpAddress")}</th>
                                 <th>{t("ExecutionLog_StartedAt")}</th>
@@ -148,6 +149,7 @@ export function ExecutionLogsPage() {
                                 <tr key={log.id}>
                                     <td className="text-right">{log.id}</td>
                                     <td>{log.procedureCaption}</td>
+                                    <td>{log.connectionName}</td>
                                     <td>{log.username}</td>
                                     <td>{log.ipAddress ?? "—"}</td>
                                     <td>{new Date(log.executionStart).toLocaleString()}</td>
@@ -174,7 +176,7 @@ export function ExecutionLogsPage() {
                             ))}
                             {!logs.data?.items.length && (
                                 <tr>
-                                    <td colSpan={9} className="p-8 text-center text-muted">
+                                    <td colSpan={10} className="p-8 text-center text-muted">
                                         {t("NoRecords")}
                                     </td>
                                 </tr>

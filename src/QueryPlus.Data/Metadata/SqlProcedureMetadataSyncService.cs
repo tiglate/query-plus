@@ -10,11 +10,8 @@ namespace QueryPlus.Data.Metadata;
 
 public sealed class SqlProcedureMetadataSyncService(IConfiguration configuration) : IProcedureMetadataSyncService
 {
-    private readonly string _connectionString = configuration.GetConnectionString("DefaultConnection")
-                                                ?? throw new InvalidOperationException(
-                                                    "Connection string 'DefaultConnection' is not configured.");
-
     public async Task<ProcedureMetadataSnapshot> FetchAsync(
+        string connectionName,
         string databaseName,
         string procedureName,
         CancellationToken cancellationToken = default)
@@ -29,11 +26,15 @@ public sealed class SqlProcedureMetadataSyncService(IConfiguration configuration
             throw new ArgumentException("Invalid procedure name.", nameof(procedureName));
         }
 
+        var connectionString = configuration.GetConnectionString(connectionName)
+                               ?? throw new InvalidOperationException(
+                                   $"Connection string '{connectionName}' is not configured.");
+
         var parts = procedureName.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         var schema = parts.Length == 2 ? parts[0] : "dbo";
         var name = parts.Length == 2 ? parts[1] : parts[0];
 
-        await using var connection = new SqlConnection(_connectionString);
+        await using var connection = new SqlConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
 
         var parameters = await LoadParametersAsync(connection, databaseName, schema, name, cancellationToken);

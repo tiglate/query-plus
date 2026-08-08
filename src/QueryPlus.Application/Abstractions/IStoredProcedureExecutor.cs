@@ -21,11 +21,13 @@ public sealed class StoredProcedureExecutionResult
 /// </summary>
 public interface IStoredProcedureExecutor
 {
+    /// <param name="connectionName">Name of the configured ConnectionStrings entry identifying the target server.</param>
     /// <param name="databaseName">Target database (validated identifier).</param>
     /// <param name="procedureName">Procedure name, optionally schema-qualified (e.g. dbo.usp_X).</param>
     /// <param name="parameters">Named parameters (values already typed/coerced). OUTPUT params may be included with null placeholders.</param>
     /// <param name="outputParameterNames">Parameter names (e.g. @TotalRecords) registered as OUTPUT.</param>
     Task<StoredProcedureExecutionResult> ExecuteAsync(
+        string connectionName,
         string databaseName,
         string procedureName,
         IReadOnlyDictionary<string, object?> parameters,

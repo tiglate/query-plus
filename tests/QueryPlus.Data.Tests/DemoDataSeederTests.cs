@@ -50,6 +50,7 @@ public class DemoDataSeederTests : IDisposable
 
         var proc = procedures.First();
         proc.Caption.Should().NotBeNullOrWhiteSpace();
+        proc.ConnectionName.Should().Be("DefaultConnection");
         proc.DatabaseName.Should().Be("QueryPlusTest");
     }
 }

@@ -10,6 +10,7 @@ const { LOG } = vi.hoisted(() => ({
         id: 1,
         procedureId: 5,
         procedureCaption: "Sales Report",
+        connectionName: "DefaultConnection",
         username: "alice",
         ipAddress: "10.0.0.1",
         executionStart: "2026-03-05T10:00:00Z",

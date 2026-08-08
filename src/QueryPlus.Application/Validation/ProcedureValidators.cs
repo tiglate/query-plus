@@ -1,4 +1,5 @@
 using FluentValidation;
+using QueryPlus.Application.Abstractions;
 using QueryPlus.Application.Common;
 using QueryPlus.Application.DTOs.Procedures;
 using QueryPlus.Domain.Enums;
@@ -7,10 +8,15 @@ namespace QueryPlus.Application.Validation;
 
 public sealed class SaveProcedureDtoValidator : AbstractValidator<SaveProcedureDto>
 {
-    public SaveProcedureDtoValidator()
+    public SaveProcedureDtoValidator(IProcedureConnectionCatalog connectionCatalog)
     {
         RuleFor(x => x.CategoryId).GreaterThan(0);
         RuleFor(x => x.Caption).NotEmpty().MaximumLength(300);
+        RuleFor(x => x.ConnectionName)
+            .NotEmpty()
+            .MaximumLength(100)
+            .Must(name => connectionCatalog.GetConnectionNames().Contains(name))
+            .WithMessage("Connection name must match a configured ConnectionStrings entry.");
         RuleFor(x => x.DatabaseName)
             .NotEmpty()
             .MaximumLength(128)

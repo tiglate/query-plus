@@ -1,5 +1,7 @@
 using System.Data;
 using FluentAssertions;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using QueryPlus.Application.Abstractions;
 
@@ -22,6 +24,7 @@ public sealed class DapperStoredProcedureExecutorTests(SqlServerContainerFixture
             var executor = sp.GetRequiredService<IStoredProcedureExecutor>();
 
             var page1 = await executor.ExecuteAsync(
+                "DefaultConnection",
                 DatabaseName,
                 "dbo.Sp_Demo_Numbers_Paged",
                 new Dictionary<string, object?> { ["@MaxNumber"] = 50, ["@PageNumber"] = 1L, ["@PageSize"] = 10L },
@@ -44,11 +47,13 @@ public sealed class DapperStoredProcedureExecutorTests(SqlServerContainerFixture
             var executor = sp.GetRequiredService<IStoredProcedureExecutor>();
 
             var page1 = await executor.ExecuteAsync(
+                "DefaultConnection",
                 DatabaseName,
                 "dbo.Sp_Demo_Numbers_Paged",
                 new Dictionary<string, object?> { ["@MaxNumber"] = 50, ["@PageNumber"] = 1L, ["@PageSize"] = 10L },
                 outputParameterNames: ["@TotalRecords"]);
             var page2 = await executor.ExecuteAsync(
+                "DefaultConnection",
                 DatabaseName,
                 "dbo.Sp_Demo_Numbers_Paged",
                 new Dictionary<string, object?> { ["@MaxNumber"] = 50, ["@PageNumber"] = 2L, ["@PageSize"] = 10L },
@@ -61,6 +66,41 @@ public sealed class DapperStoredProcedureExecutorTests(SqlServerContainerFixture
             page2Numbers.Should().NotIntersectWith(page1Numbers);
             page1Numbers.Should().BeEquivalentTo(Enumerable.Range(1, 10));
             page2Numbers.Should().BeEquivalentTo(Enumerable.Range(11, 10));
+        });
+    }
+
+    /// <summary>
+    /// Proves connectionName actually selects a distinct physical target: a procedure catalogued
+    /// against "Server2" must execute on SecondaryDatabaseName, not DatabaseName (the default
+    /// connection's database) - guards against ExecuteAsync silently ignoring connectionName and
+    /// falling back to whatever connection it happened to be constructed with.
+    /// </summary>
+    [Fact]
+    public async Task ExecuteAsync_WithNonDefaultConnectionName_TargetsThatServersDatabase()
+    {
+        await WithScopeAsync(async sp =>
+        {
+            var configuration = sp.GetRequiredService<IConfiguration>();
+            var secondaryConnectionString = configuration.GetConnectionString("Server2");
+
+            await using (var connection = new SqlConnection(secondaryConnectionString))
+            {
+                await connection.OpenAsync();
+                await using var create = connection.CreateCommand();
+                create.CommandText = "CREATE PROCEDURE dbo.Sp_MultiServer_Marker AS SELECT DB_NAME() AS CurrentDatabase;";
+                await create.ExecuteNonQueryAsync();
+            }
+
+            var executor = sp.GetRequiredService<IStoredProcedureExecutor>();
+
+            var result = await executor.ExecuteAsync(
+                "Server2",
+                SecondaryDatabaseName,
+                "dbo.Sp_MultiServer_Marker",
+                new Dictionary<string, object?>());
+
+            result.Data.Rows.Count.Should().Be(1);
+            result.Data.Rows[0]["CurrentDatabase"].Should().Be(SecondaryDatabaseName);
         });
     }
 }

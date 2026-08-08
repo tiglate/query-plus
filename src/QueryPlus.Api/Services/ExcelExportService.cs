@@ -188,7 +188,8 @@ public sealed class ExcelExportBackgroundService(
                 var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
                 var log = new Domain.Entities.ExecutionLog
                 {
-                    IdProcedure = procedure.IdProcedure, Username = job.Username ?? "export-worker",
+                    IdProcedure = procedure.IdProcedure, ConnectionName = procedure.ConnectionName,
+                    Username = job.Username ?? "export-worker",
                     ExecutionStart = DateTime.UtcNow,
                     ParameterValues = JsonHelpers.Serialize(bound.ToDictionary(x => x.Key, x => x.Value?.ToString())),
                     Success = false
@@ -196,7 +197,7 @@ public sealed class ExcelExportBackgroundService(
                 await executionRepository.AddAsync(log, stoppingToken);
                 await unitOfWork.SaveChangesAsync(stoppingToken);
                 var result = await scope.ServiceProvider.GetRequiredService<IStoredProcedureExecutor>()
-                    .ExecuteAsync(procedure.DatabaseName, procedure.ProcedureName, parameters, outputs, stoppingToken);
+                    .ExecuteAsync(procedure.ConnectionName, procedure.DatabaseName, procedure.ProcedureName, parameters, outputs, stoppingToken);
                 log.Success = true;
                 log.RowCount = procedure.SupportsPagination
                     ? (int)Math.Min(result.TotalRecords ?? result.Data.Rows.Count, int.MaxValue)

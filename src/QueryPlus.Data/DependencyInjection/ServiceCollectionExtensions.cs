@@ -39,6 +39,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IStoredProcedureExecutor, DapperStoredProcedureExecutor>();
         services.AddScoped<IProcedureMetadataSyncService, SqlProcedureMetadataSyncService>();
+        services.AddScoped<IProcedureConnectionCatalog, ProcedureConnectionCatalog>();
 
         services.AddScoped<DemoDataSeeder>();
 

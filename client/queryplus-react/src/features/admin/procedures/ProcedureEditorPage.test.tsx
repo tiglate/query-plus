@@ -22,6 +22,10 @@ vi.mock("@/api/queries", () => ({
         queryKey: ["categories", "lookup"],
         queryFn: () => Promise.resolve([{ id: 1, description: "General" }]),
     },
+    connectionsLookupQuery: {
+        queryKey: ["procedures", "connections"],
+        queryFn: () => Promise.resolve(["DefaultConnection"]),
+    },
     procedureQuery: vi.fn((id: number) => ({
         queryKey: ["procedure", id],
         queryFn: () =>
@@ -29,6 +33,7 @@ vi.mock("@/api/queries", () => ({
                 id: 1,
                 categoryId: 1,
                 caption: "Sales Report",
+                connectionName: "DefaultConnection",
                 databaseName: "SalesDB",
                 procedureName: "dbo.sp_sales",
                 enabled: true,
@@ -57,6 +62,7 @@ function renderWithClient(component: React.ReactNode) {
 const form: ProcedureFormValues = {
     categoryId: 3,
     caption: "  Report ",
+    connectionName: " DefaultConnection ",
     databaseName: " Main ",
     procedureName: " dbo.Report ",
     roleEntitlement: " analyst ",
@@ -89,6 +95,7 @@ test("procedure form transforms local arrays and canonicalizes combo JSON", () =
     expect(result).toMatchObject({
         id: 9,
         caption: "Report",
+        connectionName: "DefaultConnection",
         databaseName: "Main",
         description: null,
     });

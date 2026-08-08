@@ -13,26 +13,28 @@ namespace QueryPlus.Data.StoredProcedures;
 /// </summary>
 public sealed class DapperStoredProcedureExecutor : IStoredProcedureExecutor
 {
-    private readonly string _connectionString;
+    private readonly IConfiguration _configuration;
 
     public DapperStoredProcedureExecutor(IConfiguration configuration)
     {
-        _connectionString = configuration.GetConnectionString("DefaultConnection")
-                            ?? throw new InvalidOperationException(
-                                "Connection string 'DefaultConnection' is not configured.");
+        _configuration = configuration;
     }
 
     public async Task<StoredProcedureExecutionResult> ExecuteAsync(
+        string connectionName,
         string databaseName,
         string procedureName,
         IReadOnlyDictionary<string, object?> parameters,
         IReadOnlyCollection<string>? outputParameterNames = null,
         CancellationToken cancellationToken = default)
     {
+        var connectionString = _configuration.GetConnectionString(connectionName)
+                               ?? throw new InvalidOperationException(
+                                   $"Connection string '{connectionName}' is not configured.");
         var qualifiedName = SqlIdentifier.BuildThreePartName(databaseName, procedureName);
         var outputs = NormalizeOutputNames(outputParameterNames);
 
-        await using var connection = new SqlConnection(_connectionString);
+        await using var connection = new SqlConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
 
         var dynamicParameters = new DynamicParameters();

@@ -7,6 +7,7 @@ public class ExecutionLog
 {
     public int IdExecutionLog { get; set; }
     public int IdProcedure { get; set; }
+    public required string ConnectionName { get; set; }
     public required string Username { get; set; }
     public string? IpAddress { get; set; }
     public DateTime ExecutionStart { get; set; }
