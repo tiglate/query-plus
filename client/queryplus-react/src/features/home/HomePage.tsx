@@ -344,6 +344,7 @@ export function HomePage() {
         queryKey: ["export", jobId],
         queryFn: () => exportStatus(jobId!),
         enabled: !!jobId,
+        meta: { skipLoadingBar: true },
         refetchInterval: (query) => {
             const state = query.state.data
                 ? normalizeExportStatus(query.state.data.status)
