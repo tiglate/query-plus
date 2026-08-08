@@ -1,0 +1,133 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-unit:
+    name: Backend / fast unit tests
+    runs-on: ubuntu-latest
+    env:
+      # ApplicationDbContextFactory (used only by a design-time-factory unit test here, never
+      # connected to) throws if this is unset. Locally it comes from a gitignored .env
+      # (see .env.example); CI has no .env, so supply the same dummy local-dev value directly -
+      # this connection string is never dialed in this job.
+      ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=QueryPlus;User Id=sa;Password=Your_strong_Password123;TrustServerCertificate=True;Encrypt=False"
+    steps:
+      - uses: actions/checkout@v4
+
+      # No dotnet-version pinned here — the action auto-detects and installs the SDK pinned by
+      # global.json (10.0.0, rollForward latestFeature, prereleases allowed).
+      - uses: actions/setup-dotnet@v4
+
+      - name: Restore
+        run: dotnet restore QueryPlus.sln
+
+      # This job has no Node/pnpm toolchain, and a fresh checkout has no committed
+      # src/QueryPlus.Api/wwwroot/index.html (it's gitignored build output) - without this flag,
+      # QueryPlus.Api.csproj's BuildClientAppIfMissing target would shell out to a nonexistent pnpm.
+      - name: Build
+        run: dotnet build QueryPlus.sln --no-restore --configuration Release /p:SkipClientAppBuild=true
+
+      # Excludes tests/QueryPlus.Integration.Tests (tagged Category=Integration), which needs
+      # Docker and is covered by the separate backend-integration job below.
+      - name: Test (Application + Data + Api)
+        run: >
+          dotnet test QueryPlus.sln --no-build --configuration Release
+          --filter "Category!=Integration"
+          --collect:"XPlat Code Coverage"
+          --results-directory ./coverage-results
+
+      - name: Merge coverage and publish job summary
+        if: always()
+        run: |
+          dotnet tool install -g dotnet-reportgenerator-globaltool
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          reportgenerator \
+            -reports:"coverage-results/**/coverage.cobertura.xml" \
+            -targetdir:coverage-report \
+            -reporttypes:TextSummary
+          {
+            echo "## Backend coverage (fast unit tests only — excludes QueryPlus.Integration.Tests)"
+            echo '```'
+            cat coverage-report/Summary.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-report
+          path: coverage-report/
+          retention-days: 14
+
+  backend-integration:
+    name: Backend / Testcontainers integration tests
+    runs-on: ubuntu-latest
+    # SQL Server container image pull + startup + a full migrate/seed per test class dominates
+    # runtime here — give it real headroom rather than inheriting the fast job's implicit budget.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+
+      - name: Restore
+        run: dotnet restore tests/QueryPlus.Integration.Tests
+
+      # GitHub-hosted ubuntu-latest runners have Docker preinstalled and running, so
+      # Testcontainers.MsSql works with no extra `services:` container config — it manages the
+      # SQL Server container's lifecycle itself via the Docker socket.
+      - name: Test (real SQL Server via Testcontainers)
+        run: dotnet test tests/QueryPlus.Integration.Tests --configuration Release
+
+  frontend:
+    name: Frontend / Vitest
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client/queryplus-react
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: client/queryplus-react/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Calls vitest directly rather than `pnpm test` (-> `vp test`, this repo's dev-tooling
+      # wrapper) so CI's invocation doesn't depend on vp's own flag-forwarding behavior staying
+      # stable — --coverage needs to reach vitest reliably.
+      - name: Test with coverage
+        run: pnpm exec vitest run --coverage
+
+      - name: Publish job summary
+        if: always()
+        run: |
+          {
+            echo "## Frontend coverage (Vitest)"
+            echo "See the step output above for the full per-file table."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage-report
+          path: client/queryplus-react/coverage/
+          retention-days: 14
