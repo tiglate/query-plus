@@ -129,6 +129,10 @@ services:
       Keycloak__BackchannelPort: "8080"
       Keycloak__ClientId: "${Keycloak__ClientId:-queryplus-web}"
       Keycloak__RequireHttpsMetadata: "false"
+      # SPA and API are same-origin here (both served from :5000) so this is never actually
+      # exercised by the SPA - it only satisfies Program.cs's non-Development guard requiring
+      # Cors:AllowedOrigins to be explicit rather than silently empty.
+      Cors__AllowedOrigins__0: "http://localhost:5000"
     ports:
       - "5000:8080"
     depends_on:
