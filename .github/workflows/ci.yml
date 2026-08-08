@@ -13,6 +13,12 @@ jobs:
   backend-unit:
     name: Backend / fast unit tests
     runs-on: ubuntu-latest
+    env:
+      # ApplicationDbContextFactory (used only by a design-time-factory unit test here, never
+      # connected to) throws if this is unset. Locally it comes from a gitignored .env
+      # (see .env.example); CI has no .env, so supply the same dummy local-dev value directly -
+      # this connection string is never dialed in this job.
+      ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=QueryPlus;User Id=sa;Password=Your_strong_Password123;TrustServerCertificate=True;Encrypt=False"
     steps:
       - uses: actions/checkout@v4
 
