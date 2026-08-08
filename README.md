@@ -10,6 +10,7 @@ Construído com **.NET 10**, **ASP.NET Core Web API (controllers)**, **React 19 
 
 - 🏠 **Início** — escolha uma procedure catalogada, defina os parâmetros, execute, pagine grandes resultados no servidor e exporte para Excel
 - 🗂️ **Admin** — gerencie categorias e procedures (parâmetros, colunas, sincronização de metadados a partir do SQL Server)
+- 🌐 **Múltiplos servidores** — cada procedure é associada a um servidor SQL Server nomeado (`ConnectionName`), permitindo que uma única instância do QueryPlus execute procedures em vários servidores diferentes
 - 🔐 **Segurança** — OIDC via Keycloak (sessão em cookie + antiforgery); entitlements de papel (role) por procedure; argumentos reservados de paginação nunca expostos aos usuários finais
 - 📋 **Operação** — log de execuções, tabelas de auditoria de configuração, dados de demonstração semeados na inicialização
 
@@ -34,7 +35,11 @@ docker/
 .devcontainer/                # Dev Containers do VS Code / Codespaces
 docs/
   SPECIFICATION.md
-  database/                   # espelho do schema + SQL de demonstração
+  keycloak.md                 # guia introdutório sobre Keycloak/OIDC neste projeto
+  openbao.md                  # guia introdutório sobre OpenBao (segredos) neste projeto
+  deploy-producao.md          # guia de deploy em produção (IIS + Docker/Linux)
+  jenkins-ci-cd.md            # pipeline opcional de deploy multi-ambiente via Jenkins
+  database/                   # espelho do schema + SQL de demonstração + diagrama ER
 ```
 
 ### Camadas
@@ -179,6 +184,8 @@ cd client/queryplus-react && pnpm test
 
 ## 🐳 Docker (stack completa)
 
+📖 Nunca mexeu com OpenBao (nem com Vault)? Veja [docs/openbao.md](docs/openbao.md) para uma explicação bem simples de como os segredos são guardados neste projeto.
+
 ```bash
 docker compose --profile full up --build
 ```
@@ -227,6 +234,8 @@ Localização: `?culture=pt-BR` ou `?culture=en` (também via cookie / `Accept-L
 
 ## 🔑 Notas sobre autenticação
 
+📖 Nunca mexeu com Keycloak? Veja [docs/keycloak.md](docs/keycloak.md) para uma explicação bem simples de como o login funciona neste projeto.
+
 - Fluxo de código de autorização (authorization code) do OpenID Connect contra o Keycloak.
 - Sessão em cookie após o login (`QueryPlus.Auth`).
 - `/login` dispara o desafio OIDC; `/logout` e `/signout-callback` completam o logout nos canais front e back (proteção antiforgery para `POST /logout`).
@@ -256,6 +265,14 @@ Antes de qualquer ambiente que não seja de desenvolvimento: use senhas fortes e
 
 Todas as entidades de domínio usam chaves primárias de identidade do tipo **`int`**.
 
+## 🗂️ Modelo de dados
+
+Diagrama entidade-relacionamento (gerado a partir do schema real via JetBrains DataGrip):
+
+![Diagrama entidade-relacionamento do QueryPlus](docs/database/database-diagram.png)
+
+Veja também o [schema SQL completo](docs/database/schema.sql).
+
 ## 🌱 Dados de demonstração (automático na inicialização)
 
 Na inicialização da aplicação, o `DemoDataSeeder`:
@@ -280,7 +297,11 @@ Os scripts SQL também são espelhados em `docs/database/`.
 ## 📚 Documentação
 
 - [Especificação do software](docs/SPECIFICATION.md)
-- [Schema do banco de dados](docs/database/schema.sql)
+- [Schema do banco de dados](docs/database/schema.sql) e [diagrama entidade-relacionamento](docs/database/database-diagram.png) — veja a seção [🗂️ Modelo de dados](#-modelo-de-dados)
+- [🔑 Keycloak explicado do zero](docs/keycloak.md) — o que é, por que usamos, e como está configurado neste repositório
+- [🔒 OpenBao explicado do zero](docs/openbao.md) — o que é, por que usamos, e como está configurado neste repositório
+- [🚀 Guia de deploy em produção](docs/deploy-producao.md) — IIS (Windows, principal) e Docker em Linux (alternativa), com atenção especial a segurança
+- [🔧 CI/CD com Jenkins](docs/jenkins-ci-cd.md) — pipeline opcional de deploy multi-ambiente (DEV/QA/UAT/PRODUÇÃO)
 
 ## 📄 Licença
 
