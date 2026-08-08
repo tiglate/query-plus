@@ -66,6 +66,51 @@ services:
       retries: 15
       start_period: 30s
 
+  # Dev-mode OpenBao stores everything in memory - a restart (crash, OOM, host reboot) wipes
+  # the KV store, and openbao-init (restart: "no") does NOT automatically re-run. If `app`
+  # fails to start after this container restarts, reseed manually:
+  #   docker compose up openbao-init
+  # Acceptable for a dev-only stack; do not carry this restart policy into a production Vault.
+  openbao:
+    image: openbao/openbao:2.6.1
+    container_name: queryplus-openbao
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: "0.5"
+    environment:
+      BAO_DEV_ROOT_TOKEN_ID: "${OPENBAO_TOKEN}"
+      BAO_ADDR: "http://127.0.0.1:8200"
+    ports:
+      # Loopback-only: dev-mode OpenBao is unauthenticated beyond the root token, not meant to
+      # be reachable off-host.
+      - "127.0.0.1:8200:8200"
+    healthcheck:
+      test: ["CMD", "bao", "status"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # One-shot: seeds OpenBao's (in-memory, wiped on every restart) KV store from .env-supplied
+  # raw secret values, then exits. The app never reads these secrets directly from .env/compose
+  # - it fetches them from OpenBao at startup via OPENBAO_ADDR/OPENBAO_TOKEN instead.
+  openbao-init:
+    image: openbao/openbao:2.6.1
+    container_name: queryplus-openbao-init
+    restart: "no"
+    depends_on:
+      openbao:
+        condition: service_healthy
+    environment:
+      BAO_ADDR: "http://openbao:8200"
+      BAO_TOKEN: "${OPENBAO_TOKEN}"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        bao kv put secret/queryplus
+        ConnectionStrings__DefaultConnection="Server=sqlserver,1433;Database=QueryPlus;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;Encrypt=False"
+        Keycloak__ClientSecret="${Keycloak__ClientSecret}"
+
   app:
     build:
       context: .
@@ -76,13 +121,13 @@ services:
     cpus: "1.0"
     environment:
       ASPNETCORE_ENVIRONMENT: Docker
-      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=QueryPlus;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;Encrypt=False"
+      OPENBAO_ADDR: "http://openbao:8200"
+      OPENBAO_TOKEN: "${OPENBAO_TOKEN}"
       Keycloak__Authority: "http://localhost:8080/realms/queryplus"
       Keycloak__MetadataAddress: "http://keycloak:8080/realms/queryplus/.well-known/openid-configuration"
       Keycloak__BackchannelHost: "keycloak"
       Keycloak__BackchannelPort: "8080"
       Keycloak__ClientId: "${Keycloak__ClientId:-queryplus-web}"
-      Keycloak__ClientSecret: "${Keycloak__ClientSecret}"
       Keycloak__RequireHttpsMetadata: "false"
     ports:
       - "5000:8080"
@@ -91,6 +136,8 @@ services:
         condition: service_healthy
       keycloak:
         condition: service_healthy
+      openbao-init:
+        condition: service_completed_successfully
     profiles:
       - full
 

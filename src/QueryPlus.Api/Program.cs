@@ -14,6 +14,7 @@ const string CorsPolicyName = "QueryPlusSpa";
 
 EnvFileLoader.LoadFromAncestors(Directory.GetCurrentDirectory());
 EnvFileLoader.LoadFromAncestors(AppContext.BaseDirectory);
+await OpenBaoSecretLoader.LoadFromEnvironmentAsync();
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);

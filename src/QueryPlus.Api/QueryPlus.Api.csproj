@@ -20,6 +20,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.19.2" />
+    <PackageReference Include="VaultSharp" Version="1.17.5.1" />
   </ItemGroup>
   <Target Name="BuildClientAppIfMissing" BeforeTargets="BeforeBuild" Condition="'$(SkipClientAppBuild)' != 'true' And !Exists('$(MSBuildProjectDirectory)/wwwroot/index.html')">
     <Exec WorkingDirectory="$(ClientAppDirectory)" Command="pnpm install --frozen-lockfile" />

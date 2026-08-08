@@ -74,7 +74,7 @@ cp .env.example .env
 
 ⚠️ **Esses valores são credenciais fictícias de desenvolvimento.** Elas existem apenas para que o Docker e um notebook consigam subir rapidamente. **Não as utilize em produção, homologação ou qualquer ambiente compartilhado.** Rotacione os segredos, utilize um gerenciador de segredos e garanta HTTPS/senhas fortes antes de qualquer implantação real.
 
-O Docker Compose lê o `.env` para a substituição de variáveis. O `dotnet run` também carrega um `.env` na raiz do repositório no ambiente do processo (sem sobrescrever variáveis já definidas pelo shell ou pela CI).
+O Docker Compose lê o `.env` para a substituição de variáveis. O `dotnet run` também carrega um `.env` na raiz do repositório no ambiente do processo (sem sobrescrever variáveis já definidas pelo shell ou pela CI). O `.env.example` também traz um `OPENBAO_TOKEN` — só é usado pela stack Docker completa (veja [🐳 Docker (stack completa)](#-docker-stack-completa)); o fluxo de `dotnet run` acima não depende dele.
 
 ### 1. Suba a infraestrutura
 
@@ -185,6 +185,16 @@ docker compose --profile full up --build
 
 - API + SPA: http://localhost:5000
 - Usa `appsettings.Docker.json` / variáveis de ambiente para SQL Server e Keycloak.
+- Segredos vêm do **OpenBao** (`openbao`), não de variáveis de ambiente individuais: o serviço
+  `openbao-init` (one-shot) grava a connection string e o client secret do Keycloak em
+  `secret/queryplus` a partir dos valores fictícios do `.env`; o container `app` só recebe
+  `OPENBAO_ADDR`/`OPENBAO_TOKEN` e busca o restante em tempo de inicialização. Esse fluxo
+  containerizado é o único que usa OpenBao — o `dotnet run` na máquina host continua lendo
+  `ConnectionStrings__DefaultConnection`/`Keycloak__ClientSecret` diretamente do `.env`, como
+  antes.
+- OpenBao roda em modo dev (armazenamento em memória): um restart do container `openbao` limpa
+  o KV store. Se o `app` falhar ao iniciar depois disso, rode `docker compose up openbao-init`
+  para regravar os segredos.
 
 ## 🧰 Dev Containers
 
@@ -202,15 +212,16 @@ Prefira **variáveis de ambiente** (incluindo as do `.env`) em vez de versionar 
 
 | Configuração / variável de ambiente | Descrição |
 |-------------------|-------------|
-| `ConnectionStrings__DefaultConnection` | String de conexão com o SQL Server |
+| `ConnectionStrings__DefaultConnection` | String de conexão com o SQL Server (lida diretamente pelo `dotnet run` na máquina host; o container `app` recebe o mesmo valor via OpenBao) |
 | `Keycloak__Authority` | ex.: `http://localhost:8080/realms/queryplus` |
 | `Keycloak__ClientId` | `queryplus-web` |
-| `Keycloak__ClientSecret` | Client secret do OIDC (**fictício, apenas em `.env.example`**) |
+| `Keycloak__ClientSecret` | Client secret do OIDC (**fictício, apenas em `.env.example`**; mesma ressalva de escopo acima) |
 | `Keycloak__RequireHttpsMetadata` | `false` para Keycloak local em HTTP |
-| `MSSQL_SA_PASSWORD` | Senha do `sa` do SQL Server para o Compose |
+| `MSSQL_SA_PASSWORD` | Senha do `sa` do SQL Server para o Compose (e para seedar o OpenBao) |
 | `KEYCLOAK_ADMIN` / `KEYCLOAK_ADMIN_PASSWORD` | Usuário admin do Keycloak para o Compose |
+| `OPENBAO_TOKEN` | Root token de dev do OpenBao — usado pelo Compose para subir/seedar o `openbao` e repassado ao container `app` como `OPENBAO_TOKEN`. Não deve ter um `OPENBAO_ADDR` correspondente aqui: o app só busca segredos no OpenBao quando `OPENBAO_ADDR` também está definido no seu próprio ambiente, o que só acontece dentro do container. |
 
-O `appsettings.json` contém apenas valores padrão não sensíveis (logging, Authority/ClientId públicos). Os segredos devem vir do `.env`, do ambiente do host, ou de um cofre de segredos de produção — nunca do controle de versão.
+O `appsettings.json` contém apenas valores padrão não sensíveis (logging, Authority/ClientId públicos). Os segredos devem vir do `.env` (dev local via `dotnet run`), do OpenBao (stack Docker completa), ou de um cofre de segredos de produção — nunca do controle de versão.
 
 Localização: `?culture=pt-BR` ou `?culture=en` (também via cookie / `Accept-Language`).
 
