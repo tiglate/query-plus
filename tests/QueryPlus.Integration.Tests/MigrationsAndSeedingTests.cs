@@ -60,3 +60,45 @@ public sealed class MigrationsAndSeedingTests(SqlServerContainerFixture fixture)
         });
     }
 }
+
+/// <summary>
+/// Separate test class (own <see cref="IntegrationTestBase"/> instance/database) so the
+/// pre-existing foreign table is in place before <see cref="IntegrationTestBase.InitializeAsync"/>
+/// runs its own <see cref="DemoDataSeeder.SeedAsync"/> pass.
+/// </summary>
+[Trait("Category", "Integration")]
+public sealed class SeedingWithForeignTableTests(SqlServerContainerFixture fixture) : IntegrationTestBase(fixture)
+{
+    protected override async Task BeforeSeedAsync(string connectionString)
+    {
+        await using var connection = new SqlConnection(connectionString);
+        await connection.OpenAsync();
+        await using var cmd = connection.CreateCommand();
+        // Simulates a database shared with another, unrelated application.
+        cmd.CommandText = "CREATE TABLE dbo.tb_unrelated_legacy_app (Id INT PRIMARY KEY);";
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    [Fact]
+    public async Task Seeding_SkipsDemoData_WhenDatabaseHasForeignTables()
+    {
+        await WithScopeAsync(async sp =>
+        {
+            var db = sp.GetRequiredService<ApplicationDbContext>();
+            (await db.Categories.AnyAsync()).Should().BeFalse();
+            (await db.Procedures.AnyAsync()).Should().BeFalse();
+        });
+
+        await WithScopeAsync(async sp =>
+        {
+            var configuration = sp.GetRequiredService<IConfiguration>();
+            await using var connection = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
+            await connection.OpenAsync();
+            await using var cmd = connection.CreateCommand();
+            cmd.CommandText = "SELECT OBJECT_ID('dbo.Sp_Demo_Numbers_Paged', 'P');";
+            var objectId = await cmd.ExecuteScalarAsync();
+
+            (objectId is null or DBNull).Should().BeTrue();
+        });
+    }
+}

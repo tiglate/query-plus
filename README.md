@@ -239,7 +239,7 @@ Localização: `?culture=pt-BR` ou `?culture=en` (também via cookie / `Accept-L
 - Fluxo de código de autorização (authorization code) do OpenID Connect contra o Keycloak.
 - Sessão em cookie após o login (`QueryPlus.Auth`).
 - `/login` dispara o desafio OIDC; `/logout` e `/signout-callback` completam o logout nos canais front e back (proteção antiforgery para `POST /logout`).
-- A SPA conversa com a API **na mesma origem** (produção) ou pelo proxy de desenvolvimento do Vite (desenvolvimento). A API exige um token antiforgery + o cabeçalho `X-CSRF-TOKEN` em requisições que alteram estado (padrão de bootstrap: `GET /api/csrf` e depois ecoar o valor via cabeçalho). Todos os endpoints da API, exceto `/api/auth/*`, `/api/health`, `/api/csrf` e `/login`, exigem autenticação; autenticação ausente ou inválida retorna JSON `401 Unauthorized` (o React intercepta e redireciona para `/login`).
+- A SPA conversa com a API **na mesma origem** (produção) ou pelo proxy de desenvolvimento do Vite (desenvolvimento). A API exige um token antiforgery + o cabeçalho `X-CSRF-TOKEN` em requisições que alteram estado (padrão de bootstrap: `GET /api/csrf` e depois ecoar o valor via cabeçalho). Todos os endpoints da API, exceto `/api/auth/*`, `/api/health`, `/api/health/ready`, `/api/csrf` e `/login`, exigem autenticação; autenticação ausente ou inválida retorna JSON `401 Unauthorized` (o React intercepta e redireciona para `/login`).
 
 ### Rede em Dev Containers / Docker
 
@@ -273,13 +273,16 @@ Diagrama entidade-relacionamento (gerado a partir do schema real via JetBrains D
 
 Veja também o [schema SQL completo](docs/database/schema.sql).
 
-## 🌱 Dados de demonstração (automático na inicialização)
+## 🌱 Dados de demonstração (automático em Development/Docker)
 
-Na inicialização da aplicação, o `DemoDataSeeder`:
+Na inicialização da aplicação, o `DemoDataSeeder` sempre aplica as migrations do EF Core. A instalação dos dados de **demonstração**, porém, só acontece quando `Database:SeedDemoDataOnStartup=true` — `true` por padrão em `appsettings.Development.json`/`appsettings.Docker.json`, **`false`** no `appsettings.json` base (ou seja, desligado em `Production` e em qualquer ambiente sem override próprio). Há ainda uma segunda trava, sempre ativa e não desativável por configuração: se o banco já tiver alguma tabela que o QueryPlus não criou, o seed de demonstração é pulado, para nunca escrever num banco compartilhado com outra aplicação.
 
-1. Aplica as migrations do EF Core
-2. Instala as tabelas e stored procedures de demonstração a partir de `src/QueryPlus.Data/Seed/demo-objects.sql`
-3. Registra categorias/procedures/parâmetros/colunas a partir de `demo-catalog.json` (idempotente)
+Quando habilitado, o `DemoDataSeeder`:
+
+1. Instala as tabelas e stored procedures de demonstração a partir de `src/QueryPlus.Data/Seed/demo-objects.sql`
+2. Registra categorias/procedures/parâmetros/colunas a partir de `demo-catalog.json` (idempotente)
+
+Ver [docs/deploy-producao.md](docs/deploy-producao.md) (seção 4.2) para os detalhes de produção.
 
 ### Destaques
 

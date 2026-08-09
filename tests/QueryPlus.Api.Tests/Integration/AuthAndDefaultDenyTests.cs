@@ -28,6 +28,19 @@ public sealed class AuthAndDefaultDenyTests(QueryPlusApiApplicationFactory facto
     }
 
     [Fact]
+    public async Task Anonymous_health_ready_returns_503_when_database_is_unreachable()
+    {
+        // The factory points ConnectionStrings:DefaultConnection at an unreachable host
+        // (Server=127.0.0.1,1) on purpose, so this proves /api/health/ready does a real
+        // connectivity check rather than always reporting healthy like /api/health.
+        var response = await _client.GetAsync("/api/health/ready");
+
+        response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("unhealthy");
+    }
+
+    [Fact]
     public async Task Anonymous_csrf_returns_token_with_cookie()
     {
         var response = await _client.GetAsync(AntiforgeryApiHelper.CsrfEndpoint);

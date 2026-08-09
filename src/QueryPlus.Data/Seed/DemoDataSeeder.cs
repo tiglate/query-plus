@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -11,20 +12,36 @@ using QueryPlus.Domain.Enums;
 namespace QueryPlus.Data.Seed;
 
 /// <summary>
-/// Applies EF migrations, installs demo SQL objects, and registers catalog metadata
-/// so the app starts with end-to-end test procedures.
+/// Applies EF migrations, then - only when demo data seeding is enabled and safe - installs demo
+/// SQL objects and registers catalog metadata so the app starts with end-to-end test procedures.
 /// </summary>
 public sealed class DemoDataSeeder(
     ApplicationDbContext db,
     IConfiguration configuration,
     ILogger<DemoDataSeeder> logger)
 {
+    private const string EfMigrationsHistoryTable = "__EFMigrationsHistory";
+
+    private static readonly Regex DemoTableNameRegex =
+        new(@"CREATE TABLE\s+dbo\.(\w+)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         if (db.Database.IsRelational())
         {
             logger.LogInformation("Applying database migrations…");
             await db.Database.MigrateAsync(cancellationToken);
+        }
+
+        // Database:SeedDemoDataOnStartup defaults to false (see appsettings.json) and is only
+        // flipped to true for Development/Docker (appsettings.{Environment}.json) - a Production
+        // deploy that never sets ASPNETCORE_ENVIRONMENT=Development/Docker gets no demo data,
+        // with no extra opt-out step required.
+        if (!configuration.GetValue("Database:SeedDemoDataOnStartup", false))
+        {
+            logger.LogInformation(
+                "Demo data seeding is disabled (Database:SeedDemoDataOnStartup=false); skipping.");
+            return;
         }
 
         var connectionString = configuration.GetConnectionString("DefaultConnection")
@@ -35,6 +52,16 @@ public sealed class DemoDataSeeder(
         if (string.IsNullOrWhiteSpace(databaseName))
         {
             databaseName = "QueryPlus";
+        }
+
+        // Independent safety net: even if the flag above is true, never touch a database that
+        // already has tables QueryPlus didn't create - it's shared with something else.
+        if (db.Database.IsRelational() && await HasForeignTablesAsync(connectionString, cancellationToken))
+        {
+            logger.LogWarning(
+                "Database {Database} already contains tables that QueryPlus did not create; " +
+                "skipping demo data seed to avoid touching a shared/existing database.", databaseName);
+            return;
         }
 
         try
@@ -49,6 +76,58 @@ public sealed class DemoDataSeeder(
         await SeedCatalogAsync(databaseName, cancellationToken);
 
         logger.LogInformation("Demo data seed completed for database {Database}.", databaseName);
+    }
+
+    /// <summary>
+    /// True when the database has any base table that isn't one QueryPlus itself owns - either
+    /// an EF-migrated catalog/audit table or a demo object installed by <c>demo-objects.sql</c>.
+    /// The known-table set is derived from the live EF model and the seed script itself, so it
+    /// can't drift out of sync as entities or demo objects are added.
+    /// </summary>
+    private async Task<bool> HasForeignTablesAsync(string connectionString, CancellationToken cancellationToken)
+    {
+        var knownTables = GetKnownTableNames();
+
+        await using var connection = new SqlConnection(connectionString);
+        await connection.OpenAsync(cancellationToken);
+        await using var cmd = connection.CreateCommand();
+        cmd.CommandText = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'";
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            if (!knownTables.Contains(reader.GetString(0)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private HashSet<string> GetKnownTableNames()
+    {
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { EfMigrationsHistoryTable };
+
+        foreach (var entityType in db.Model.GetEntityTypes())
+        {
+            var tableName = entityType.GetTableName();
+            if (!string.IsNullOrEmpty(tableName))
+            {
+                names.Add(tableName);
+            }
+        }
+
+        var demoObjectsPath = ResolveSeedFile("demo-objects.sql");
+        if (File.Exists(demoObjectsPath))
+        {
+            var script = File.ReadAllText(demoObjectsPath);
+            foreach (Match match in DemoTableNameRegex.Matches(script))
+            {
+                names.Add(match.Groups[1].Value);
+            }
+        }
+
+        return names;
     }
 
     private async Task InstallSqlObjectsAsync(string connectionString, CancellationToken cancellationToken)

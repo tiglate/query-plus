@@ -16,6 +16,7 @@ EnvFileLoader.LoadFromAncestors(Directory.GetCurrentDirectory());
 EnvFileLoader.LoadFromAncestors(AppContext.BaseDirectory);
 await OpenBaoSecretLoader.LoadFromEnvironmentAsync();
 var builder = WebApplication.CreateBuilder(args);
+ProductionSecretsValidator.Validate(builder.Configuration, builder.Environment);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApiServices();
