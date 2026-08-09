@@ -329,9 +329,10 @@ pipeline {
                             --profile full up -d
                     """
                 }
-                // Smoke test simples - ver ressalvas importantes na seção 9 sobre
-                // o que este endpoint realmente verifica (e o que NÃO verifica).
-                sh 'curl -f http://localhost:8080/api/health'
+                // Smoke test simples - /ready confirma conectividade real com o SQL
+                // Server; ver ressalvas importantes na seção 9 sobre o que mesmo assim
+                // NÃO é verificado (Keycloak, OpenBao, um login de verdade).
+                sh 'curl -f http://localhost:8080/api/health/ready'
             }
         }
 
@@ -349,7 +350,7 @@ pipeline {
                             --profile full up -d
                     """
                 }
-                sh 'curl -f http://localhost:8080/api/health'
+                sh 'curl -f http://localhost:8080/api/health/ready'
             }
         }
 
@@ -380,7 +381,7 @@ pipeline {
                             --profile full up -d
                     """
                 }
-                sh 'curl -f http://localhost:8080/api/health'
+                sh 'curl -f http://localhost:8080/api/health/ready'
             }
         }
 
@@ -442,11 +443,12 @@ pipeline {
                     '''
                 }
 
-                // Smoke test pós-deploy - ver ressalvas na seção 9: isto só prova
-                // que o processo subiu, não que o banco/Keycloak estão saudáveis.
+                // Smoke test pós-deploy - /ready confirma conectividade real com o SQL
+                // Server; ver ressalvas na seção 9 sobre o que mesmo assim NÃO é
+                // verificado (Keycloak, OpenBao, um login de verdade).
                 powershell '''
                     Start-Sleep -Seconds 5
-                    Invoke-WebRequest -Uri "https://queryplus.empresa.example.com/api/health" -UseBasicParsing
+                    Invoke-WebRequest -Uri "https://queryplus.empresa.example.com/api/health/ready" -UseBasicParsing
                 '''
             }
         }
@@ -581,7 +583,7 @@ docker compose -f docker-compose.yml -f docker-compose.deploy.yml --profile full
 | ☐ Verifiquei se essa build envolveu alguma migration de banco que precise de atenção especial | |
 | ☐ Reimplantei o artefato antigo (imagem Docker ou pasta `publish/`, conforme o ambiente) | |
 | ☐ Excluí `App_Data\exports` do `robocopy` (produção) | |
-| ☐ Rodei o smoke test (`GET /api/health`) após o rollback | |
+| ☐ Rodei o smoke test (`GET /api/health/ready`) após o rollback | |
 | ☐ Comuniquei o time sobre o rollback e abri um item de trabalho para investigar a causa raiz | |
 
 ---
@@ -590,23 +592,15 @@ docker compose -f docker-compose.yml -f docker-compose.deploy.yml --profile full
 
 Esta seção existe para não passar a falsa impressão de que "está tudo pronto". Leia com atenção antes do primeiro deploy real em produção via este pipeline.
 
-### 🚨 `SeedDemoDataAsync()` roda sempre, incondicionalmente, em todo ambiente
+### ✅ Seed de demonstração — gateado, mas confira o `ASPNETCORE_ENVIRONMENT` de cada estágio
 
-Em `src/QueryPlus.Api/Program.cs`, a linha `await app.SeedDemoDataAsync();` executa **em toda subida da aplicação, em qualquer ambiente**, sem nenhum controle por `ASPNETCORE_ENVIRONMENT` hoje. Isso significa que, ao subir a aplicação pela primeira vez contra um banco de PRODUÇÃO vazio, o `DemoDataSeeder`:
+`DemoDataSeeder` (`src/QueryPlus.Api/Program.cs`, chamado via `await app.SeedDemoDataAsync();`) sempre aplica as migrations do EF Core, em qualquer ambiente — isso é desejável. A instalação de objetos SQL/catálogo de **demonstração** (`Sp_Demo_*`, `tb_usa_president` e afins) é uma etapa separada, controlada pela configuração `Database:SeedDemoDataOnStartup` (`appsettings.{Environment}.json`): `true` em `Development`/`Docker`, `false` no `appsettings.json` base — ou seja, `false` em qualquer ambiente sem override próprio, incluindo `Production`. Há ainda um segundo gate independente e não desativável por configuração: se o banco já tiver alguma tabela que o QueryPlus não criou, o seed de demonstração é pulado incondicionalmente (ver `docs/deploy-producao.md` seção 4.2 para os detalhes).
 
-1. Aplica automaticamente todas as migrations do EF Core — isso, isoladamente, é geralmente desejável.
-2. **E também** instala objetos SQL de demonstração e um catálogo de procedures de demonstração (`Sp_Demo_*`, `tb_usa_president` e afins) — isso é **altamente indesejável** num banco de produção real.
+Isso importa especificamente para **este** pipeline porque os estágios DEV/QA/UAT usam `docker compose --profile full`, cuja imagem roda com `ASPNETCORE_ENVIRONMENT=Docker` por padrão — então DEV/QA/UAT **recebem** dados de demonstração de propósito (é o comportamento esperado para ambientes de teste interno). O estágio **Deploy PRODUÇÃO (IIS)**, por sua vez, publica direto no IIS com `ASPNETCORE_ENVIRONMENT=Production` no `web.config` (seção 6) — nesse ambiente o seed de demonstração já vem desligado, sem nenhum passo extra no `Jenkinsfile`. O único jeito de isso dar errado é se alguém, manualmente, definir `Database__SeedDemoDataOnStartup=true` (ou trocar `ASPNETCORE_ENVIRONMENT` para algo diferente de `Production`) na configuração do IIS de produção.
 
-Hoje **não existe** nenhuma variável de configuração para desativar apenas a parte de demonstração do seeder. Diante disso, o time tem duas opções, nenhuma delas "resolvida automaticamente" por este pipeline:
+### 🩺 `GET /api/health/ready` é o smoke test recomendado, mas ainda não prova tudo
 
-- **Opção A**: aceitar que os objetos de demonstração sejam criados no primeiro start de produção e removê-los manualmente logo em seguida (antes de qualquer uso real do sistema).
-- **Opção B**: tratar "impedir a instalação de dados de demonstração em produção" como um item de trabalho de desenvolvimento **a ser resolvido antes do primeiro deploy real** (ex: adicionar um gate por `ASPNETCORE_ENVIRONMENT` dentro do próprio `DemoDataSeeder`).
-
-Nenhum passo de PowerShell ou Jenkins consegue contornar isso de fora — é um comportamento do próprio código da aplicação.
-
-### 🩺 `GET /api/health` não é uma prova de que o deploy está saudável
-
-O endpoint usado como *smoke test* neste pipeline (`HealthController.cs`) apenas retorna `{ "status": "healthy" }` de forma incondicional, assim que o processo sobe — **[AllowAnonymous]**, sem checar conexão com SQL Server, Keycloak ou OpenBao. Não existem hoje endpoints `/health/live` ou `/health/ready` no projeto. Um "verde" nesse smoke test prova apenas que o processo .NET subiu; **não** prova que o banco de dados está acessível, que as migrations aplicaram sem erro, ou que a autenticação via Keycloak está funcional. Trate os estágios de "Deploy DEV/QA/UAT/PRODUÇÃO" deste pipeline como confirmação de que **o processo subiu**, e complemente sempre com uma verificação manual funcional (login real, execução de uma procedure catalogada) antes de considerar um deploy de produção como concluído.
+Desde que `/api/health/ready` existe (`HealthController.cs`, `[AllowAnonymous]`), os estágios de deploy deste pipeline chamam esse endpoint em vez do antigo `/api/health` simples — `/ready` faz um `CanConnectAsync()` real contra o SQL Server (timeout de 5s) e responde HTTP 503 se o banco estiver inacessível, então um "verde" aqui já prova bem mais do que "o processo subiu". Ainda assim, ele **não** verifica Keycloak nem OpenBao, e não prova que as migrations aplicaram sem erro nem que a autenticação funciona de ponta a ponta. Trate os estágios de "Deploy DEV/QA/UAT/PRODUÇÃO" deste pipeline como confirmação de que **o processo subiu e consegue falar com o SQL Server**, e complemente sempre com uma verificação manual funcional (login real, execução de uma procedure catalogada) antes de considerar um deploy de produção como concluído.
 
 ### 🔌 Duas formas válidas de fornecer segredos ao IIS — escolha uma conscientemente
 
@@ -656,7 +650,7 @@ sequenceDiagram
     Jenkins-->>QALead: ⏸️ input "Aprovar deploy em UAT?"
     QALead->>Jenkins: ✅ Aprovado
     Jenkins->>UATSrv: docker compose pull + up -d (tag build-N)
-    UATSrv-->>Jenkins: GET /api/health = healthy
+    UATSrv-->>Jenkins: GET /api/health/ready = healthy
     Jenkins-->>RelMgr: ⏸️ input "Aprovar deploy em PRODUÇÃO?"
     RelMgr->>Jenkins: ✅ Aprovado
     Jenkins->>IISSrv: unstash publish-artifact
@@ -665,7 +659,7 @@ sequenceDiagram
     Jenkins->>IISSrv: powershell: Start-WebAppPool
     IISSrv->>Vault: OPENBAO_ADDR + OPENBAO_TOKEN -> lê secret/queryplus (KV v2)
     Vault-->>IISSrv: ConnectionStrings__DefaultConnection, Keycloak__ClientSecret
-    IISSrv-->>Jenkins: GET /api/health = healthy
+    IISSrv-->>Jenkins: GET /api/health/ready = healthy
     Jenkins-->>Dev: ✅ Pipeline concluído (build-N em produção)
 ```
 

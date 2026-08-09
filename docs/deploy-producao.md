@@ -465,29 +465,18 @@ dotnet ef database update \
 
 Isso precisa da variável `ConnectionStrings__DefaultConnection` apontando para o banco de produção no ambiente onde você roda o comando.
 
-**Opção B — deixar a própria aplicação aplicar na primeira subida.** O `DemoDataSeeder`, chamado a partir de `Program.cs` (`await app.SeedDemoDataAsync();`), aplica as migrations automaticamente todo início de aplicação — isso é geralmente desejável (garante que o esquema esteja sempre atualizado). **Porém, leia com atenção o aviso a seguir antes de contar com essa opção.**
+**Opção B — deixar a própria aplicação aplicar na primeira subida.** O `DemoDataSeeder`, chamado a partir de `Program.cs` (`await app.SeedDemoDataAsync();`), aplica as migrations automaticamente todo início de aplicação, em **todo** ambiente — isso é geralmente desejável (garante que o esquema esteja sempre atualizado). A instalação dos objetos/catálogo de **demonstração** é uma etapa separada, controlada e gateada — ver seção 4.2.
 
-### 4.2. ⚠️ RISCO REAL: o seed de demonstração roda sempre, em qualquer ambiente
+### 4.2. Seed de demonstração — gateado por configuração, nunca em Production por padrão
 
-Este é o ponto mais importante deste documento — leia com atenção antes do primeiro deploy contra um banco de produção real.
+Diferente das migrations (que sempre rodam), o `DemoDataSeeder` só instala objetos SQL de demonstração (`Sp_Demo_*`, `tb_usa_president`, etc.) e o catálogo de procedures de exemplo quando **todas** as condições abaixo são verdadeiras:
 
-> Em `src/QueryPlus.Api/Program.cs`, a linha `await app.SeedDemoDataAsync();` executa **sempre, incondicionalmente, em todo ambiente** — hoje **não existe** nenhum controle por `ASPNETCORE_ENVIRONMENT` (nenhum `if (app.Environment.IsDevelopment())` protegendo essa chamada).
+1. **`Database:SeedDemoDataOnStartup` está `true`.** Isso é controlado por `appsettings.{Environment}.json`: `appsettings.Development.json` e `appsettings.Docker.json` definem `true`; o `appsettings.json` base (usado por `Production` e qualquer ambiente sem override próprio) define `false`. Ou seja: **basta rodar com `ASPNETCORE_ENVIRONMENT=Production` (sem nenhum `appsettings.Production.json` customizado) para o seed de demonstração já vir desligado por padrão** — nenhuma etapa manual extra é necessária.
+2. **O banco ainda não tem nenhuma tabela "estranha".** Mesmo que (1) esteja `true` por engano (ex.: alguém copiou `appsettings.Development.json` para o ambiente errado), o `DemoDataSeeder` consulta `INFORMATION_SCHEMA.TABLES` depois de aplicar as migrations e compara com o conjunto de tabelas que o próprio QueryPlus criaria (tabelas do modelo EF + `__EFMigrationsHistory` + as tabelas de `demo-objects.sql`). Se encontrar qualquer tabela fora desse conjunto — sinal de que o banco já é compartilhado com outra aplicação, ou já tem dados reais de um deploy anterior — o seed de demonstração é **pulado incondicionalmente**, com um aviso no log. Essa checagem não pode ser desativada por configuração.
 
-Isso quer dizer que, ao subir a aplicação pela **primeira vez** contra um banco de produção vazio, o `DemoDataSeeder` vai:
+Se qualquer uma das duas condições falhar, o `DemoDataSeeder` aplica as migrations normalmente e simplesmente não instala nada de demonstração — sem erro, só um log informativo.
 
-1. ✅ Aplicar automaticamente todas as migrations do EF Core — isso geralmente **é** desejável.
-2. ❌ **Instalar objetos SQL de demonstração e um catálogo de procedures de demonstração** (`Sp_Demo_*`, `tb_usa_president`, e outros) — isso é **altamente indesejável** em um banco de produção real.
-
-Hoje **não existe** nenhuma forma de desativar apenas a parte (2) via configuração — é tudo ou nada, dentro do mesmo método.
-
-**O time precisa escolher conscientemente uma das duas estratégias abaixo antes do primeiro deploy real:**
-
-| Estratégia                                     | Como funciona                                                                                                                                                                                                                                                          | Quando faz sentido                                                                                                                                                      |
-| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **A. Aceitar temporariamente e limpar depois** | Deixe o primeiro start instalar os objetos de demo, confirme que a aplicação subiu corretamente, depois rode um script manual para remover os objetos/procedures de demonstração e as linhas de catálogo correspondentes do banco de produção                          | Deploys sob pressão de tempo, equipes já confortáveis em auditar e limpar o catálogo manualmente depois                                                                 |
-| **B. Tratar como item de trabalho bloqueante** | Antes do primeiro deploy real, o time implementa um gate (ex.: `if (!app.Environment.IsProduction())` ou uma flag de configuração dedicada) para que o seed de demonstração nunca rode contra um banco marcado como produção, e só então aplica as migrations "limpas" | Ambientes regulados, bancos compartilhados com outros sistemas, ou qualquer situação em que "objetos de demonstração aparecerem" mesmo que por minutos seja inaceitável |
-
-⚠️ Este documento **não resolve** esse problema por você — ele existe hoje no código, sem solução pronta via configuração. Trate a escolha acima como uma decisão de equipe, documentada, antes de apontar `ConnectionStrings__DefaultConnection` para um banco de produção real pela primeira vez.
+**Na prática, para um primeiro deploy de produção você não precisa fazer nada especial aqui**: rode com `ASPNETCORE_ENVIRONMENT=Production` (seção 5.7) e o seed de demonstração fica desligado automaticamente. Isso só deixa de ser verdade se alguém explicitamente definir `Database__SeedDemoDataOnStartup=true` no ambiente de produção — o que só faz sentido para um ambiente de demonstração/vendas deliberado, nunca para produção real.
 
 ### 4.3. Criando um login de aplicação com privilégio mínimo (nunca use `sa`)
 
@@ -758,19 +747,20 @@ icacls "C:\inetpub\queryplus\App_Data\exports" /grant "IIS AppPool\QueryPlusAppP
 ### 5.9. Testar (smoke test)
 
 1. Reinicie o site/pool no IIS Manager (botão direito no site → **Manage Website → Restart**, ou reinicie só o Application Pool).
-2. Teste o endpoint de saúde:
+2. Teste os endpoints de saúde:
 
 ```bash
 curl -i https://queryplus.suaempresa.com/api/health
+curl -i https://queryplus.suaempresa.com/api/health/ready
 ```
 
-Resposta esperada:
+Resposta esperada (ambos):
 
 ```json
 { "status": "healthy" }
 ```
 
-⚠️ **Importante entender o que esse endpoint realmente verifica**: `GET /api/health` (implementado em `HealthController.cs`, `[AllowAnonymous]`) só confirma que **o processo .NET está de pé** — ele **não** verifica conectividade com o SQL Server, com o Keycloak ou com o OpenBao. Hoje não existem endpoints adicionais como `/health/live` ou `/health/ready` que façam essa verificação mais profunda. Um `{"status":"healthy"}` **não é garantia** de que o banco de dados ou o Keycloak estejam alcançáveis.
+⚠️ **Importante entender a diferença entre os dois**: `GET /api/health` (implementado em `HealthController.cs`, `[AllowAnonymous]`) confirma **apenas** que **o processo .NET está de pé** — ele **não** verifica conectividade com nada. `GET /api/health/ready` vai um passo além: ele faz um `CanConnectAsync()` real contra o SQL Server (timeout de 5s) e responde **HTTP 503** com `{"status":"unhealthy","reason":"database unreachable"}` se o banco não estiver alcançável. Use `/api/health/ready` como o smoke test principal — ele já teria pego, por exemplo, uma string de conexão errada ou um firewall bloqueando o SQL Server. Nenhum dos dois verifica o Keycloak ou o OpenBao, então mesmo um `/api/health/ready` verde não é garantia de que o login funciona — complete sempre com o teste manual do passo 3 abaixo.
 
 3. Por isso, complemente o smoke test testando o fluxo real de login pelo navegador:
     - Acesse `https://queryplus.suaempresa.com` — você deve ser redirecionado para a tela de login do Keycloak (`https://auth.suaempresa.com/...`).
@@ -865,7 +855,7 @@ As seções anteriores cobrem a **primeira** publicação. Para atualizar um sit
     Start-WebAppPool -Name "QueryPlusAppPool"
     ```
 
-5. Repita o smoke test da seção 5.9 (`/api/health` + login real) antes de considerar a atualização concluída.
+5. Repita o smoke test da seção 5.9 (`/api/health` + `/api/health/ready` + login real) antes de considerar a atualização concluída.
 
 💡 Esse é exatamente o mesmo padrão parar → copiar → iniciar que o `docs/jenkins-ci-cd.md` automatiza no estágio de deploy em produção — vale a pena ler os dois documentos em conjunto se você for automatizar isso.
 
@@ -882,14 +872,14 @@ Use esta tabela como revisão final antes de considerar o ambiente pronto. Cada 
 | ⬜  | Fragmentos de unseal e root token do OpenBao guardados separadamente, fora do próprio servidor                                                                  | 3.3.2         |
 | ⬜  | Firewall restringindo quem alcança as portas internas do Keycloak (8080) e do OpenBao (8200) — só o proxy local                                                 | 3.2           |
 | ⬜  | Login de aplicação do SQL Server com privilégio mínimo (`db_datareader`/`db_datawriter`/`EXECUTE`), nunca `sa`                                                  | 4.3           |
-| ⬜  | Nenhum segredo de desenvolvimento (`MSSQL_SA_PASSWORD` do `.env`, client secret `change-me-in-production`, `demo/demo`/`admin/admin`) reaproveitado em produção | 3.4, 3.7, 4.3 |
+| ⬜  | Nenhum segredo de desenvolvimento (`MSSQL_SA_PASSWORD` do `.env`, client secret `change-me-in-production`, `demo/demo`/`admin/admin`) reaproveitado em produção — a aplicação já recusa iniciar com `ASPNETCORE_ENVIRONMENT=Production` se `ConnectionStrings:DefaultConnection` ou `Keycloak:ClientSecret` estiverem vazios ou ainda forem esses valores dummy (`ProductionSecretsValidator`), mas isso não cobre `demo/demo`/`admin/admin` no realm do Keycloak — confira manualmente | 3.4, 3.7, 4.3 |
 | ⬜  | Cookie de sessão servido só sobre HTTPS real (garante `Secure` automaticamente)                                                                                 | 5.9           |
 | ⬜  | Keycloak rodando com `start` (produção), não `start-dev`                                                                                                        | 3.4.1         |
 | ⬜  | Keycloak com banco Postgres real, não o datastore efêmero de dev                                                                                                | 3.4.1         |
 | ⬜  | Realm de produção criado do zero, sem usuários de demonstração                                                                                                  | 3.6           |
 | ⬜  | `Cors__AllowedOrigins__0` (e demais) configurados com a(s) origem(ns) real(is) da SPA                                                                           | 5.7           |
 | ⬜  | `Keycloak__RequireHttpsMetadata=true` em produção                                                                                                               | 5.7           |
-| ⬜  | Decisão tomada e documentada sobre o risco do seed de demonstração automático (`SeedDemoDataAsync`) antes do primeiro deploy                                    | 4.2           |
+| ⬜  | `ASPNETCORE_ENVIRONMENT=Production` está de fato definido (senão `Database:SeedDemoDataOnStartup` não assume o `false` do `appsettings.json` base) e ninguém setou `Database__SeedDemoDataOnStartup=true` manualmente | 4.2           |
 | ⬜  | Permissões NTFS do `web.config` restritas (se a Opção B de segredos for usada)                                                                                  | 5.7           |
 | ⬜  | `stdoutLogEnabled` desativado (`false`) fora de sessões de depuração pontuais                                                                                   | 8             |
 
@@ -932,7 +922,7 @@ O repositório já traz um `Dockerfile` na raiz, usado para este cenário. Ele:
 - Usa a imagem `mcr.microsoft.com/dotnet/sdk:10.0` no estágio de build, com Node.js 22 copiado da imagem oficial `node:22-slim` e `pnpm@10.14.0` ativado via Corepack — ou seja, **não precisa instalar Node/pnpm manualmente no servidor**, tudo acontece dentro do build da imagem.
 - Roda o mesmo `dotnet publish src/QueryPlus.Api/QueryPlus.Api.csproj -c Release -o /app/publish /p:UseAppHost=false` usado na Parte 3.
 - No estágio final, usa `mcr.microsoft.com/dotnet/aspnet:10.0` (runtime, já resolvendo a mesma dependência de framework-dependent explicada na seção 5.1 — só que aqui embutida na própria imagem, sem precisar de Hosting Bundle).
-- Expõe a porta `8080` e já define `ENV ASPNETCORE_URLS=http://+:8080` e `ENV ASPNETCORE_ENVIRONMENT=Docker` (um nome de ambiente próprio para o cenário containerizado — não é `Production`, mas conta igualmente como "não-Development" para a checagem obrigatória de CORS).
+- Expõe a porta `8080` e já define `ENV ASPNETCORE_URLS=http://+:8080` e `ENV ASPNETCORE_ENVIRONMENT=Docker` (um nome de ambiente próprio para o cenário containerizado — não é `Production`, mas conta igualmente como "não-Development" para a checagem obrigatória de CORS). ⚠️ Esse mesmo nome de ambiente também ativa `Database:SeedDemoDataOnStartup=true` via `appsettings.Docker.json` (seção 4.2) — é por isso que o comando de exemplo da seção 7.2 sobrescreve para `Production`.
 - Roda como usuário não-root (`$APP_UID`) e já cria a pasta `App_Data/exports` com o dono correto.
 - Já traz um `HEALTHCHECK` que chama `GET /api/health` a cada 30 segundos.
 
@@ -989,7 +979,7 @@ server {
 
 ⚠️ Diferente do cenário do IIS (onde o próprio IIS termina o TLS), aqui o proxy reverso é quem termina o TLS **na frente** do container QueryPlus. Isso significa que, se no futuro a aplicação precisar saber o protocolo/host original da requisição (por exemplo, para gerar URLs absolutas corretas), será necessário configurar o middleware `ForwardedHeaders` do ASP.NET Core em `Program.cs` — algo que **não existe hoje** no código. Na prática, para o uso atual da aplicação (cookie de sessão, redirecionamento OIDC), isso não costuma ser bloqueante, mas é um ponto a manter em mente neste cenário especificamente (diferente do IIS, que termina TLS ele mesmo).
 
-⚠️ Todos os avisos de segurança da Parte 1 (nunca usar root token do OpenBao, nunca usar `sa` no SQL Server, nunca reaproveitar segredos de dev) e o risco do seed de demonstração (seção 4.2) valem **igualmente** neste cenário — containerizar tudo não elimina nenhum desses riscos.
+⚠️ Todos os avisos de segurança da Parte 1 (nunca usar root token do OpenBao, nunca usar `sa` no SQL Server, nunca reaproveitar segredos de dev) valem **igualmente** neste cenário. O gate do seed de demonstração (seção 4.2) também vale aqui — o comando de exemplo da seção 7.2 já usa `-e ASPNETCORE_ENVIRONMENT=Production`, o que é importante: a imagem do `Dockerfile` roda com `ASPNETCORE_ENVIRONMENT=Docker` por padrão (`appsettings.Docker.json` define `Database:SeedDemoDataOnStartup=true`, para a demo local de stack completa), então **não** sobrescrever essa variável para `Production` no `docker run` faria o container instalar dados de demonstração contra o banco real.
 
 ---
 
@@ -1002,8 +992,9 @@ server {
 | **OpenBao "sealed" depois de um restart**                                                                         | Todo restart do container do OpenBao volta ao estado selado — isso é esperado, não é um bug                                                            | Rode `bao operator unseal` três vezes (ou o número correspondente ao limiar configurado), colando um fragmento de cada vez, conforme a seção 3.3.2; considere documentar isso no runbook de operação da equipe                                                                                                              |
 | A aplicação recusa iniciar reclamando de `Cors:AllowedOrigins`                                                    | `Cors__AllowedOrigins__0` não foi definido no `web.config`/variáveis de ambiente do container, e o ambiente não é `Development`                        | Adicione `Cors__AllowedOrigins__0` (e `__1`, `__2` se houver mais de uma origem) com a(s) URL(s) pública(s) real(is) da SPA, seção 5.7                                                                                                                                                                                      |
 | A aplicação recusa iniciar depois de configurar `OPENBAO_ADDR`/`OPENBAO_TOKEN`                                    | O OpenBao está inacessível (rede/firewall) ou o token está expirado/inválido, ou o OpenBao está selado                                                 | Teste `curl https://vault.suaempresa.com:8200/v1/sys/health` a partir do Windows Server; confirme que o token ainda não expirou (`bao token lookup`); confirme que o cofre não está selado (seção acima)                                                                                                                    |
-| `/api/health` responde `{"status":"healthy"}` mas a aplicação não funciona de verdade                             | Esse endpoint só verifica se o processo está de pé — não checa SQL Server nem Keycloak/OpenBao (ver seção 5.9)                                         | Teste o fluxo de login completo e uma tela que efetivamente consulte o banco, não confie só no `/api/health`                                                                                                                                                                                                                |
-| Objetos `Sp_Demo_*`/`tb_usa_president` aparecem no catálogo de produção                                           | O `DemoDataSeeder` instalou os dados de demonstração no primeiro start, como descrito na seção 4.2                                                     | Siga uma das duas estratégias da seção 4.2 (limpar manualmente ou implementar um gate antes de repetir o deploy)                                                                                                                                                                                                            |
+| `/api/health` responde `{"status":"healthy"}` mas a aplicação não funciona de verdade                             | `/api/health` só verifica se o processo está de pé, não SQL Server/Keycloak/OpenBao — use `/api/health/ready` para uma checagem real de SQL Server (ver seção 5.9)                                        | Teste `GET /api/health/ready` (deve responder 503 se o SQL Server estiver inacessível); complete sempre com o fluxo de login completo e uma tela que efetivamente consulte o banco                                                                                                                                                                                                                |
+| Objetos `Sp_Demo_*`/`tb_usa_president` aparecem no catálogo de produção                                           | `Database:SeedDemoDataOnStartup` está `true` nesse ambiente — ou porque `ASPNETCORE_ENVIRONMENT` não está de fato `Production`, ou porque alguém definiu `Database__SeedDemoDataOnStartup=true` manualmente (ver seção 4.2)                                                     | Confirme `ASPNETCORE_ENVIRONMENT=Production` no `web.config`/ambiente e remova qualquer override manual de `Database__SeedDemoDataOnStartup`; depois, limpe manualmente os objetos/linhas de catálogo de demonstração já instalados                                                                                                                                                                                                            |
+| Aplicação recusa iniciar com `InvalidOperationException` mencionando "dummy password"/"placeholder value"         | `ProductionSecretsValidator` detectou `ConnectionStrings:DefaultConnection` ou `Keycloak:ClientSecret` ainda com o valor de desenvolvimento (`Your_strong_Password123`/`change-me-in-production`) enquanto `ASPNETCORE_ENVIRONMENT=Production` — isso é intencional, não um bug | Configure os segredos reais de produção (seção 3.7/4.3) antes de subir com `ASPNETCORE_ENVIRONMENT=Production`                                                                                                                                                                                                              |
 | Redirecionamento de login cai em um domínio Docker-interno (`http://keycloak:8080/...`) em vez do domínio público | `Keycloak__Authority` foi configurado com o hostname interno do Docker em vez da URL pública                                                           | Use sempre a URL **pública** HTTPS do Keycloak (`https://auth.suaempresa.com/realms/queryplus`) em `Keycloak__Authority`; hostnames internos só valem para `Keycloak__MetadataAddress`/`Keycloak__BackchannelHost` em cenários específicos de rede                                                                          |
 
 ---
@@ -1020,15 +1011,15 @@ Antes de anunciar o QueryPlus como disponível para os usuários finais, confirm
 | ⬜  | Realm de produção do Keycloak criado do zero, sem usuários/segredos de demonstração, com client secret gerado de verdade                                                                                                                                                     |
 | ⬜  | Login de aplicação do SQL Server (`queryplus_app` ou equivalente) criado com privilégio mínimo, `sa` não usado pela aplicação                                                                                                                                                |
 | ⬜  | Migrations do EF Core aplicadas contra o banco de produção                                                                                                                                                                                                                   |
-| ⬜  | Decisão da equipe tomada e registrada sobre o risco do seed de demonstração automático (`SeedDemoDataAsync`) — ver seção 4.2                                                                                                                                                 |
+| ⬜  | `ASPNETCORE_ENVIRONMENT=Production` confirmado no `web.config`/ambiente — garante `Database:SeedDemoDataOnStartup=false` (nenhum objeto de demonstração instalado) e ativa o `ProductionSecretsValidator` (falha rápido se a connection string ou o client secret ainda forem os valores dummy) — ver seção 4.2                                                                                                                                                 |
 | ⬜  | .NET 10 Hosting Bundle instalado no Windows Server, papel "Web Server (IIS)" habilitado                                                                                                                                                                                      |
 | ⬜  | `dotnet publish` gerado com sucesso (SPA incluída) e copiado para o servidor                                                                                                                                                                                                 |
 | ⬜  | Application Pool criado com "No Managed Code", site criado, binding HTTPS configurado com certificado válido                                                                                                                                                                 |
 | ⬜  | `web.config` com as variáveis de ambiente corretas (`ASPNETCORE_ENVIRONMENT=Production`, `Cors__AllowedOrigins__0`, Keycloak, e os segredos via OpenBao ou diretos)                                                                                                          |
 | ⬜  | Permissões NTFS corretas na pasta do site e em `App_Data/exports`                                                                                                                                                                                                            |
-| ⬜  | `GET /api/health` respondendo `{"status":"healthy"}`                                                                                                                                                                                                                         |
+| ⬜  | `GET /api/health` e `GET /api/health/ready` respondendo `{"status":"healthy"}`                                                                                                                                                                                                                         |
 | ⬜  | Fluxo de login completo testado manualmente no navegador, ponta a ponta, com um usuário real                                                                                                                                                                                 |
-| ⬜  | Uma tela que consulta o SQL Server testada com sucesso (validação além do `/api/health`)                                                                                                                                                                                     |
+| ⬜  | Uma tela que consulta o SQL Server testada com sucesso (validação além do `/api/health/ready`)                                                                                                                                                                                     |
 | ⬜  | Firewall do servidor Ubuntu restringindo o acesso às portas internas do Keycloak/OpenBao apenas ao proxy local                                                                                                                                                               |
 | ⬜  | Checklist de segurança da seção 6 revisado item a item                                                                                                                                                                                                                       |
 | ⬜  | `stdoutLogEnabled` desligado (`false`) no `web.config`, exceto durante depuração pontual                                                                                                                                                                                     |

@@ -1,11 +1,13 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using NSubstitute;
 using QueryPlus.Api.Api;
 using QueryPlus.Application.Abstractions;
 using QueryPlus.Application.DTOs.Categories;
 using QueryPlus.Application.DTOs.Common;
 using QueryPlus.Application.Interfaces;
+using QueryPlus.Data.Context;
 
 namespace QueryPlus.Api.Tests;
 
@@ -15,12 +17,30 @@ public class ControllersTests
     private readonly IProcedureService _procedures = Substitute.For<IProcedureService>();
     private readonly ICurrentUserContext _user = Substitute.For<ICurrentUserContext>();
 
+    private static ApplicationDbContext CreateInMemoryDbContext() =>
+        new(new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options);
+
     [Fact]
     public void HealthController_Get_ReturnsHealthy()
     {
-        var controller = new HealthController();
+        using var db = CreateInMemoryDbContext();
+        var controller = new HealthController(db);
 
         var result = controller.Get() as OkObjectResult;
+
+        result.Should().NotBeNull();
+        result!.StatusCode.Should().Be(200);
+    }
+
+    [Fact]
+    public async Task HealthController_Ready_ReturnsHealthy_WhenDatabaseIsReachable()
+    {
+        using var db = CreateInMemoryDbContext();
+        var controller = new HealthController(db);
+
+        var result = await controller.Ready(CancellationToken.None) as OkObjectResult;
 
         result.Should().NotBeNull();
         result!.StatusCode.Should().Be(200);

@@ -66,6 +66,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
             {
                 ["ConnectionStrings:DefaultConnection"] = scopedConnectionString,
                 ["ConnectionStrings:Server2"] = secondaryConnectionString,
+                ["Database:SeedDemoDataOnStartup"] = "true",
             })
             .Build();
 
@@ -76,10 +77,19 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         services.AddData(configuration);
         _provider = services.BuildServiceProvider();
 
+        await BeforeSeedAsync(scopedConnectionString);
+
         await using var scope = _provider.CreateAsyncScope();
         var seeder = scope.ServiceProvider.GetRequiredService<DemoDataSeeder>();
         await seeder.SeedAsync();
     }
+
+    /// <summary>
+    /// Extension point for subclasses that need to put the just-created, still-empty database
+    /// into a specific state (e.g. a pre-existing foreign table) before <see cref="DemoDataSeeder"/>
+    /// runs its own migrate/seed pass.
+    /// </summary>
+    protected virtual Task BeforeSeedAsync(string connectionString) => Task.CompletedTask;
 
     public async Task DisposeAsync()
     {

@@ -11,7 +11,6 @@ namespace QueryPlus.Data.Tests;
 public class DemoDataSeederTests : IDisposable
 {
     private readonly ApplicationDbContext _db;
-    private readonly IConfiguration _config;
 
     public DemoDataSeederTests()
     {
@@ -21,12 +20,6 @@ public class DemoDataSeederTests : IDisposable
             .Options;
 
         _db = new ApplicationDbContext(options);
-
-        var myConfig = new Dictionary<string, string?>
-        {
-            ["ConnectionStrings:DefaultConnection"] = "Server=localhost;Database=QueryPlusTest;"
-        };
-        _config = new ConfigurationBuilder().AddInMemoryCollection(myConfig).Build();
     }
 
     public void Dispose()
@@ -34,10 +27,24 @@ public class DemoDataSeederTests : IDisposable
         _db.Dispose();
     }
 
+    private static IConfiguration BuildConfig(bool? seedDemoDataOnStartup)
+    {
+        var values = new Dictionary<string, string?>
+        {
+            ["ConnectionStrings:DefaultConnection"] = "Server=localhost;Database=QueryPlusTest;"
+        };
+        if (seedDemoDataOnStartup.HasValue)
+        {
+            values["Database:SeedDemoDataOnStartup"] = seedDemoDataOnStartup.Value.ToString();
+        }
+
+        return new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+    }
+
     [Fact]
     public async Task SeedAsync_LoadsDemoCatalogFile_And_PopulatesCategoriesAndProcedures()
     {
-        var seeder = new DemoDataSeeder(_db, _config, NullLogger<DemoDataSeeder>.Instance);
+        var seeder = new DemoDataSeeder(_db, BuildConfig(seedDemoDataOnStartup: true), NullLogger<DemoDataSeeder>.Instance);
 
         // Run seeding step against InMemory database
         await seeder.SeedAsync();
@@ -52,5 +59,27 @@ public class DemoDataSeederTests : IDisposable
         proc.Caption.Should().NotBeNullOrWhiteSpace();
         proc.ConnectionName.Should().Be("DefaultConnection");
         proc.DatabaseName.Should().Be("QueryPlusTest");
+    }
+
+    [Fact]
+    public async Task SeedAsync_SkipsDemoData_WhenSettingIsAbsent()
+    {
+        var seeder = new DemoDataSeeder(_db, BuildConfig(seedDemoDataOnStartup: null), NullLogger<DemoDataSeeder>.Instance);
+
+        await seeder.SeedAsync();
+
+        (await _db.Categories.ToListAsync()).Should().BeEmpty();
+        (await _db.Procedures.ToListAsync()).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task SeedAsync_SkipsDemoData_WhenSettingIsExplicitlyFalse()
+    {
+        var seeder = new DemoDataSeeder(_db, BuildConfig(seedDemoDataOnStartup: false), NullLogger<DemoDataSeeder>.Instance);
+
+        await seeder.SeedAsync();
+
+        (await _db.Categories.ToListAsync()).Should().BeEmpty();
+        (await _db.Procedures.ToListAsync()).Should().BeEmpty();
     }
 }
