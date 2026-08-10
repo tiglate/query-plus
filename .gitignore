@@ -2,6 +2,8 @@
 bin/
 obj/
 out/
+/publish/
+/queryplus.local.mk
 *.user
 *.userosscache
 *.suo

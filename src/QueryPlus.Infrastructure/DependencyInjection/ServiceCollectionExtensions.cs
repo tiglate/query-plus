@@ -1,6 +1,10 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using QueryPlus.Application.Abstractions;
+using QueryPlus.Application.Interfaces;
 using QueryPlus.Data.DependencyInjection;
+using QueryPlus.Infrastructure.Jobs;
+using QueryPlus.Infrastructure.Notifications;
 
 namespace QueryPlus.Infrastructure.DependencyInjection;
 
@@ -16,7 +20,10 @@ public static class ServiceCollectionExtensions
     {
         services.AddData(configuration);
 
-        // Future: email, file storage, external APIs, etc.
+        services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));
+        services.AddScoped<INotificationSender, SmtpNotificationSender>();
+
+        services.AddScoped<IJobRunAsUserCatalog, LinuxRunAsUserCatalog>();
 
         return services;
     }

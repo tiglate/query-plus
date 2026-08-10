@@ -1,0 +1,34 @@
+# Local overrides for the repo root Makefile - persists across `make` invocations so you don't
+# have to retype the same variables every time (e.g. `sudo make install-systemd` forgetting the
+# DEPLOY_USER/API_USER you passed to `make install` earlier).
+#
+# DEPLOY_USER/API_USER/API_GROUP are normally set for you: `make install` (run as yourself, not
+# root - it escalates to root itself via sudo where needed) runs an interactive account wizard
+# (deploy/scripts/accounts-wizard.sh) that writes them here automatically the first time it runs
+# (see docs/local/jobs-module-deployment.md section 0). Only copy this file yourself if you'd
+# rather skip that wizard's account prompts entirely, or for the other variables below
+# (PREFIX/API_PORT/DOTNET_BIN), which the wizard doesn't ask about.
+#
+# Setup:
+#   cp queryplus.local.mk.example queryplus.local.mk
+#
+# queryplus.local.mk is gitignored and must never be committed - see Makefile's header comment
+# for exactly how/when it's loaded, and docs/local/jobs-module-deployment.md "Account model" for
+# what DEPLOY_USER/API_USER are and why they're kept separate from each other and from root.
+
+# Example: use your own login account for both roles during local testing (NOT recommended for a
+# real deployment - see the Account model doc for why dedicated non-interactive system accounts
+# are the intended setup).
+# DEPLOY_USER = daniel
+# API_USER = daniel
+
+# Example: install somewhere other than /opt/queryplus.
+# PREFIX = /srv/queryplus
+
+# Example: avoid a port collision with something else already running on this host (e.g. Keycloak
+# on 8080, or `docker compose --profile full` also defaulting to 5000 - see CLAUDE.md).
+# API_PORT = 5050
+
+# Example: .NET wasn't installed from the Microsoft package repo (dotnet-install.sh/tarball/snap
+# instead), so it isn't at the default /usr/bin/dotnet. Run `which dotnet` to find the real path.
+# DOTNET_BIN = /home/daniel/.dotnet/dotnet

@@ -1,5 +1,5 @@
 using FluentAssertions;
-using QueryPlus.Api.Hosting;
+using QueryPlus.Hosting;
 
 namespace QueryPlus.Api.Tests;
 
@@ -72,6 +72,36 @@ public sealed class EnvFileLoaderTests : IDisposable
         EnvFileLoader.LoadFromAncestors(deep);
 
         Environment.GetEnvironmentVariable(key).Should().Be("root-value");
+    }
+
+    [Fact]
+    public void Load_TreatsAnExistingButUnreadableFile_TheSameAsAMissingFile()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return; // Unix permission bits (chmod 000) aren't meaningful on Windows.
+        }
+
+        var key = Track("QP_TEST_UNREADABLE_" + Guid.NewGuid().ToString("N"));
+        var path = Path.Combine(_root, ".env");
+        File.WriteAllText(path, $"{key}=should-not-load");
+        File.SetUnixFileMode(path, UnixFileMode.None);
+
+        try
+        {
+            var act = () => EnvFileLoader.Load(path);
+
+            act.Should().NotThrow(
+                "an unreadable .env (e.g. 0600 root:root, read by a non-root process - the " +
+                "systemd-deployed Api's normal case) must not crash startup, the same as a " +
+                "missing one wouldn't");
+            Environment.GetEnvironmentVariable(key).Should().BeNull();
+        }
+        finally
+        {
+            // Restore read/write so Dispose()'s recursive delete of _root can actually remove it.
+            File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+        }
     }
 
     [Fact]

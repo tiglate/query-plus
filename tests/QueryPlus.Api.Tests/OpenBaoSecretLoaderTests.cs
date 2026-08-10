@@ -1,5 +1,5 @@
 using FluentAssertions;
-using QueryPlus.Api.Hosting;
+using QueryPlus.Hosting;
 
 namespace QueryPlus.Api.Tests;
 

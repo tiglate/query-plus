@@ -17,4 +17,5 @@ public class Revision
         new List<ProcedureParameterAud>();
 
     public ICollection<ProcedureColumnAud> ProcedureColumnAudits { get; set; } = new List<ProcedureColumnAud>();
+    public ICollection<JobDefinitionAud> JobDefinitionAudits { get; set; } = new List<JobDefinitionAud>();
 }

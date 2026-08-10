@@ -12,6 +12,7 @@ import {
     MoonStar,
     Plus,
     Settings,
+    Terminal,
     User,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -26,6 +27,7 @@ import {
     ADMIN_AREA_ROLES,
     CATEGORY_ROLES,
     EXECUTION_LOG_ROLES,
+    JOB_ROLES,
     PROCEDURE_ROLES,
     hasAnyRole,
 } from "@/features/auth/roles";
@@ -42,6 +44,7 @@ export function AppShell() {
     const canSeeCategories = hasAnyRole(roles, CATEGORY_ROLES);
     const canSeeProcedures = hasAnyRole(roles, PROCEDURE_ROLES);
     const canSeeExecutionLogs = hasAnyRole(roles, EXECUTION_LOG_ROLES);
+    const canSeeJobs = hasAnyRole(roles, JOB_ROLES);
     const [theme, setTheme] = useState<Theme>(() => {
         const saved = localStorage.getItem(THEME_KEY);
         return saved === "light" || saved === "dark" || saved === "system" ? saved : "system";
@@ -118,6 +121,14 @@ export function AppShell() {
                                                     >
                                                         <ListChecks className="h-4 w-4" />
                                                         {t("Nav_ExecutionLogs")}
+                                                    </Link>
+                                                </DropdownMenu.Item>
+                                            )}
+                                            {canSeeJobs && (
+                                                <DropdownMenu.Item asChild>
+                                                    <Link className="menu-item" to="/admin/jobs">
+                                                        <Terminal className="h-4 w-4" />
+                                                        {t("Nav_Jobs")}
                                                     </Link>
                                                 </DropdownMenu.Item>
                                             )}

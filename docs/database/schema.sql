@@ -196,3 +196,108 @@ BEGIN
     CREATE NONCLUSTERED INDEX ix_execution_log_user_date ON tb_execution_log (username, execution_start DESC);
     CREATE NONCLUSTERED INDEX ix_execution_log_proc_date ON tb_execution_log (id_procedure, execution_start DESC);
 END
+
+-- =============================================
+-- Jobs (scheduled shell/Python execution)
+-- =============================================
+IF OBJECT_ID('tb_job_definition', 'U') IS NULL
+BEGIN
+    CREATE TABLE tb_job_definition (
+        id_job_definition INT NOT NULL IDENTITY(1, 1),
+        name VARCHAR(200) NOT NULL,
+        description VARCHAR(500) NULL,
+        job_type VARCHAR(20) NOT NULL,
+        script_path VARCHAR(1000) NULL,
+        script_sha256 VARCHAR(64) NULL,              -- pinned only once approved
+        cron_expression VARCHAR(120) NOT NULL,
+        run_as_user VARCHAR(64) NOT NULL,
+        memory_limit_mb INT NOT NULL,
+        max_duration_minutes INT NOT NULL,
+        enabled BIT NOT NULL DEFAULT(0),
+        approval_status VARCHAR(20) NOT NULL DEFAULT('Draft'),
+        created_by VARCHAR(100) NOT NULL,
+        approved_by VARCHAR(100) NULL,
+        approved_at DATETIME2 NULL,
+        rejection_reason VARCHAR(1000) NULL,
+        notify_emails VARCHAR(1000) NULL,             -- comma-separated
+        created_at DATETIME2 NOT NULL DEFAULT(SYSDATETIME()),
+        updated_at DATETIME2 NULL,
+        CONSTRAINT pk_job_definition PRIMARY KEY CLUSTERED (id_job_definition),
+        CONSTRAINT uq_job_definition_name UNIQUE (name),
+        CONSTRAINT ck_job_definition_no_self_approval CHECK (approved_by IS NULL OR approved_by <> created_by)
+    );
+
+    CREATE TABLE tb_job_definition_aud (
+        id_job_definition INT NOT NULL,
+        id_revision INT NOT NULL,
+        id_revision_type TINYINT NULL,
+        name VARCHAR(200) NULL,
+        description VARCHAR(500) NULL,
+        job_type VARCHAR(20) NULL,
+        script_path VARCHAR(1000) NULL,
+        script_sha256 VARCHAR(64) NULL,
+        cron_expression VARCHAR(120) NULL,
+        run_as_user VARCHAR(64) NULL,
+        memory_limit_mb INT NULL,
+        max_duration_minutes INT NULL,
+        enabled BIT NULL,
+        approval_status VARCHAR(20) NULL,
+        created_by VARCHAR(100) NULL,
+        approved_by VARCHAR(100) NULL,
+        approved_at DATETIME2 NULL,
+        rejection_reason VARCHAR(1000) NULL,
+        notify_emails VARCHAR(1000) NULL,
+        created_at DATETIME2 NULL,
+        updated_at DATETIME2 NULL,
+        CONSTRAINT pk_job_definition_aud PRIMARY KEY (id_job_definition, id_revision),
+        CONSTRAINT fk_job_definition_aud_revision FOREIGN KEY (id_revision) REFERENCES tb_revision (id_revision),
+        CONSTRAINT fk_job_definition_aud_revision_type FOREIGN KEY (id_revision_type) REFERENCES tb_revision_type (id_revision_type)
+    );
+
+    CREATE NONCLUSTERED INDEX ix_job_definition_approved_enabled ON tb_job_definition (approval_status, enabled);
+END
+
+IF OBJECT_ID('tb_job_run', 'U') IS NULL
+BEGIN
+    CREATE TABLE tb_job_run (
+        id_job_run INT NOT NULL IDENTITY(1, 1),
+        id_job_definition INT NOT NULL,
+        status VARCHAR(20) NOT NULL,
+        triggered_by VARCHAR(20) NOT NULL,
+        runner_pid INT NULL,
+        runner_started_at_utc DATETIME2 NULL,         -- + runner_pid guards against PID reuse
+        child_pid INT NULL,
+        child_started_at_utc DATETIME2 NULL,
+        last_heartbeat_utc DATETIME2 NULL,
+        started_at DATETIME2 NULL,
+        finished_at DATETIME2 NULL,
+        exit_code INT NULL,
+        stdout_path VARCHAR(1000) NULL,
+        stderr_path VARCHAR(1000) NULL,
+        host_machine VARCHAR(200) NULL,
+        created_at DATETIME2 NOT NULL DEFAULT(SYSDATETIME()),
+        CONSTRAINT pk_job_run PRIMARY KEY CLUSTERED (id_job_run),
+        CONSTRAINT fk_job_run_job_definition FOREIGN KEY (id_job_definition) REFERENCES tb_job_definition (id_job_definition)
+    );
+
+    CREATE NONCLUSTERED INDEX ix_job_run_job_definition_started ON tb_job_run (id_job_definition, started_at DESC);
+    CREATE NONCLUSTERED INDEX ix_job_run_status ON tb_job_run (status);
+END
+
+IF OBJECT_ID('tb_job_run_request', 'U') IS NULL
+BEGIN
+    CREATE TABLE tb_job_run_request (
+        id_job_run_request INT NOT NULL IDENTITY(1, 1),
+        id_job_definition INT NOT NULL,
+        requested_by VARCHAR(100) NOT NULL,
+        requested_at DATETIME2 NOT NULL DEFAULT(SYSDATETIME()),
+        consumed_at DATETIME2 NULL,
+        id_job_run INT NULL,                          -- set once the runner inserts its own tb_job_run row
+        CONSTRAINT pk_job_run_request PRIMARY KEY CLUSTERED (id_job_run_request),
+        CONSTRAINT fk_job_run_request_job_definition FOREIGN KEY (id_job_definition) REFERENCES tb_job_definition (id_job_definition),
+        CONSTRAINT fk_job_run_request_job_run FOREIGN KEY (id_job_run) REFERENCES tb_job_run (id_job_run) ON DELETE SET NULL
+    );
+
+    -- What QueryPlus.SchedulerSync drains each reconcile tick.
+    CREATE NONCLUSTERED INDEX ix_job_run_request_pending ON tb_job_run_request (consumed_at) WHERE consumed_at IS NULL;
+END

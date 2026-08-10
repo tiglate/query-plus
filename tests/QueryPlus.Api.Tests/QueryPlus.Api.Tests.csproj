@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\QueryPlus.Api\QueryPlus.Api.csproj" />
+    <ProjectReference Include="..\..\src\QueryPlus.Hosting\QueryPlus.Hosting.csproj" />
   </ItemGroup>
 
 </Project>

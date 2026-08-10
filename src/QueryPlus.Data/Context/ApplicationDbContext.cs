@@ -17,6 +17,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<ProcedureColumn> ProcedureColumns => Set<ProcedureColumn>();
     public DbSet<ProcedureColumnAud> ProcedureColumnAudits => Set<ProcedureColumnAud>();
     public DbSet<ExecutionLog> ExecutionLogs => Set<ExecutionLog>();
+    public DbSet<JobDefinition> JobDefinitions => Set<JobDefinition>();
+    public DbSet<JobDefinitionAud> JobDefinitionAudits => Set<JobDefinitionAud>();
+    public DbSet<JobRun> JobRuns => Set<JobRun>();
+    public DbSet<JobRunRequest> JobRunRequests => Set<JobRunRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -32,6 +36,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         RemoveConventionForeignKeys(modelBuilder, typeof(ProcedureParameterAud), typeof(Procedure));
         RemoveConventionForeignKeys(modelBuilder, typeof(ProcedureColumnAud), typeof(ProcedureColumn));
         RemoveConventionForeignKeys(modelBuilder, typeof(ProcedureColumnAud), typeof(Procedure));
+        RemoveConventionForeignKeys(modelBuilder, typeof(JobDefinitionAud), typeof(JobDefinition));
     }
 
     private static void RemoveConventionForeignKeys(ModelBuilder modelBuilder, Type dependentType, Type principalType)

@@ -137,6 +137,9 @@ public class AuditSaveChangesInterceptor(ICurrentUserContext currentUser) : Save
                 case ProcedureColumn column:
                     AddColumnAud(context, entry, column, revision, revisionType);
                     break;
+                case JobDefinition jobDefinition:
+                    AddJobDefinitionAud(context, entry, jobDefinition, revision, revisionType);
+                    break;
             }
         }
     }
@@ -261,6 +264,54 @@ public class AuditSaveChangesInterceptor(ICurrentUserContext currentUser) : Save
             aud);
     }
 
+    private void AddJobDefinitionAud(
+        DbContext context,
+        EntityEntry entry,
+        JobDefinition entity,
+        Revision revision,
+        RevisionTypeCode revisionType)
+    {
+        var jobType = entry.State == EntityState.Deleted
+            ? entry.Property(nameof(JobDefinition.JobType)).OriginalValue?.ToString()
+            : entity.JobType.ToString();
+
+        var approvalStatus = entry.State == EntityState.Deleted
+            ? entry.Property(nameof(JobDefinition.ApprovalStatus)).OriginalValue?.ToString()
+            : entity.ApprovalStatus.ToString();
+
+        var aud = new JobDefinitionAud
+        {
+            IdJobDefinition = entity.IdJobDefinition,
+            Revision = revision,
+            IdRevisionType = revisionType,
+            Name = Read<string?>(entry, nameof(JobDefinition.Name)),
+            Description = Read<string?>(entry, nameof(JobDefinition.Description)),
+            JobType = jobType,
+            ScriptPath = Read<string?>(entry, nameof(JobDefinition.ScriptPath)),
+            ScriptSha256 = Read<string?>(entry, nameof(JobDefinition.ScriptSha256)),
+            CronExpression = Read<string?>(entry, nameof(JobDefinition.CronExpression)),
+            RunAsUser = Read<string?>(entry, nameof(JobDefinition.RunAsUser)),
+            MemoryLimitMb = Read<int?>(entry, nameof(JobDefinition.MemoryLimitMb)),
+            MaxDurationMinutes = Read<int?>(entry, nameof(JobDefinition.MaxDurationMinutes)),
+            Enabled = Read<bool?>(entry, nameof(JobDefinition.Enabled)),
+            ApprovalStatus = approvalStatus,
+            CreatedBy = Read<string?>(entry, nameof(JobDefinition.CreatedBy)),
+            ApprovedBy = Read<string?>(entry, nameof(JobDefinition.ApprovedBy)),
+            ApprovedAt = Read<DateTime?>(entry, nameof(JobDefinition.ApprovedAt)),
+            RejectionReason = Read<string?>(entry, nameof(JobDefinition.RejectionReason)),
+            NotifyEmails = Read<string?>(entry, nameof(JobDefinition.NotifyEmails)),
+            CreatedAt = Read<DateTime?>(entry, nameof(JobDefinition.CreatedAt)),
+            UpdatedAt = Read<DateTime?>(entry, nameof(JobDefinition.UpdatedAt))
+        };
+
+        context.Set<JobDefinitionAud>().Add(aud);
+        ShareTemporaryKey(
+            entry,
+            nameof(JobDefinition.IdJobDefinition),
+            context.Entry(aud).Property(a => a.IdJobDefinition),
+            aud);
+    }
+
     private static T Read<T>(EntityEntry entry, string propertyName)
     {
         var property = entry.Property(propertyName);
@@ -355,6 +406,10 @@ public class AuditSaveChangesInterceptor(ICurrentUserContext currentUser) : Save
                 context.Database.ExecuteSqlInterpolated(
                     $"UPDATE tb_procedure_column_aud SET id_procedure_column = {column.IdProcedureColumn}, id_procedure = {column.IdProcedure} WHERE id_procedure_column = {pending.TemporaryKey} AND id_revision = {audit.IdRevision}");
                 break;
+            case (JobDefinition jobDefinition, JobDefinitionAud audit):
+                context.Database.ExecuteSqlInterpolated(
+                    $"UPDATE tb_job_definition_aud SET id_job_definition = {jobDefinition.IdJobDefinition} WHERE id_job_definition = {pending.TemporaryKey} AND id_revision = {audit.IdRevision}");
+                break;
         }
     }
 
@@ -375,6 +430,9 @@ public class AuditSaveChangesInterceptor(ICurrentUserContext currentUser) : Save
                 cancellationToken),
             (ProcedureColumn column, ProcedureColumnAud audit) => context.Database.ExecuteSqlInterpolatedAsync(
                 $"UPDATE tb_procedure_column_aud SET id_procedure_column = {column.IdProcedureColumn}, id_procedure = {column.IdProcedure} WHERE id_procedure_column = {pending.TemporaryKey} AND id_revision = {audit.IdRevision}",
+                cancellationToken),
+            (JobDefinition jobDefinition, JobDefinitionAud audit) => context.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE tb_job_definition_aud SET id_job_definition = {jobDefinition.IdJobDefinition} WHERE id_job_definition = {pending.TemporaryKey} AND id_revision = {audit.IdRevision}",
                 cancellationToken),
             _ => Task.CompletedTask
         };

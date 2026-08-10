@@ -24,6 +24,8 @@ public sealed class QueryPlusApiApplicationFactory : WebApplicationFactory<Progr
     public IExcelExportService Exports { get; } = Substitute.For<IExcelExportService>();
     public IProcedureRepository ProcedureRepository { get; } = Substitute.For<IProcedureRepository>();
     public IProcedureMetadataSyncService MetadataSync { get; } = Substitute.For<IProcedureMetadataSyncService>();
+    public IJobDefinitionService JobDefinitions { get; } = Substitute.For<IJobDefinitionService>();
+    public IJobRunService JobRuns { get; } = Substitute.For<IJobRunService>();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -58,6 +60,8 @@ public sealed class QueryPlusApiApplicationFactory : WebApplicationFactory<Progr
             services.RemoveAll<IExcelExportService>();
             services.RemoveAll<IProcedureRepository>();
             services.RemoveAll<IProcedureMetadataSyncService>();
+            services.RemoveAll<IJobDefinitionService>();
+            services.RemoveAll<IJobRunService>();
 
             services.AddSingleton(Procedures);
             services.AddSingleton(Categories);
@@ -65,6 +69,8 @@ public sealed class QueryPlusApiApplicationFactory : WebApplicationFactory<Progr
             services.AddSingleton(Exports);
             services.AddSingleton(ProcedureRepository);
             services.AddSingleton(MetadataSync);
+            services.AddSingleton(JobDefinitions);
+            services.AddSingleton(JobRuns);
         });
 
         builder.ConfigureTestServices(services =>

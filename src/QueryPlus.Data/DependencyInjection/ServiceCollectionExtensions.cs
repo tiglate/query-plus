@@ -35,6 +35,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<IProcedureRepository, ProcedureRepository>();
         services.AddScoped<IExecutionRepository, ExecutionRepository>();
+        services.AddScoped<IJobDefinitionRepository, JobDefinitionRepository>();
+        services.AddScoped<IJobRunRepository, JobRunRepository>();
+        services.AddScoped<IJobRunRequestRepository, JobRunRequestRepository>();
         services.AddScoped<IConfigurationAuditReader, ConfigurationAuditReader>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IStoredProcedureExecutor, DapperStoredProcedureExecutor>();

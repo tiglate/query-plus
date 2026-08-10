@@ -34,6 +34,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IProcedureService, ProcedureService>();
         services.AddScoped<IExecutionService, ExecutionService>();
+        services.AddScoped<IJobDefinitionService, JobDefinitionService>();
+        services.AddScoped<IJobRunService, JobRunService>();
 
         return services;
     }

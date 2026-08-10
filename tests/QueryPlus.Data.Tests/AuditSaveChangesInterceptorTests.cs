@@ -116,4 +116,117 @@ public class AuditSaveChangesInterceptorTests : IDisposable
         var delColAud = await _db.Set<ProcedureColumnAud>().FirstOrDefaultAsync(a => a.IdRevisionType == RevisionTypeCode.Delete);
         delColAud.Should().NotBeNull();
     }
+
+    private static JobDefinition BuildJobDefinition() => new()
+    {
+        Name = "nightly-cleanup",
+        Description = "Removes stale temp files",
+        JobType = JobType.Shell,
+        ScriptPath = "/opt/queryplus/jobs/nightly-cleanup.sh",
+        CronExpression = "0 2 * * *",
+        RunAsUser = "queryplus-jobs",
+        MemoryLimitMb = 512,
+        MaxDurationMinutes = 30,
+        Enabled = true,
+        ApprovalStatus = JobApprovalStatus.Draft,
+        CreatedBy = "analyst1",
+        NotifyEmails = "analyst1@example.com"
+    };
+
+    [Fact]
+    public async Task SaveChangesAsync_CreatesRevisionAndAuditRow_ForJobDefinitionInsert_AndCorrectsTemporaryKey()
+    {
+        var job = BuildJobDefinition();
+        _db.JobDefinitions.Add(job);
+        await _db.SaveChangesAsync();
+
+        job.IdJobDefinition.Should().NotBe(0);
+
+        var jobAud = await _db.Set<JobDefinitionAud>()
+            .FirstOrDefaultAsync(a => a.IdRevisionType == RevisionTypeCode.Insert);
+
+        jobAud.Should().NotBeNull();
+        jobAud!.IdRevisionType.Should().Be(RevisionTypeCode.Insert);
+
+        // Exercises the async temporary-key correction path: the aud row must resolve to the
+        // real generated id, not the negative placeholder EF assigns before SaveChangesAsync.
+        jobAud.IdJobDefinition.Should().Be(job.IdJobDefinition);
+
+        jobAud.Name.Should().Be("nightly-cleanup");
+        jobAud.Description.Should().Be("Removes stale temp files");
+        jobAud.JobType.Should().Be(JobType.Shell.ToString());
+        jobAud.ScriptPath.Should().Be("/opt/queryplus/jobs/nightly-cleanup.sh");
+        jobAud.ScriptSha256.Should().BeNull();
+        jobAud.CronExpression.Should().Be("0 2 * * *");
+        jobAud.RunAsUser.Should().Be("queryplus-jobs");
+        jobAud.MemoryLimitMb.Should().Be(512);
+        jobAud.MaxDurationMinutes.Should().Be(30);
+        jobAud.Enabled.Should().BeTrue();
+        jobAud.ApprovalStatus.Should().Be(JobApprovalStatus.Draft.ToString());
+        jobAud.CreatedBy.Should().Be("analyst1");
+        jobAud.ApprovedBy.Should().BeNull();
+        jobAud.ApprovedAt.Should().BeNull();
+        jobAud.RejectionReason.Should().BeNull();
+        jobAud.NotifyEmails.Should().Be("analyst1@example.com");
+        jobAud.CreatedAt.Should().NotBeNull();
+
+        var rev = await _db.Set<Revision>().FirstOrDefaultAsync(r => r.IdRevision == jobAud.IdRevision);
+        rev.Should().NotBeNull();
+        rev!.Username.Should().Be("audit_user");
+
+        var jobAudCount = await _db.Set<JobDefinitionAud>().CountAsync();
+        jobAudCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task SaveChangesAsync_CreatesAuditRow_ForJobDefinitionUpdate()
+    {
+        var job = BuildJobDefinition();
+        _db.JobDefinitions.Add(job);
+        await _db.SaveChangesAsync();
+
+        job.Description = "Removes stale temp files older than 7 days";
+        job.ApprovalStatus = JobApprovalStatus.PendingApproval;
+        await _db.SaveChangesAsync();
+
+        var updatedAud = await _db.Set<JobDefinitionAud>()
+            .Where(a => a.IdRevisionType == RevisionTypeCode.Update)
+            .FirstOrDefaultAsync();
+
+        updatedAud.Should().NotBeNull();
+        updatedAud!.IdJobDefinition.Should().Be(job.IdJobDefinition);
+        updatedAud.Description.Should().Be("Removes stale temp files older than 7 days");
+        updatedAud.ApprovalStatus.Should().Be(JobApprovalStatus.PendingApproval.ToString());
+        // Unchanged columns must still round-trip on an update revision.
+        updatedAud.Name.Should().Be("nightly-cleanup");
+        updatedAud.JobType.Should().Be(JobType.Shell.ToString());
+
+        var jobAudCount = await _db.Set<JobDefinitionAud>().CountAsync();
+        jobAudCount.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task SaveChangesAsync_CreatesAuditRow_ForJobDefinitionDelete_UsingOriginalValues()
+    {
+        var job = BuildJobDefinition();
+        _db.JobDefinitions.Add(job);
+        await _db.SaveChangesAsync();
+        var realId = job.IdJobDefinition;
+
+        _db.JobDefinitions.Remove(job);
+        await _db.SaveChangesAsync();
+
+        var deletedAud = await _db.Set<JobDefinitionAud>()
+            .FirstOrDefaultAsync(a => a.IdRevisionType == RevisionTypeCode.Delete);
+
+        deletedAud.Should().NotBeNull();
+        deletedAud!.IdJobDefinition.Should().Be(realId);
+        deletedAud.Name.Should().Be("nightly-cleanup");
+        deletedAud.JobType.Should().Be(JobType.Shell.ToString());
+        deletedAud.ApprovalStatus.Should().Be(JobApprovalStatus.Draft.ToString());
+        deletedAud.CreatedBy.Should().Be("analyst1");
+
+        var jobAudCount = await _db.Set<JobDefinitionAud>().CountAsync();
+        jobAudCount.Should().Be(2);
+    }
 }

@@ -3,11 +3,16 @@ import { authQuery } from "@/api/queries";
 import { AppShell } from "@/components/layout/AppShell";
 import { CategoriesPage } from "@/features/admin/categories/CategoriesPage";
 import { ExecutionLogsPage } from "@/features/admin/execution-logs/ExecutionLogsPage";
+import { JobEditorPage } from "@/features/admin/jobs/JobEditorPage";
+import { JobRunHistoryPage } from "@/features/admin/jobs/JobRunHistoryPage";
+import { JobsPage } from "@/features/admin/jobs/JobsPage";
 import { ProcedureEditorPage } from "@/features/admin/procedures/ProcedureEditorPage";
 import { ProceduresPage } from "@/features/admin/procedures/ProceduresPage";
 import {
     CATEGORY_ROLES,
     EXECUTION_LOG_ROLES,
+    JOB_ROLES,
+    JOB_WRITE_ROLES,
     PROCEDURE_ROLES,
     hasAnyRole,
 } from "@/features/auth/roles";
@@ -84,6 +89,30 @@ export const router = createBrowserRouter([
                 path: "admin/execution-logs",
                 element: <ExecutionLogsPage />,
                 loader: requireAnyRole(EXECUTION_LOG_ROLES),
+                errorElement: <RouteErrorPage />,
+            },
+            {
+                path: "admin/jobs",
+                element: <JobsPage />,
+                loader: requireAnyRole(JOB_ROLES),
+                errorElement: <RouteErrorPage />,
+            },
+            {
+                path: "admin/jobs/new",
+                element: <JobEditorPage />,
+                loader: requireAnyRole(JOB_WRITE_ROLES),
+                errorElement: <RouteErrorPage />,
+            },
+            {
+                path: "admin/jobs/:id",
+                element: <JobEditorPage />,
+                loader: requireAnyRole(JOB_ROLES),
+                errorElement: <RouteErrorPage />,
+            },
+            {
+                path: "admin/jobs/:id/runs",
+                element: <JobRunHistoryPage />,
+                loader: requireAnyRole(JOB_ROLES),
                 errorElement: <RouteErrorPage />,
             },
             { path: "support", element: <SupportPage />, errorElement: <RouteErrorPage /> },

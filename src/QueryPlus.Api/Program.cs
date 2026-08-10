@@ -8,6 +8,8 @@ using QueryPlus.Api.Json;
 using QueryPlus.Api.ProblemDetails;
 using QueryPlus.Api.Security;
 using QueryPlus.Application.DependencyInjection;
+using QueryPlus.Application.Options;
+using QueryPlus.Hosting;
 using QueryPlus.Infrastructure.DependencyInjection;
 
 const string CorsPolicyName = "QueryPlusSpa";
@@ -19,6 +21,7 @@ var builder = WebApplication.CreateBuilder(args);
 ProductionSecretsValidator.Validate(builder.Configuration, builder.Environment);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddOptions<JobsOptions>().Bind(builder.Configuration.GetSection(JobsOptions.SectionName));
 builder.Services.AddApiServices();
 builder.Services.AddApiRateLimiting();
 builder.Services.AddApiAuthentication(builder.Configuration);

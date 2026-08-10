@@ -79,6 +79,12 @@ export default defineConfig(({ mode }) => {
             outDir: "../../src/QueryPlus.Api/wwwroot",
             emptyOutDir: true,
             sourcemap: "hidden",
+            // Vite's default 500 kB warning assumes code-split output; this project intentionally
+            // ships one bundle instead (see codeSplitting below), so the warning would just
+            // fire on every build regardless of size. 900 kB leaves headroom over the current
+            // ~730 kB queryplus.js while still catching a genuine, unexpected size regression
+            // (e.g. an accidentally-added heavy dependency).
+            chunkSizeWarningLimit: 900,
             rollupOptions: {
                 output: {
                     entryFileNames: "assets/queryplus.js",
@@ -87,7 +93,8 @@ export default defineConfig(({ mode }) => {
                     // absence of dynamic import()/React.lazy() - a future dynamic import would
                     // otherwise silently produce a second chunk and reintroduce the
                     // ResultsMaximize double-mount bug this setup exists to avoid.
-                    inlineDynamicImports: true,
+                    // (Rolldown's replacement for Rollup's now-deprecated inlineDynamicImports.)
+                    codeSplitting: false,
                 },
             },
         },

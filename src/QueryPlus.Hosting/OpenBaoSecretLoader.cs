@@ -2,7 +2,7 @@ using VaultSharp;
 using VaultSharp.V1.AuthMethods;
 using VaultSharp.V1.AuthMethods.Token;
 
-namespace QueryPlus.Api.Hosting;
+namespace QueryPlus.Hosting;
 
 /// <summary>
 /// Fetches app secrets from an OpenBao (Vault-API-compatible) KV v2 store and merges them into

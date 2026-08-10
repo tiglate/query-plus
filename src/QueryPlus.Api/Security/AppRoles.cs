@@ -13,12 +13,19 @@ public static class AppRoles
     public const string ProcedureRead = "ROLE_PROCEDURE_READ";
     public const string ProcedureWrite = "ROLE_PROCEDURE_WRITE";
     public const string QueryExec = "ROLE_QUERY_EXEC";
+    public const string JobRead = "ROLE_JOB_READ";
+    public const string JobWrite = "ROLE_JOB_WRITE";
+    public const string JobApprove = "ROLE_JOB_APPROVE";
 
     public const string CanReadCategories = CategoryRead + "," + CategoryWrite + "," + Admin;
     public const string CanWriteCategories = CategoryWrite + "," + Admin;
 
     public const string CanReadProcedures = ProcedureRead + "," + ProcedureWrite + "," + Admin;
     public const string CanWriteProcedures = ProcedureWrite + "," + Admin;
+
+    public const string CanReadJobs = JobRead + "," + JobWrite + "," + JobApprove + "," + Admin;
+    public const string CanWriteJobs = JobWrite + "," + Admin;
+    public const string CanApproveJobs = JobApprove + "," + Admin;
 
     /// <summary>Endpoints procedure admins need (category dropdown) that aren't category-specific.</summary>
     public const string CanReadCategoryLookup = CategoryRead + "," + CategoryWrite + "," + ProcedureRead + "," +

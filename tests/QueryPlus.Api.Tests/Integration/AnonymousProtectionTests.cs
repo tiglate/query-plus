@@ -40,6 +40,15 @@ public sealed class AnonymousProtectionTests(AnonymousQueryPlusApiApplicationFac
     }
 
     [Fact]
+    public async Task Anonymous_jobs_returns_401_under_fallback_policy()
+    {
+        var response = await _client.GetAsync("/api/jobs");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.Headers.Location.Should().BeNull();
+    }
+
+    [Fact]
     public async Task Anonymous_auth_user_returns_200_with_unauthenticated_state()
     {
         var response = await _client.GetAsync("/api/auth/user");

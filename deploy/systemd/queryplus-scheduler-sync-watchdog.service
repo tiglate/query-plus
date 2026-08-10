@@ -1,0 +1,26 @@
+[Unit]
+Description=QueryPlus Scheduler Sync - watchdog pass (marks stuck/lost JobRuns, sends notifications)
+After=network-online.target
+Wants=network-online.target
+# Started only by queryplus-scheduler-sync-watchdog.timer - do not enable this unit directly.
+
+[Service]
+Type=oneshot
+# User/Group are intentionally NOT a placeholder like @PREFIX@ below - SchedulerSync must run as
+# root (systemd-run --uid= and writing /etc/cron.d both require it), and that is not something a
+# Makefile variable should be able to weaken. @PREFIX@ IS a placeholder, substituted by
+# "make install-systemd" from the repo Makefile's PREFIX variable (default /opt/queryplus) - do
+# not write the literal token text anywhere in this file other than where it should be substituted.
+User=root
+Group=root
+WorkingDirectory=@PREFIX@
+# Leading "-" makes a missing env file non-fatal, same optional-env-file
+# philosophy as EnvFileLoader for the Api process. Provides OPENBAO_ADDR,
+# OPENBAO_TOKEN and ConnectionStrings__DefaultConnection when not sourced
+# from OpenBao.
+EnvironmentFile=-@PREFIX@/.env
+ExecStart=@PREFIX@/scheduler-sync --watchdog
+# Safety net only, not an expected runtime - see queryplus-scheduler-sync.service
+# for why the sync pass stays fast; the watchdog pass is a bounded DB scan and
+# should be faster still.
+TimeoutStartSec=120

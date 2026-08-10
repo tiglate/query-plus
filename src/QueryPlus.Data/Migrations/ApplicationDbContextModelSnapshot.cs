@@ -177,6 +177,405 @@ namespace QueryPlus.Data.Migrations
                     b.ToTable("tb_execution_log", (string)null);
                 });
 
+            modelBuilder.Entity("QueryPlus.Domain.Entities.JobDefinition", b =>
+                {
+                    b.Property<int>("IdJobDefinition")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id_job_definition");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdJobDefinition"));
+
+                    b.Property<string>("ApprovalStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)")
+                        .HasDefaultValue("Draft")
+                        .HasColumnName("approval_status");
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("approved_at");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("approved_by");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("CronExpression")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(120)")
+                        .HasColumnName("cron_expression");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("Enabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("enabled");
+
+                    b.Property<string>("JobType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("job_type");
+
+                    b.Property<int>("MaxDurationMinutes")
+                        .HasColumnType("int")
+                        .HasColumnName("max_duration_minutes");
+
+                    b.Property<int>("MemoryLimitMb")
+                        .HasColumnType("int")
+                        .HasColumnName("memory_limit_mb");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("NotifyEmails")
+                        .HasMaxLength(1000)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("notify_emails");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(1000)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("rejection_reason");
+
+                    b.Property<string>("RunAsUser")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(64)")
+                        .HasColumnName("run_as_user");
+
+                    b.Property<string>("ScriptPath")
+                        .HasMaxLength(1000)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("script_path");
+
+                    b.Property<string>("ScriptSha256")
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(64)")
+                        .HasColumnName("script_sha256");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("IdJobDefinition")
+                        .HasName("pk_job_definition");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("uq_job_definition_name");
+
+                    b.HasIndex("ApprovalStatus", "Enabled")
+                        .HasDatabaseName("ix_job_definition_approved_enabled");
+
+                    b.ToTable("tb_job_definition", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_job_definition_no_self_approval", "[approved_by] IS NULL OR [approved_by] <> [created_by]");
+                        });
+                });
+
+            modelBuilder.Entity("QueryPlus.Domain.Entities.JobDefinitionAud", b =>
+                {
+                    b.Property<int>("IdJobDefinition")
+                        .HasColumnType("int")
+                        .HasColumnName("id_job_definition");
+
+                    b.Property<int>("IdRevision")
+                        .HasColumnType("int")
+                        .HasColumnName("id_revision");
+
+                    b.Property<string>("ApprovalStatus")
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("approval_status");
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("approved_at");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("approved_by");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("CronExpression")
+                        .HasMaxLength(120)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(120)")
+                        .HasColumnName("cron_expression");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("description");
+
+                    b.Property<bool?>("Enabled")
+                        .HasColumnType("bit")
+                        .HasColumnName("enabled");
+
+                    b.Property<byte?>("IdRevisionType")
+                        .HasColumnType("tinyint")
+                        .HasColumnName("id_revision_type");
+
+                    b.Property<string>("JobType")
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("job_type");
+
+                    b.Property<int?>("MaxDurationMinutes")
+                        .HasColumnType("int")
+                        .HasColumnName("max_duration_minutes");
+
+                    b.Property<int?>("MemoryLimitMb")
+                        .HasColumnType("int")
+                        .HasColumnName("memory_limit_mb");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(200)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("NotifyEmails")
+                        .HasMaxLength(1000)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("notify_emails");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(1000)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("rejection_reason");
+
+                    b.Property<string>("RunAsUser")
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(64)")
+                        .HasColumnName("run_as_user");
+
+                    b.Property<string>("ScriptPath")
+                        .HasMaxLength(1000)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("script_path");
+
+                    b.Property<string>("ScriptSha256")
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(64)")
+                        .HasColumnName("script_sha256");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("IdJobDefinition", "IdRevision")
+                        .HasName("pk_job_definition_aud");
+
+                    b.HasIndex("IdRevision");
+
+                    b.HasIndex("IdRevisionType");
+
+                    b.ToTable("tb_job_definition_aud", (string)null);
+                });
+
+            modelBuilder.Entity("QueryPlus.Domain.Entities.JobRun", b =>
+                {
+                    b.Property<int>("IdJobRun")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id_job_run");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdJobRun"));
+
+                    b.Property<int?>("ChildPid")
+                        .HasColumnType("int")
+                        .HasColumnName("child_pid");
+
+                    b.Property<DateTime?>("ChildStartedAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("child_started_at_utc");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<int?>("ExitCode")
+                        .HasColumnType("int")
+                        .HasColumnName("exit_code");
+
+                    b.Property<DateTime?>("FinishedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("finished_at");
+
+                    b.Property<string>("HostMachine")
+                        .HasMaxLength(200)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(200)")
+                        .HasColumnName("host_machine");
+
+                    b.Property<int>("IdJobDefinition")
+                        .HasColumnType("int")
+                        .HasColumnName("id_job_definition");
+
+                    b.Property<DateTime?>("LastHeartbeatUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("last_heartbeat_utc");
+
+                    b.Property<int?>("RunnerPid")
+                        .HasColumnType("int")
+                        .HasColumnName("runner_pid");
+
+                    b.Property<DateTime?>("RunnerStartedAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("runner_started_at_utc");
+
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("started_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("StderrPath")
+                        .HasMaxLength(1000)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("stderr_path");
+
+                    b.Property<string>("StdoutPath")
+                        .HasMaxLength(1000)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("stdout_path");
+
+                    b.Property<string>("TriggeredBy")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("triggered_by");
+
+                    b.HasKey("IdJobRun")
+                        .HasName("pk_job_run");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_job_run_status");
+
+                    b.HasIndex("IdJobDefinition", "StartedAt")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_job_run_job_definition_started");
+
+                    b.ToTable("tb_job_run", (string)null);
+                });
+
+            modelBuilder.Entity("QueryPlus.Domain.Entities.JobRunRequest", b =>
+                {
+                    b.Property<int>("IdJobRunRequest")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id_job_run_request");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdJobRunRequest"));
+
+                    b.Property<DateTime?>("ConsumedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("consumed_at");
+
+                    b.Property<int>("IdJobDefinition")
+                        .HasColumnType("int")
+                        .HasColumnName("id_job_definition");
+
+                    b.Property<int?>("IdJobRun")
+                        .HasColumnType("int")
+                        .HasColumnName("id_job_run");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasColumnName("requested_at")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("requested_by");
+
+                    b.HasKey("IdJobRunRequest")
+                        .HasName("pk_job_run_request");
+
+                    b.HasIndex("ConsumedAt")
+                        .HasDatabaseName("ix_job_run_request_pending")
+                        .HasFilter("[consumed_at] IS NULL");
+
+                    b.HasIndex("IdJobDefinition");
+
+                    b.HasIndex("IdJobRun")
+                        .IsUnique()
+                        .HasFilter("[id_job_run] IS NOT NULL");
+
+                    b.ToTable("tb_job_run_request", (string)null);
+                });
+
             modelBuilder.Entity("QueryPlus.Domain.Entities.Procedure", b =>
                 {
                     b.Property<int>("IdProcedure")
@@ -733,6 +1132,58 @@ namespace QueryPlus.Data.Migrations
                     b.Navigation("Procedure");
                 });
 
+            modelBuilder.Entity("QueryPlus.Domain.Entities.JobDefinitionAud", b =>
+                {
+                    b.HasOne("QueryPlus.Domain.Entities.Revision", "Revision")
+                        .WithMany("JobDefinitionAudits")
+                        .HasForeignKey("IdRevision")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_job_definition_aud_revision");
+
+                    b.HasOne("QueryPlus.Domain.Entities.RevisionType", "RevisionType")
+                        .WithMany()
+                        .HasForeignKey("IdRevisionType")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_job_definition_aud_revision_type");
+
+                    b.Navigation("Revision");
+
+                    b.Navigation("RevisionType");
+                });
+
+            modelBuilder.Entity("QueryPlus.Domain.Entities.JobRun", b =>
+                {
+                    b.HasOne("QueryPlus.Domain.Entities.JobDefinition", "JobDefinition")
+                        .WithMany("JobRuns")
+                        .HasForeignKey("IdJobDefinition")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_job_run_job_definition");
+
+                    b.Navigation("JobDefinition");
+                });
+
+            modelBuilder.Entity("QueryPlus.Domain.Entities.JobRunRequest", b =>
+                {
+                    b.HasOne("QueryPlus.Domain.Entities.JobDefinition", "JobDefinition")
+                        .WithMany("JobRunRequests")
+                        .HasForeignKey("IdJobDefinition")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_job_run_request_job_definition");
+
+                    b.HasOne("QueryPlus.Domain.Entities.JobRun", "JobRun")
+                        .WithOne()
+                        .HasForeignKey("QueryPlus.Domain.Entities.JobRunRequest", "IdJobRun")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_job_run_request_job_run");
+
+                    b.Navigation("JobDefinition");
+
+                    b.Navigation("JobRun");
+                });
+
             modelBuilder.Entity("QueryPlus.Domain.Entities.Procedure", b =>
                 {
                     b.HasOne("QueryPlus.Domain.Entities.Category", "Category")
@@ -834,6 +1285,13 @@ namespace QueryPlus.Data.Migrations
                     b.Navigation("Procedures");
                 });
 
+            modelBuilder.Entity("QueryPlus.Domain.Entities.JobDefinition", b =>
+                {
+                    b.Navigation("JobRunRequests");
+
+                    b.Navigation("JobRuns");
+                });
+
             modelBuilder.Entity("QueryPlus.Domain.Entities.Procedure", b =>
                 {
                     b.Navigation("Columns");
@@ -846,6 +1304,8 @@ namespace QueryPlus.Data.Migrations
             modelBuilder.Entity("QueryPlus.Domain.Entities.Revision", b =>
                 {
                     b.Navigation("CategoryAudits");
+
+                    b.Navigation("JobDefinitionAudits");
 
                     b.Navigation("ProcedureAudits");
 

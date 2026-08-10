@@ -111,6 +111,24 @@ services:
         ConnectionStrings__DefaultConnection="Server=sqlserver,1433;Database=QueryPlus;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;Encrypt=False"
         Keycloak__ClientSecret="${Keycloak__ClientSecret}"
 
+  # Catches all outbound SMTP instead of delivering it - lets Jobs module notifications (job
+  # failure / missed-trigger / lost-run emails, sent by QueryPlus.Runner and
+  # QueryPlus.SchedulerSync - see docs/local/jobs-module-deployment.md) be exercised locally
+  # without a real mail provider. No auth required for local submission, so Smtp:Username stays
+  # unset below. Web UI at http://localhost:8025 shows every message caught.
+  mailpit:
+    image: axllent/mailpit:v1.30.7
+    container_name: queryplus-mailpit
+    restart: unless-stopped
+    mem_limit: 128m
+    cpus: "0.25"
+    environment:
+      MP_MAX_MESSAGES: 5000
+    ports:
+      # Loopback-only, same posture as the other dev-infra ports in this file.
+      - "127.0.0.1:8025:8025"
+      - "127.0.0.1:1025:1025"
+
   app:
     build:
       context: .
@@ -133,6 +151,13 @@ services:
       # exercised by the SPA - it only satisfies Program.cs's non-Development guard requiring
       # Cors:AllowedOrigins to be explicit rather than silently empty.
       Cors__AllowedOrigins__0: "http://localhost:5000"
+      # Points at the mailpit service above (its own container network, not the loopback-only
+      # published ports) - mailpit accepts unauthenticated local submission, so Smtp__Username
+      # is intentionally left unset.
+      Smtp__Host: "mailpit"
+      Smtp__Port: "1025"
+      Smtp__EnableSsl: "false"
+      Smtp__FromAddress: "queryplus@example.local"
     ports:
       - "5000:8080"
     depends_on:

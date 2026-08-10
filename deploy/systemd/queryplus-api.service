@@ -1,0 +1,53 @@
+[Unit]
+Description=QueryPlus Api
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# The placeholder tokens throughout this file are substituted by "make install-systemd" from the
+# repo Makefile's API_USER, API_GROUP, PREFIX, API_PORT, and DOTNET_BIN variables (defaults:
+# queryplus-api, queryplus-api, /opt/queryplus, 5000, and /usr/bin/dotnet respectively) - this file
+# is a template, not installed verbatim, specifically so overriding those Makefile variables
+# actually changes what this service does, instead of silently installing a service that still
+# points at the untouched defaults. Do not write any placeholder token's literal text anywhere in
+# this file other than where it should be substituted - the substitution is a blind find-and-replace
+# over the whole file, including comments.
+User=@API_USER@
+Group=@API_GROUP@
+WorkingDirectory=@PREFIX@/api
+# Same optional-env-file convention as the Jobs module units: a missing file is non-fatal.
+# Provides ConnectionStrings__DefaultConnection, Keycloak__ClientSecret, OPENBAO_ADDR/TOKEN, etc.
+# - EnvFileLoader also walks up from here and finds @PREFIX@/.env one level up if this one
+# doesn't exist, so a single shared .env at @PREFIX@/.env (used by Runner/SchedulerSync too)
+# works for the Api as well; only add @PREFIX@/api/.env if you specifically want the Api to
+# use different values than the console apps.
+EnvironmentFile=-@PREFIX@/api/.env
+EnvironmentFile=-@PREFIX@/.env
+# ASPNETCORE_ENVIRONMENT=Production below means the Api will refuse to start unless whichever of
+# the two EnvironmentFile lines above actually exist ALSO supply ConnectionStrings__DefaultConnection,
+# Keycloak__ClientSecret, AND Cors__AllowedOrigins__0 (three separate fail-fast startup checks -
+# see ProductionSecretsValidator.cs and Program.cs's CORS setup - so a missing one only surfaces
+# after you've already fixed the one before it; "make install-api" prints all three at once). The
+# CORS one is never actually exercised here - the SPA is served by this same Api process
+# (@PREFIX@/api/wwwroot), so there is no cross-origin request to allow - it only satisfies a
+# blanket "must be explicit outside Development" guard that can't distinguish that from a real
+# cross-origin deployment.
+# Loopback only, same posture as docs/deploy-producao.md's Docker/nginx path (a reverse proxy
+# terminates TLS and forwards here) - do not bind 0.0.0.0 without also putting a reverse proxy in
+# front for anything beyond local testing. Default port 5000, not 8080: 8080 is Keycloak's port in
+# this repo's local dev docker-compose stack (see CLAUDE.md), and this systemd unit runs directly
+# on the host, not inside a container, so it shares the host's real port space with Keycloak -
+# unlike the Docker deployment path, where the Api's in-container 8080 never collides with
+# anything because containers have their own network namespace. 5000 also matches the existing
+# convention for "the whole app, API + SPA, one origin" already used by `docker compose --profile
+# full` (see CLAUDE.md's Infra section) - which means running that compose stack on the same host
+# collides too, so API_PORT is overridable rather than a second hardcoded literal.
+Environment=ASPNETCORE_URLS=http://127.0.0.1:@API_PORT@
+Environment=ASPNETCORE_ENVIRONMENT=Production
+ExecStart=@DOTNET_BIN@ @PREFIX@/api/QueryPlus.Api.dll
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

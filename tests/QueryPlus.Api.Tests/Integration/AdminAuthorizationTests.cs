@@ -7,7 +7,9 @@ using QueryPlus.Api.Tests.Infrastructure;
 using QueryPlus.Application.DTOs.Categories;
 using QueryPlus.Application.DTOs.Common;
 using QueryPlus.Application.DTOs.Execution;
+using QueryPlus.Application.DTOs.Jobs;
 using QueryPlus.Application.DTOs.Procedures;
+using QueryPlus.Domain.Enums;
 
 namespace QueryPlus.Api.Tests.Integration;
 
@@ -186,6 +188,228 @@ public sealed class AdminAuthorizationTests(QueryPlusApiApplicationFactory facto
             "ROLE_PROCEDURE_WRITE"));
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    // ---- ROLE_JOB_READ: job browsing only, no writes ----
+
+    [Fact]
+    public async Task JobRead_can_search_job_definitions()
+    {
+        factory.JobDefinitions.SearchAsync(Arg.Any<JobDefinitionFilterDto>(), Arg.Any<CancellationToken>())
+            .Returns(new PagedResult<JobDefinitionListItemDto> { Items = [], TotalCount = 0, Page = 1, PageSize = 20 });
+
+        var response = await _client.SendAsync(WithRoles(HttpMethod.Get, "/api/jobs", "ROLE_JOB_READ"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task JobRead_can_search_job_runs()
+    {
+        factory.JobRuns.SearchAsync(Arg.Any<JobRunFilterDto>(), Arg.Any<CancellationToken>())
+            .Returns(new PagedResult<JobRunListItemDto> { Items = [], TotalCount = 0, Page = 1, PageSize = 20 });
+
+        var response = await _client.SendAsync(WithRoles(HttpMethod.Get, "/api/jobs/runs", "ROLE_JOB_READ"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task JobRead_cannot_create_job_definition()
+    {
+        using var request = await WithRolesAndCsrfAsync(HttpMethod.Post, "/api/jobs", "ROLE_JOB_READ",
+            JsonContent.Create(new { }));
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task JobRead_cannot_approve_job_definition()
+    {
+        using var request = await WithRolesAndCsrfAsync(HttpMethod.Post, "/api/jobs/1/approve", "ROLE_JOB_READ",
+            JsonContent.Create(new { }));
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    // ---- ROLE_JOB_WRITE: create/edit/submit/enable/run-now, but not approve/reject ----
+    // (segregation of duties: the same role that proposes a job must not be able to approve it)
+
+    [Fact]
+    public async Task JobWrite_can_create_job_definition()
+    {
+        factory.JobDefinitions.CreateAsync(Arg.Any<CreateJobDefinitionDto>(), Arg.Any<CancellationToken>())
+            .Returns(new JobDefinitionDetailDto
+            {
+                Id = 1, Name = "Job", ScriptPath = "job.sh", CronExpression = "* * * * *", RunAsUser = "svc",
+                CreatedBy = "creator", ApprovalStatus = JobApprovalStatus.Draft, CreatedAt = DateTime.UtcNow
+            });
+
+        using var request = await WithRolesAndCsrfAsync(HttpMethod.Post, "/api/jobs", "ROLE_JOB_WRITE",
+            JsonContent.Create(new { name = "Job", scriptPath = "job.sh", cronExpression = "* * * * *",
+                runAsUser = "svc" }));
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+    }
+
+    [Fact]
+    public async Task JobWrite_can_submit_job_definition_for_approval()
+    {
+        factory.JobDefinitions.SubmitForApprovalAsync(1, Arg.Any<CancellationToken>())
+            .Returns(new JobDefinitionDetailDto
+            {
+                Id = 1, Name = "Job", ScriptPath = "job.sh", CronExpression = "* * * * *", RunAsUser = "svc",
+                CreatedBy = "creator", ApprovalStatus = JobApprovalStatus.PendingApproval,
+                CreatedAt = DateTime.UtcNow
+            });
+
+        using var request = await WithRolesAndCsrfAsync(HttpMethod.Post, "/api/jobs/1/submit", "ROLE_JOB_WRITE");
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task JobWrite_cannot_approve_job_definition()
+    {
+        using var request = await WithRolesAndCsrfAsync(HttpMethod.Post, "/api/jobs/1/approve", "ROLE_JOB_WRITE",
+            JsonContent.Create(new { }));
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task JobWrite_cannot_reject_job_definition()
+    {
+        using var request = await WithRolesAndCsrfAsync(HttpMethod.Post, "/api/jobs/1/reject", "ROLE_JOB_WRITE",
+            JsonContent.Create(new { reason = "not needed" }));
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task JobWrite_can_upload_script()
+    {
+        factory.JobDefinitions.UploadScriptAsync(
+                1, Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<long>(), Arg.Any<CancellationToken>())
+            .Returns(new JobDefinitionDetailDto
+            {
+                Id = 1, Name = "Job", ScriptPath = "/allowlist/uploads/job-1/run.sh", CronExpression = "* * * * *",
+                RunAsUser = "svc", CreatedBy = "creator", ApprovalStatus = JobApprovalStatus.Draft,
+                CreatedAt = DateTime.UtcNow
+            });
+
+        using var fileContent = new ByteArrayContent("#!/bin/bash\necho hi\n"u8.ToArray());
+        using var form = new MultipartFormDataContent { { fileContent, "file", "backup.sh" } };
+
+        using var request = await WithRolesAndCsrfAsync(HttpMethod.Post, "/api/jobs/1/script", "ROLE_JOB_WRITE", form);
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        await factory.JobDefinitions.Received(1).UploadScriptAsync(
+            1, Arg.Any<Stream>(), "backup.sh", Arg.Any<long>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task JobRead_cannot_upload_script()
+    {
+        using var fileContent = new ByteArrayContent("#!/bin/bash\necho hi\n"u8.ToArray());
+        using var form = new MultipartFormDataContent { { fileContent, "file", "backup.sh" } };
+
+        using var request = await WithRolesAndCsrfAsync(HttpMethod.Post, "/api/jobs/1/script", "ROLE_JOB_READ", form);
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task JobWrite_can_list_run_as_users()
+    {
+        var response = await _client.SendAsync(WithRoles(HttpMethod.Get, "/api/jobs/run-as-users", "ROLE_JOB_WRITE"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task JobRead_cannot_list_run_as_users()
+    {
+        var response = await _client.SendAsync(WithRoles(HttpMethod.Get, "/api/jobs/run-as-users", "ROLE_JOB_READ"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    // ---- ROLE_JOB_APPROVE: approve/reject only, no create/edit ----
+    // (segregation of duties: the approver role must not also be able to author job definitions)
+
+    [Fact]
+    public async Task JobApprove_can_approve_job_definition()
+    {
+        factory.JobDefinitions.ApproveAsync(1, Arg.Any<ApproveJobDefinitionDto>(), Arg.Any<CancellationToken>())
+            .Returns(new JobDefinitionDetailDto
+            {
+                Id = 1, Name = "Job", ScriptPath = "job.sh", CronExpression = "* * * * *", RunAsUser = "svc",
+                CreatedBy = "creator", ApprovalStatus = JobApprovalStatus.Approved, CreatedAt = DateTime.UtcNow
+            });
+
+        using var request = await WithRolesAndCsrfAsync(HttpMethod.Post, "/api/jobs/1/approve", "ROLE_JOB_APPROVE",
+            JsonContent.Create(new { }));
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task JobApprove_can_reject_job_definition()
+    {
+        factory.JobDefinitions.RejectAsync(1, Arg.Any<RejectJobDefinitionDto>(), Arg.Any<CancellationToken>())
+            .Returns(new JobDefinitionDetailDto
+            {
+                Id = 1, Name = "Job", ScriptPath = "job.sh", CronExpression = "* * * * *", RunAsUser = "svc",
+                CreatedBy = "creator", ApprovalStatus = JobApprovalStatus.Rejected, CreatedAt = DateTime.UtcNow
+            });
+
+        using var request = await WithRolesAndCsrfAsync(HttpMethod.Post, "/api/jobs/1/reject", "ROLE_JOB_APPROVE",
+            JsonContent.Create(new { reason = "needs rework" }));
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task JobApprove_cannot_create_job_definition()
+    {
+        using var request = await WithRolesAndCsrfAsync(HttpMethod.Post, "/api/jobs", "ROLE_JOB_APPROVE",
+            JsonContent.Create(new { }));
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task JobApprove_cannot_edit_job_definition()
+    {
+        using var request = await WithRolesAndCsrfAsync(HttpMethod.Put, "/api/jobs/1", "ROLE_JOB_APPROVE",
+            JsonContent.Create(new { }));
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
     // ---- ROLE_ADMIN implies every permission ----

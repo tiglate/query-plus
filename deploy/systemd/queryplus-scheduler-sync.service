@@ -1,0 +1,29 @@
+[Unit]
+Description=QueryPlus Scheduler Sync - sync pass (writes /etc/cron.d entries, drains Run Now requests)
+After=network-online.target
+Wants=network-online.target
+# Started only by queryplus-scheduler-sync.timer - do not enable this unit directly.
+
+[Service]
+Type=oneshot
+# User/Group are intentionally NOT a placeholder like @PREFIX@ below - SchedulerSync must run as
+# root (systemd-run --uid= and writing /etc/cron.d both require it), and that is not something a
+# Makefile variable should be able to weaken. @PREFIX@ IS a placeholder, substituted by
+# "make install-systemd" from the repo Makefile's PREFIX variable (default /opt/queryplus) - do
+# not write the literal token text anywhere in this file other than where it should be substituted.
+User=root
+Group=root
+WorkingDirectory=@PREFIX@
+# Leading "-" makes a missing env file non-fatal, same optional-env-file
+# philosophy as EnvFileLoader for the Api process. Provides OPENBAO_ADDR,
+# OPENBAO_TOKEN and ConnectionStrings__DefaultConnection when not sourced
+# from OpenBao.
+EnvironmentFile=-@PREFIX@/.env
+ExecStart=@PREFIX@/scheduler-sync --sync
+# systemd-run (used both for cron.d lines and for draining Run Now here)
+# returns as soon as the transient scope is started, it does not block on
+# job completion, so this pass should stay fast. TimeoutStartSec is a safety
+# net, not an expected runtime. A oneshot service is never overlapped by
+# systemd, so a run that is still active when the next timer tick fires
+# simply causes that tick to be skipped, not queued - this is intended.
+TimeoutStartSec=120
